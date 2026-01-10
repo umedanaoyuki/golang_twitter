@@ -1,5 +1,10 @@
 services:
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - 8080:8080
+    volumes:
+      - .:/golang_twitter
+      - /golang_twitter/tmp
