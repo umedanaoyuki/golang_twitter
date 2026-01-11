@@ -15,11 +15,11 @@ docker-compose ps
 
 ### 動作確認
 
+以下にアクセスできるか確認
+
 ```
 http://localhost:8080/health_check
 ```
-
-にアクセスできるか確認
 
 以下のレスポンスが返ってきたら成功
 
