@@ -7,7 +7,7 @@ import (
 )
 
 	type RegisterInput struct {
-		Username string `json:"username" binding:"required"`
+		MailAddress string `json:"mail_address" binding:"required"`
 		Password string `json:"password" binding:"required"`
 	}
 
