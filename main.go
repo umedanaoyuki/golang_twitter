@@ -1,6 +1,10 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"golang_twitter/controllers"
+
+	"github.com/gin-gonic/gin"
+)
 
 func main() {
   router := gin.Default()
@@ -9,6 +13,9 @@ func main() {
       "status": "ok",
     })
   })
+
+router.POST("/register", controllers.Register)
+
 //   デフォルト 0.0.0.0:8080
   router.Run()
 }
