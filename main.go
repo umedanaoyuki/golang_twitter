@@ -51,9 +51,12 @@ func main() {
 	})
 
 	router.POST("/register", func(c *gin.Context) {
-    // クエリを渡す
+		// クエリを渡す
 		controllers.Register(c, queries)
 	})
+
+	// メール送信エンドポイント
+	router.POST("/email", controllers.SendWelcomeEmail)
 
 	log.Println("サーバー起動: http://localhost:8080")
 	router.Run()

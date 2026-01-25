@@ -2,7 +2,10 @@ package controllers
 
 import (
 	db "golang_twitter/db/sqlc"
+	"golang_twitter/infrastructure/email"
+	"log"
 	"net/http"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -104,5 +107,63 @@ func Register(c *gin.Context, queries *db.Queries) {
 			"email":      user.Email,
 			"created_at": user.CreatedAt,
 		},
+	})
+}
+
+// EmailInput はメール送信リクエストの構造体
+type EmailInput struct {
+	Email string `json:"email" binding:"required,email"`
+	Name  string `json:"name"`
+}
+
+// SendWelcomeEmail はウェルカムメールを送信するエンドポイント
+func SendWelcomeEmail(c *gin.Context) {
+	var input EmailInput
+
+	// JSONバリデーション
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 名前が指定されていない場合はメールアドレスを使用
+	if input.Name == "" {
+		input.Name = input.Email
+	}
+
+	// MailCatcher設定
+	config := email.NewMailCatcherConfig()
+	sender := email.NewEmailSender(config)
+
+	// テンプレートパス
+	templatePath := filepath.Join(email.GetTemplateDir(), "welcome.html")
+
+	// テンプレートデータ
+	data := map[string]interface{}{
+		"Username": input.Name,
+		"Email":    input.Email,
+		"AppName":  "Twitter Clone",
+	}
+
+	// メール送信
+	err := sender.SendEmail(
+		[]string{input.Email},
+		"ようこそ",
+		templatePath,
+		data,
+	)
+
+	if err != nil {
+		log.Printf("メール送信エラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "メールの送信に失敗しました",
+			"detail": err.Error(),
+		})
+		return
+	}
+
+	// 成功レスポンス
+	c.JSON(http.StatusOK, gin.H{
+		"msg": "email has been sent",
 	})
 }
