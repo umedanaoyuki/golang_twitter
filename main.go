@@ -33,8 +33,8 @@ func main() {
 
 	log.Println("データベース接続成功")
 
-	// sqlcのQueriesを作成（プリペアードステートメント付き）
 	ctx := context.Background()
+  // 生SQLを事前にDBに送信してチェック
 	queries, err := db.Prepare(ctx, conn)
 	if err != nil {
 		log.Fatal("プリペアードステートメント作成エラー:", err)
@@ -50,12 +50,11 @@ func main() {
 		})
 	})
 
-	// サインアップエンドポイント（queriesを渡す）
 	router.POST("/register", func(c *gin.Context) {
+    // クエリを渡す
 		controllers.Register(c, queries)
 	})
 
-	// デフォルト 0.0.0.0:8080
 	log.Println("🚀 サーバー起動: http://localhost:8080")
 	router.Run()
 }
