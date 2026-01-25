@@ -1,21 +1,63 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"golang_twitter/controllers"
+	db "golang_twitter/db/sqlc"
+	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 )
 
 func main() {
-  router := gin.Default()
-  router.GET("/health_check", func(c *gin.Context) {
-    c.JSON(200, gin.H{
-      "status": "ok",
-    })
-  })
+	// 環境変数からDATABASE_URLを取得
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		// ローカル開発用のデフォルト値
+		dbURL = "postgresql://umeda:password@localhost:5432/golang_twitter?sslmode=disable"
+		log.Println("⚠️  DATABASE_URL が設定されていません。デフォルト値を使用します")
+	}
 
-router.POST("/register", controllers.Register)
+	// データベース接続
+	conn, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal("データベース接続エラー:", err)
+	}
+	defer conn.Close()
 
-//   デフォルト 0.0.0.0:8080
-  router.Run()
+	// 接続確認
+	if err := conn.Ping(); err != nil {
+		log.Fatal("データベース接続確認エラー:", err)
+	}
+
+	log.Println("✅ データベース接続成功")
+
+	// sqlcのQueriesを作成（プリペアードステートメント付き）
+	ctx := context.Background()
+	queries, err := db.Prepare(ctx, conn)
+	if err != nil {
+		log.Fatal("プリペアードステートメント作成エラー:", err)
+	}
+	defer queries.Close()
+
+	// Ginルーター設定
+	router := gin.Default()
+
+	router.GET("/health_check", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status": "ok",
+		})
+	})
+
+	// サインアップエンドポイント（queriesを渡す）
+	router.POST("/register", func(c *gin.Context) {
+		controllers.Register(c, queries)
+	})
+
+	// デフォルト 0.0.0.0:8080
+	log.Println("🚀 サーバー起動: http://localhost:8080")
+	router.Run()
 }
