@@ -29,7 +29,7 @@ func Register(c *gin.Context, queries *db.Queries) {
 		return
 	}
 
-	// データベースにユーザーを作成
+	// データベースにユーザーを作成（CreateUserはsqlcが自動生成）
 	user, err := queries.CreateUser(c.Request.Context(), db.CreateUserParams{
 		Email:    input.MailAddress,
 		Password: string(hashedPassword),
