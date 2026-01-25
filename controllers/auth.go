@@ -15,7 +15,7 @@ type RegisterInput struct {
 	Password    string `json:"password" binding:"required,min=8,max=15"`
 }
 
-// パスワードの複雑性をチェックする関数
+// パスワードのバリデーションチェック
 func validatePassword(password string) error {
 	// 1. 長さチェック（8文字以上15文字以下）
 	if len(password) < 8 || len(password) > 15 {
@@ -73,13 +73,12 @@ func Register(c *gin.Context, queries *db.Queries) {
 		return
 	}
 
-	// パスワードの複雑性チェック
 	if err := validatePassword(input.Password); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// パスワードをハッシュ化
+	// パスワードハッシュ化
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "パスワードのハッシュ化に失敗しました"})
