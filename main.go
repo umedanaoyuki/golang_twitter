@@ -16,9 +16,7 @@ func main() {
 	// 環境変数からDATABASE_URLを取得
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		// ローカル開発用のデフォルト値
-		dbURL = "postgresql://umeda:password@localhost:5432/golang_twitter?sslmode=disable"
-		log.Println("⚠️  DATABASE_URL が設定されていません。デフォルト値を使用します")
+		log.Println("DATABASE_URL が設定されていません")
 	}
 
 	// データベース接続
@@ -33,7 +31,7 @@ func main() {
 		log.Fatal("データベース接続確認エラー:", err)
 	}
 
-	log.Println("✅ データベース接続成功")
+	log.Println("データベース接続成功")
 
 	// sqlcのQueriesを作成（プリペアードステートメント付き）
 	ctx := context.Background()
