@@ -15,7 +15,6 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      # ← Goアプリケーションから接続するための環境変数
       - DATABASE_URL=postgresql://umeda:password@postgres:5432/golang_twitter?sslmode=disable
     depends_on:
       - postgres

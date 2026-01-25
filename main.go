@@ -55,6 +55,6 @@ func main() {
 		controllers.Register(c, queries)
 	})
 
-	log.Println("🚀 サーバー起動: http://localhost:8080")
+	log.Println("サーバー起動: http://localhost:8080")
 	router.Run()
 }
