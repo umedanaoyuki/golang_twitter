@@ -34,7 +34,7 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 
 	// JSONの形式チェック
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "JSONの形式に誤りがあります"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": messages.JsonFormatError})
 		return
 	}
 
