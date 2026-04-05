@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"golang_twitter/messages"
 	"golang_twitter/services"
 	"net/http"
 
@@ -39,7 +40,7 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 
 	// 成功レスポンス（パスワードは返さない）
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "ユーザー登録が完了しました",
+		"message": messages.MsgUserRegistered,
 		"user": gin.H{
 			"id":         user.ID,
 			"email":      user.Email,
