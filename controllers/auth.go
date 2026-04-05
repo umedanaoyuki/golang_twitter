@@ -25,20 +25,20 @@ type RegisterInput struct {
 func (ctrl *AuthController) Register(c *gin.Context) {
 	var input RegisterInput
 
-	// ユーザー登録
+	// 1. JSONの形式チェック
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 2. ビジネスロジック実行
 	user, err := ctrl.authService.RegisterUser(c.Request.Context(), input.MailAddress, input.Password)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// JSONの形式チェック
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": messages.JsonFormatError})
-		return
-	}
-
-	// 成功レスポンス（パスワードは返さない）
+	// 3. 成功レスポンス（パスワードは返さない）
 	c.JSON(http.StatusCreated, gin.H{
 		"message": messages.MsgUserRegistered,
 		"user": gin.H{
