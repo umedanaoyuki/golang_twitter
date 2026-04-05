@@ -1,6 +1,5 @@
 package messages
 
-// エラーメッセージ
 const (
 	ErrPasswordLength         = "パスワードは8文字以上15文字以下である必要があります"
 	ErrPasswordInvalidChars   = "パスワードは半角英数字と記号(!?-_)のみ使用できます"
@@ -14,5 +13,4 @@ const (
 	JsonFormatError            = "JSONの形式に誤りがあります"
 	
 	MsgUserRegistered         = "ユーザー登録が完了しました"
-
 )
