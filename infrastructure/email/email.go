@@ -26,18 +26,15 @@ func NewMailCatcherConfig() *SMTPConfig {
 		Password: "",
 	}
 }
-
-// EmailSender はメール送信を担当する
 type EmailSender struct {
 	config *SMTPConfig
 }
 
-// NewEmailSender は新しいEmailSenderを作成
 func NewEmailSender(config *SMTPConfig) *EmailSender {
 	return &EmailSender{config: config}
 }
 
-// SendEmail はHTMLテンプレートを使ってメールを送信
+// メールを送信
 func (s *EmailSender) SendEmail(to []string, subject string, templatePath string, data interface{}) error {
 	// テンプレートを読み込み
 	tmpl, err := template.ParseFiles(templatePath)
@@ -66,7 +63,7 @@ func (s *EmailSender) SendEmail(to []string, subject string, templatePath string
 	return nil
 }
 
-// buildMessage はメールメッセージを構築
+// メールメッセージを構築
 func (s *EmailSender) buildMessage(to []string, subject string, htmlBody string) string {
 	headers := make(map[string]string)
 	headers["From"] = s.config.From
@@ -84,7 +81,6 @@ func (s *EmailSender) buildMessage(to []string, subject string, htmlBody string)
 	return message
 }
 
-// SendSimpleEmail はシンプルなテキストメールを送信（テンプレート不要）
 func (s *EmailSender) SendSimpleEmail(to []string, subject string, body string) error {
 	message := s.buildMessage(to, subject, body)
 	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
@@ -97,7 +93,6 @@ func (s *EmailSender) SendSimpleEmail(to []string, subject string, body string) 
 	return nil
 }
 
-// GetTemplateDir はテンプレートディレクトリのパスを返す
 func GetTemplateDir() string {
 	return filepath.Join(".", "infrastructure", "emails", "templates")
 }

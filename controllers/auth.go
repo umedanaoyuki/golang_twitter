@@ -1,12 +1,9 @@
 package controllers
 
 import (
-	"golang_twitter/infrastructure/email"
 	"golang_twitter/messages"
 	"golang_twitter/services"
-	"log"
 	"net/http"
-	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 )
@@ -41,12 +38,7 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	// 3. ウェルカムメール送信
-	if err := ctrl.sendWelcomeEmailInternal(user.Email); err != nil {
-		log.Printf("ウェルカムメール送信エラー（ユーザー: %s）: %v", user.Email, err)
-	}
-
-	// 4. 成功レスポンス（パスワードは返さない）
+	// 3. 成功レスポンス（パスワードは返さない）
 	c.JSON(http.StatusCreated, gin.H{
 		"message": messages.MsgUserRegistered,
 		"user": gin.H{
@@ -55,23 +47,4 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 			"created_at": user.CreatedAt,
 		},
 	})
-}
-
-// sendWelcomeEmailInternal はウェルカムメールを送信する内部関数
-func (ctrl *AuthController) sendWelcomeEmailInternal(userEmail string) error {
-	// メール送信処理
-	config := email.NewMailCatcherConfig()
-	sender := email.NewEmailSender(config)
-	templatePath := filepath.Join(email.GetTemplateDir(), "welcome.html")
-
-	data := map[string]interface{}{
-		"Email":   userEmail,
-	}
-
-	return sender.SendEmail(
-		[]string{userEmail},
-		"ようこそ Twitter Clone へ",
-		templatePath,
-		data,
-	)
 }

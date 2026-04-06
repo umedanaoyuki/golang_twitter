@@ -3,7 +3,9 @@ package services
 import (
 	"context"
 	db "golang_twitter/db/sqlc"
+	"golang_twitter/mailer"
 	"golang_twitter/messages"
+	"log"
 	"regexp"
 	"strings"
 
@@ -16,13 +18,16 @@ type AuthService interface {
 
 type authService struct {
 	queries *db.Queries
+	mailer  mailer.Mailer
 }
 
-func NewAuthService(queries *db.Queries) AuthService {
-	return &authService{queries: queries}
+func NewAuthService(queries *db.Queries, mailer mailer.Mailer) AuthService {
+	return &authService{
+		queries: queries,
+		mailer:  mailer,
+	}
 }
 
-// RegisterUser はユーザー登録のビジネスロジックを実行
 func (s *authService) RegisterUser(ctx context.Context, email, password string) (*db.User, error) {
 	// 1. パスワードのバリデーション
 	if err := validatePassword(password); err != nil {
@@ -42,6 +47,11 @@ func (s *authService) RegisterUser(ctx context.Context, email, password string) 
 	})
 	if err != nil {
 		return nil, &ServiceError{Message: messages.ErrEmailAlreadyExists}
+	}
+
+	// 4. メール送信
+	if err := s.mailer.SendWelcomeEmail(user.Email); err != nil {
+		log.Printf("[ERROR] ウェルカムメール送信失敗 - ユーザー: %s, エラー: %v", user.Email, err)
 	}
 
 	return &user, nil

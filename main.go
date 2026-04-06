@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"golang_twitter/controllers"
 	db "golang_twitter/db/sqlc"
+	"golang_twitter/mailer"
 	"golang_twitter/services"
 	"log"
 	"os"
@@ -42,7 +43,10 @@ func main() {
 	}
 	defer queries.Close()
 
-	authService := services.NewAuthService(queries)
+	// メール送信の実装（開発環境用：MailCatcher）
+	emailMailer := mailer.NewMailCatcherMailer()
+
+	authService := services.NewAuthService(queries, emailMailer)
 
 	authController := controllers.NewAuthController(authService)
 
