@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"golang_twitter/controllers"
 	db "golang_twitter/db/sqlc"
+	"golang_twitter/services"
 	"log"
 	"os"
 
@@ -41,6 +42,10 @@ func main() {
 	}
 	defer queries.Close()
 
+	authService := services.NewAuthService(queries)
+
+	authController := controllers.NewAuthController(authService)
+
 	// Ginルーター設定
 	router := gin.Default()
 
@@ -50,13 +55,8 @@ func main() {
 		})
 	})
 
-	router.POST("/register", func(c *gin.Context) {
-		// クエリを渡す
-		controllers.Register(c, queries)
-	})
-
-	// メール送信エンドポイント
-	router.POST("/email", controllers.SendWelcomeEmail)
+	// ユーザー登録エンドポイント
+	router.POST("/register", authController.Register)
 
 	log.Println("サーバー起動: http://localhost:8080")
 	router.Run()
