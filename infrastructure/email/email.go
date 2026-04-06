@@ -81,18 +81,6 @@ func (s *EmailSender) buildMessage(to []string, subject string, htmlBody string)
 	return message
 }
 
-func (s *EmailSender) SendSimpleEmail(to []string, subject string, body string) error {
-	message := s.buildMessage(to, subject, body)
-	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
-	
-	err := smtp.SendMail(addr, nil, s.config.From, to, []byte(message))
-	if err != nil {
-		return fmt.Errorf("メール送信エラー: %w", err)
-	}
-
-	return nil
-}
-
 func GetTemplateDir() string {
 	return filepath.Join(".", "infrastructure", "emails", "templates")
 }

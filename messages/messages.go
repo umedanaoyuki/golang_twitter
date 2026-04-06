@@ -10,7 +10,6 @@ const (
 	
 	ErrPasswordHashFailed     = "パスワードのハッシュ化に失敗しました"
 	ErrEmailAlreadyExists     = "このメールアドレスは既に登録されています"
-	JsonFormatError            = "JSONの形式に誤りがあります"
 	
 	MsgUserRegistered         = "ユーザー登録が完了しました"
 )
