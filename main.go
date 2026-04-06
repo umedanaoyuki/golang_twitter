@@ -57,6 +57,8 @@ func main() {
 
 	// ユーザー登録エンドポイント
 	router.POST("/register", authController.Register)
+	// ウェルカムメール送信エンドポイント
+	router.POST("/send-welcome-email", authController.SendWelcomeEmail)
 
 	log.Println("サーバー起動: http://localhost:8080")
 	router.Run()

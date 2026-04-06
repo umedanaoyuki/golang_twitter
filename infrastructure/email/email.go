@@ -17,7 +17,6 @@ type SMTPConfig struct {
 	Password string
 }
 
-// NewMailCatcherConfig はMailCatcher用の設定を返す
 func NewMailCatcherConfig() *SMTPConfig {
 	return &SMTPConfig{
 		Host:     "mail", // docker-composeのサービス名
