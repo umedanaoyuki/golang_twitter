@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"golang_twitter/controllers"
 	db "golang_twitter/db/sqlc"
+	mailcatcher "golang_twitter/infrastructure/email/mailcather"
 	"golang_twitter/mailer"
 	"golang_twitter/services"
 	"log"
@@ -43,8 +44,13 @@ func main() {
 	}
 	defer queries.Close()
 
-	// メール送信の実装（開発環境用：MailCatcher）
-	emailMailer := mailer.NewMailCatcherMailer()
+	var emailMailer mailer.Mailer
+	if os.Getenv("ENV") == "development" {
+		emailMailer = mailcatcher.NewMailCatcherMailer()
+	} else {
+		// TODO: SMTPの設定値を書く（環境変数）
+		// emailMailer = smtp.NewEmailSender()
+	}
 
 	authService := services.NewAuthService(queries, emailMailer)
 

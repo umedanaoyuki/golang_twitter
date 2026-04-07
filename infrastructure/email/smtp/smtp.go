@@ -1,8 +1,9 @@
-package email
+package smtp
 
 import (
 	"bytes"
 	"fmt"
+	"golang_twitter/mailer"
 	"html/template"
 	"net/smtp"
 	"path/filepath"
@@ -30,7 +31,23 @@ type EmailSender struct {
 	config *SMTPConfig
 }
 
-func NewEmailSender(config *SMTPConfig) *EmailSender {
+func (m *EmailSender) SendWelcomeEmail(to string) error {
+	templatePath := filepath.Join(mailer.GetTemplateDir(), "welcome.html")
+
+	data := map[string]interface{}{
+		"Email":   to,
+		"AppName": "Twitter Clone",
+	}
+
+	return m.SendEmail(
+		[]string{to},
+		"ようこそ Twitter Clone へ",
+		templatePath,
+		data,
+	)
+}
+
+func NewEmailSender(config *SMTPConfig) mailer.Mailer {
 	return &EmailSender{config: config}
 }
 
@@ -49,7 +66,7 @@ func (s *EmailSender) SendEmail(to []string, subject string, templatePath string
 	}
 
 	// メールメッセージを構築
-	message := s.buildMessage(to, subject, body.String())
+	message := mailer.BuildMessage(to, subject, body.String(), s.config.From)
 
 	// SMTPサーバーに接続して送信
 	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
@@ -61,26 +78,4 @@ func (s *EmailSender) SendEmail(to []string, subject string, templatePath string
 	}
 
 	return nil
-}
-
-// メールメッセージを構築
-func (s *EmailSender) buildMessage(to []string, subject string, htmlBody string) string {
-	headers := make(map[string]string)
-	headers["From"] = s.config.From
-	headers["To"] = to[0] // 簡略化のため最初の宛先のみ
-	headers["Subject"] = subject
-	headers["MIME-Version"] = "1.0"
-	headers["Content-Type"] = "text/html; charset=UTF-8"
-
-	message := ""
-	for k, v := range headers {
-		message += fmt.Sprintf("%s: %s\r\n", k, v)
-	}
-	message += "\r\n" + htmlBody
-
-	return message
-}
-
-func GetTemplateDir() string {
-	return filepath.Join(".", "infrastructure", "emails", "templates")
 }
