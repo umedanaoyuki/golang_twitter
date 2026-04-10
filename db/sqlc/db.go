@@ -36,6 +36,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getUserActivationByTokenStmt, err = db.PrepareContext(ctx, getUserActivationByToken); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUserActivationByToken: %w", err)
 	}
+	if q.updateUserIsActiveStmt, err = db.PrepareContext(ctx, updateUserIsActive); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateUserIsActive: %w", err)
+	}
 	return &q, nil
 }
 
@@ -59,6 +62,11 @@ func (q *Queries) Close() error {
 	if q.getUserActivationByTokenStmt != nil {
 		if cerr := q.getUserActivationByTokenStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getUserActivationByTokenStmt: %w", cerr)
+		}
+	}
+	if q.updateUserIsActiveStmt != nil {
+		if cerr := q.updateUserIsActiveStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateUserIsActiveStmt: %w", cerr)
 		}
 	}
 	return err
@@ -104,6 +112,7 @@ type Queries struct {
 	createUserActivationStmt     *sql.Stmt
 	deleteUserActivationStmt     *sql.Stmt
 	getUserActivationByTokenStmt *sql.Stmt
+	updateUserIsActiveStmt       *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
@@ -114,5 +123,6 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		createUserActivationStmt:     q.createUserActivationStmt,
 		deleteUserActivationStmt:     q.deleteUserActivationStmt,
 		getUserActivationByTokenStmt: q.getUserActivationByTokenStmt,
+		updateUserIsActiveStmt:       q.updateUserIsActiveStmt,
 	}
 }

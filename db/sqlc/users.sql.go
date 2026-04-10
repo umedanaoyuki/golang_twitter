@@ -38,3 +38,19 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	)
 	return i, err
 }
+
+const updateUserIsActive = `-- name: UpdateUserIsActive :exec
+UPDATE users
+SET is_active = $2, updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateUserIsActiveParams struct {
+	ID       int32 `json:"id"`
+	IsActive bool  `json:"is_active"`
+}
+
+func (q *Queries) UpdateUserIsActive(ctx context.Context, arg UpdateUserIsActiveParams) error {
+	_, err := q.exec(ctx, q.updateUserIsActiveStmt, updateUserIsActive, arg.ID, arg.IsActive)
+	return err
+}

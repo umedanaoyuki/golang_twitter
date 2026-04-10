@@ -6,7 +6,7 @@ import (
 )
 
 type Mailer interface {
-	SendWelcomeEmail(to string) error
+	SendWelcomeEmail(to string, token string) error
 }
 
 func GetTemplateDir() string {

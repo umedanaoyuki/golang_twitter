@@ -12,4 +12,5 @@ const (
 	ErrEmailAlreadyExists     = "このメールアドレスは既に登録されています"
 	
 	MsgUserRegistered         = "ユーザー登録が完了しました"
+	MsgUserActivated          = "アカウントが有効化されました"
 )

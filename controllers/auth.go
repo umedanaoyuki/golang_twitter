@@ -48,3 +48,24 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 		},
 	})
 }
+
+// ユーザーアクティベーション
+func (ctrl *AuthController) ActivateUser(c *gin.Context) {
+	// 1. クエリパラメータからトークンを取得
+	token := c.Query("token")
+	if token == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "トークンが指定されていません"})
+		return
+	}
+
+	// 2. アクティベーション処理
+	if err := ctrl.authService.ActivateUser(c.Request.Context(), token); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 3. 成功レスポンス
+	c.JSON(http.StatusOK, gin.H{
+		"message": messages.MsgUserActivated,
+	})
+}

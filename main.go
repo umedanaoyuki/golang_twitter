@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"golang_twitter/controllers"
 	db "golang_twitter/db/sqlc"
-	mailcatcher "golang_twitter/infrastructure/email/mailcather"
 	"golang_twitter/mailer"
 	"golang_twitter/services"
 	"log"
@@ -67,6 +66,9 @@ func main() {
 
 	// ユーザー登録エンドポイント
 	router.POST("/register", authController.Register)
+
+	// ユーザーアクティベーションエンドポイント
+	router.GET("/activate", authController.ActivateUser)
 
 	log.Println("サーバー起動: http://localhost:8080")
 	router.Run()
