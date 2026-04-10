@@ -4,5 +4,5 @@ INSERT INTO users (
   password,
   is_active
 ) VALUES (
-  $1, $2, $3,
+  $1, $2, $3
 ) RETURNING id, email, password, is_active, created_at, updated_at;

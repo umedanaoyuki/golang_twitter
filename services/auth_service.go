@@ -44,6 +44,7 @@ func (s *authService) RegisterUser(ctx context.Context, email, password string) 
 	user, err := s.queries.CreateUser(ctx, db.CreateUserParams{
 		Email:    email,
 		Password: string(hashedPassword),
+		IsActive: false,
 	})
 	if err != nil {
 		return nil, &ServiceError{Message: messages.ErrEmailAlreadyExists}

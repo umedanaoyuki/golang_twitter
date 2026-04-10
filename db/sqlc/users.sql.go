@@ -15,17 +15,18 @@ INSERT INTO users (
   password,
   is_active
 ) VALUES (
-  $1, $2, FALSE
+  $1, $2, $3
 ) RETURNING id, email, password, is_active, created_at, updated_at
 `
 
 type CreateUserParams struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	IsActive bool   `json:"is_active"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.queryRow(ctx, q.createUserStmt, createUser, arg.Email, arg.Password)
+	row := q.queryRow(ctx, q.createUserStmt, createUser, arg.Email, arg.Password, arg.IsActive)
 	var i User
 	err := row.Scan(
 		&i.ID,

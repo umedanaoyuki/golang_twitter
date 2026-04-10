@@ -35,7 +35,7 @@ func NewMailCatcherMailer() mailer.Mailer {
 // SendWelcomeEmail はウェルカムメールを送信
 func (m *MailCatcherMailer) SendWelcomeEmail(to string) error {
 	// テンプレートパス
-	templatePath := filepath.Join(mailer.GetTemplateDir(), "welcome.html")
+	templatePath := filepath.Join(mailer.GetTemplateDir(), "welcome_stg.html")
 
 	// テンプレートを読み込み
 	tmpl, err := template.ParseFiles(templatePath)
@@ -47,6 +47,7 @@ func (m *MailCatcherMailer) SendWelcomeEmail(to string) error {
 	data := map[string]interface{}{
 		"Email":   to,
 		"AppName": "Twitter Clone",
+		"ActivationURL": "https://stg.twitter-clone.com/activate?token=" + token,
 	}
 
 	// HTMLを生成
