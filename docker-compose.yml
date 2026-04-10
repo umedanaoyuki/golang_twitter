@@ -14,7 +14,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    env_file:
+      - .env.development
     environment:
+      - ENV=${ENV}
       - DATABASE_URL=${DATABASE_URL}
     depends_on:
       - postgres

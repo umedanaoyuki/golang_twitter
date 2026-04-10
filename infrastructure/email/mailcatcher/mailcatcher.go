@@ -1,9 +1,9 @@
-package mailer
+package mailcatcher
 
 import (
 	"bytes"
 	"fmt"
-	mailer "golang_twitter/mailer"
+	"golang_twitter/mailer"
 	"html/template"
 	"log"
 	"net/smtp"
@@ -33,7 +33,7 @@ func NewMailCatcherMailer() mailer.Mailer {
 }
 
 // SendWelcomeEmail はウェルカムメールを送信
-func (m *MailCatcherMailer) SendWelcomeEmail(to string) error {
+func (m *MailCatcherMailer) SendWelcomeEmail(to string, token string) error {
 	// テンプレートパス
 	templatePath := filepath.Join(mailer.GetTemplateDir(), "welcome_stg.html")
 
@@ -43,11 +43,13 @@ func (m *MailCatcherMailer) SendWelcomeEmail(to string) error {
 		return fmt.Errorf("テンプレート読み込みエラー: %w", err)
 	}
 
+	// アクティベーションURLを生成
+	activationURL := fmt.Sprintf("http://localhost:8080/activate?token=%s", token)
+
 	// データ準備
 	data := map[string]interface{}{
-		"Email":   to,
-		"AppName": "Twitter Clone",
-		"ActivationURL": "https://stg.twitter-clone.com/activate?token=" + token,
+		"Email":         to,
+		"ActivationURL": activationURL,
 	}
 
 	// HTMLを生成
