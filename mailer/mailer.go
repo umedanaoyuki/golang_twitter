@@ -10,7 +10,7 @@ type Mailer interface {
 }
 
 func GetTemplateDir() string {
-	return filepath.Join(".", "infrastructure", "emails", "templates")
+	return filepath.Join(".", "infrastructure", "email", "templates")
 }
 
 // メールメッセージを構築
