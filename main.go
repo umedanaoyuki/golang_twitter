@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"golang_twitter/controllers"
 	db "golang_twitter/db/sqlc"
+	"golang_twitter/infrastructure/email/mailcatcher"
 	"golang_twitter/mailer"
 	"golang_twitter/services"
 	"log"

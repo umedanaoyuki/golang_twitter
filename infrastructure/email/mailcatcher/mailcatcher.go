@@ -1,13 +1,11 @@
 package mailcatcher
 
 import (
-	"bytes"
 	"fmt"
-	"golang_twitter/mailer"
-	"html/template"
 	"log"
 	"net/smtp"
-	"path/filepath"
+
+	"golang_twitter/mailer"
 )
 
 // MailCatcherConfig は MailCatcher の設定
@@ -34,38 +32,37 @@ func NewMailCatcherMailer() mailer.Mailer {
 
 // SendWelcomeEmail はウェルカムメールを送信
 func (m *MailCatcherMailer) SendWelcomeEmail(to string, token string) error {
-	// テンプレートパス
-	templatePath := filepath.Join(mailer.GetTemplateDir(), "welcome.html")
-
-	// テンプレートを読み込み
-	tmpl, err := template.ParseFiles(templatePath)
-	if err != nil {
-		return fmt.Errorf("テンプレート読み込みエラー: %w", err)
-	}
-
 	// アクティベーションURLを生成
 	activationURL := fmt.Sprintf("http://localhost:8080/activate?token=%s", token)
 
-	// データ準備
-	data := map[string]interface{}{
-		"Email":         to,
-		"ActivationURL": activationURL,
-	}
-
-	// HTMLを生成
-	var body bytes.Buffer
-	if err := tmpl.Execute(&body, data); err != nil {
-		return fmt.Errorf("テンプレート実行エラー: %w", err)
-	}
+	// HTMLを直接構築
+	htmlBody := fmt.Sprintf(`
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>ようこそ</title>
+  </head>
+  <body>
+    <h1>ようこそ Twitter Clone へ！</h1>
+    <p>ご登録ありがとうございます。</p>
+    <p>登録されたメールアドレス: <strong>%s</strong></p>
+    <p>アカウントを有効化するには、以下のリンクをクリックしてください。</p>
+    <a href="%s">アカウントを有効化</a>
+    <hr />
+    <p>このメールに心当たりがない場合は、無視してください。</p>
+  </body>
+</html>
+	`, to, activationURL)
 
 	// メールメッセージを構築
-	message := mailer.BuildMessage([]string{to}, "ようこそ Twitter Clone へ", body.String(), m.config.From)
+	message := mailer.BuildMessage([]string{to}, "ようこそ Twitter Clone へ", htmlBody, m.config.From)
 
 	// SMTPサーバーに接続して送信
 	addr := fmt.Sprintf("%s:%d", m.config.Host, m.config.Port)
 
 	// MailCatcherは認証不要
-	err = smtp.SendMail(addr, nil, m.config.From, []string{to}, []byte(message))
+	err := smtp.SendMail(addr, nil, m.config.From, []string{to}, []byte(message))
 	if err != nil {
 		return fmt.Errorf("メール送信エラー: %w", err)
 	}
