@@ -35,7 +35,7 @@ func NewMailCatcherMailer() mailer.Mailer {
 // SendWelcomeEmail はウェルカムメールを送信
 func (m *MailCatcherMailer) SendWelcomeEmail(to string, token string) error {
 	// テンプレートパス
-	templatePath := filepath.Join(mailer.GetTemplateDir(), "welcome_stg.html")
+	templatePath := filepath.Join(mailer.GetTemplateDir(), "welcome.html")
 
 	// テンプレートを読み込み
 	tmpl, err := template.ParseFiles(templatePath)
