@@ -26,6 +26,11 @@ services:
     volumes:
       - .:/golang_twitter
       - /golang_twitter/tmp
+  redis_server:
+    container_name: redis_server
+    image: redis:latest
+    ports:
+      - "16379:6379"
 
   mail:
     container_name: mail
