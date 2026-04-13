@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/hex"
 	db "golang_twitter/db/sqlc"
 	"golang_twitter/mailer"
@@ -21,12 +22,14 @@ type AuthService interface {
 }
 
 type authService struct {
+	db      *sql.DB
 	queries *db.Queries
 	mailer  mailer.Mailer
 }
 
-func NewAuthService(queries *db.Queries, mailer mailer.Mailer) AuthService {
+func NewAuthService(db *sql.DB, queries *db.Queries, mailer mailer.Mailer) AuthService {
 	return &authService{
+		db:      db,
 		queries: queries,
 		mailer:  mailer,
 	}
@@ -84,20 +87,31 @@ func (s *authService) ActivateUser(ctx context.Context, token string) error {
 		return &ServiceError{Message: "無効なトークンまたは期限切れです"}
 	}
 
-	// 2. ユーザーをアクティブ化
-	if err := s.queries.UpdateUserIsActive(ctx, db.UpdateUserIsActiveParams{
+	// 2. トランザクション開始
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return &ServiceError{Message: "トランザクション開始に失敗しました"}
+	}
+	// ロールバックの予約
+	defer tx.Rollback()
+
+	// 3. トランザクション用のQueriesを作成
+	qtx := s.queries.WithTx(tx)
+
+	// 4. ユーザーをアクティブ化
+	if err := qtx.UpdateUserIsActive(ctx, db.UpdateUserIsActiveParams{
 		ID:       activation.UserID,
 		IsActive: true,
 	}); err != nil {
 		return &ServiceError{Message: "ユーザーのアクティブ化に失敗しました"}
 	}
 
-	// 3. トークンを削除（使用済み）
-	if err := s.queries.DeleteUserActivation(ctx, token); err != nil {
-		log.Printf("[ERROR] トークン削除失敗 - トークン: %s, エラー: %v", token, err)
+	// 5. トークンを削除（使用済み）
+	if err := qtx.DeleteUserActivation(ctx, token); err != nil {
+		return &ServiceError{Message: "トークン削除に失敗しました"}
 	}
 
-	return nil
+	return tx.Commit()
 }
 
 // generateRandomToken はランダムなトークンを生成

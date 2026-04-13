@@ -52,7 +52,7 @@ func main() {
 		// emailMailer = smtp.NewEmailSender()
 	}
 
-	authService := services.NewAuthService(queries, emailMailer)
+	authService := services.NewAuthService(conn, queries, emailMailer)
 
 	authController := controllers.NewAuthController(authService)
 
