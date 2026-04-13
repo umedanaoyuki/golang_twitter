@@ -27,6 +27,18 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createUserStmt, err = db.PrepareContext(ctx, createUser); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUser: %w", err)
 	}
+	if q.createUserActivationStmt, err = db.PrepareContext(ctx, createUserActivation); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateUserActivation: %w", err)
+	}
+	if q.deleteUserActivationStmt, err = db.PrepareContext(ctx, deleteUserActivation); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteUserActivation: %w", err)
+	}
+	if q.getUserActivationByTokenStmt, err = db.PrepareContext(ctx, getUserActivationByToken); err != nil {
+		return nil, fmt.Errorf("error preparing query GetUserActivationByToken: %w", err)
+	}
+	if q.updateUserIsActiveStmt, err = db.PrepareContext(ctx, updateUserIsActive); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateUserIsActive: %w", err)
+	}
 	return &q, nil
 }
 
@@ -35,6 +47,26 @@ func (q *Queries) Close() error {
 	if q.createUserStmt != nil {
 		if cerr := q.createUserStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createUserStmt: %w", cerr)
+		}
+	}
+	if q.createUserActivationStmt != nil {
+		if cerr := q.createUserActivationStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createUserActivationStmt: %w", cerr)
+		}
+	}
+	if q.deleteUserActivationStmt != nil {
+		if cerr := q.deleteUserActivationStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteUserActivationStmt: %w", cerr)
+		}
+	}
+	if q.getUserActivationByTokenStmt != nil {
+		if cerr := q.getUserActivationByTokenStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getUserActivationByTokenStmt: %w", cerr)
+		}
+	}
+	if q.updateUserIsActiveStmt != nil {
+		if cerr := q.updateUserIsActiveStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateUserIsActiveStmt: %w", cerr)
 		}
 	}
 	return err
@@ -74,15 +106,23 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db             DBTX
-	tx             *sql.Tx
-	createUserStmt *sql.Stmt
+	db                           DBTX
+	tx                           *sql.Tx
+	createUserStmt               *sql.Stmt
+	createUserActivationStmt     *sql.Stmt
+	deleteUserActivationStmt     *sql.Stmt
+	getUserActivationByTokenStmt *sql.Stmt
+	updateUserIsActiveStmt       *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:             tx,
-		tx:             tx,
-		createUserStmt: q.createUserStmt,
+		db:                           tx,
+		tx:                           tx,
+		createUserStmt:               q.createUserStmt,
+		createUserActivationStmt:     q.createUserActivationStmt,
+		deleteUserActivationStmt:     q.deleteUserActivationStmt,
+		getUserActivationByTokenStmt: q.getUserActivationByTokenStmt,
+		updateUserIsActiveStmt:       q.updateUserIsActiveStmt,
 	}
 }

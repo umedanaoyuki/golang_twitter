@@ -2,27 +2,36 @@ package services
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	db "golang_twitter/db/sqlc"
+	"golang_twitter/mailer"
 	"golang_twitter/messages"
+	"log"
 	"regexp"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService interface {
 	RegisterUser(ctx context.Context, email, password string) (*db.User, error)
+	ActivateUser(ctx context.Context, token string) error
 }
 
 type authService struct {
 	queries *db.Queries
+	mailer  mailer.Mailer
 }
 
-func NewAuthService(queries *db.Queries) AuthService {
-	return &authService{queries: queries}
+func NewAuthService(queries *db.Queries, mailer mailer.Mailer) AuthService {
+	return &authService{
+		queries: queries,
+		mailer:  mailer,
+	}
 }
 
-// RegisterUser はユーザー登録のビジネスロジックを実行
 func (s *authService) RegisterUser(ctx context.Context, email, password string) (*db.User, error) {
 	// 1. パスワードのバリデーション
 	if err := validatePassword(password); err != nil {
@@ -39,12 +48,63 @@ func (s *authService) RegisterUser(ctx context.Context, email, password string) 
 	user, err := s.queries.CreateUser(ctx, db.CreateUserParams{
 		Email:    email,
 		Password: string(hashedPassword),
+		IsActive: false,
 	})
 	if err != nil {
 		return nil, &ServiceError{Message: messages.ErrEmailAlreadyExists}
 	}
 
+	// 4. アクティベーショントークンを生成
+	token := generateRandomToken()
+	expiredAt := time.Now().Add(24 * time.Hour)
+
+	// 5. トークンをDBに保存
+	_, err = s.queries.CreateUserActivation(ctx, db.CreateUserActivationParams{
+		UserID:    user.ID,
+		Token:     token,
+		ExpiredAt: expiredAt,
+	})
+	if err != nil {
+		log.Printf("[ERROR] アクティベーショントークン作成失敗 - ユーザー: %s, エラー: %v", user.Email, err)
+	}
+
+	// 6. ウェルカムメール送信（トークン付き）
+	if err := s.mailer.SendWelcomeEmail(user.Email, token); err != nil {
+		log.Printf("[ERROR] ウェルカムメール送信失敗 - ユーザー: %s, エラー: %v", user.Email, err)
+	}
+
 	return &user, nil
+}
+
+// ActivateUser はトークンを使用してユーザーをアクティブ化
+func (s *authService) ActivateUser(ctx context.Context, token string) error {
+	// 1. トークンを検証（有効期限チェックも含む）
+	activation, err := s.queries.GetUserActivationByToken(ctx, token)
+	if err != nil {
+		return &ServiceError{Message: "無効なトークンまたは期限切れです"}
+	}
+
+	// 2. ユーザーをアクティブ化
+	if err := s.queries.UpdateUserIsActive(ctx, db.UpdateUserIsActiveParams{
+		ID:       activation.UserID,
+		IsActive: true,
+	}); err != nil {
+		return &ServiceError{Message: "ユーザーのアクティブ化に失敗しました"}
+	}
+
+	// 3. トークンを削除（使用済み）
+	if err := s.queries.DeleteUserActivation(ctx, token); err != nil {
+		log.Printf("[ERROR] トークン削除失敗 - トークン: %s, エラー: %v", token, err)
+	}
+
+	return nil
+}
+
+// generateRandomToken はランダムなトークンを生成
+func generateRandomToken() string {
+	b := make([]byte, 32)
+	rand.Read(b)
+	return hex.EncodeToString(b)
 }
 
 func validatePassword(password string) error {

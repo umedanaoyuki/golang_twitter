@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"golang_twitter/controllers"
 	db "golang_twitter/db/sqlc"
+	"golang_twitter/infrastructure/email/mailcatcher"
+	"golang_twitter/mailer"
 	"golang_twitter/services"
 	"log"
 	"os"
@@ -42,7 +44,15 @@ func main() {
 	}
 	defer queries.Close()
 
-	authService := services.NewAuthService(queries)
+	var emailMailer mailer.Mailer
+	if os.Getenv("ENV") == "development" {
+		emailMailer = mailcatcher.NewMailCatcherMailer()
+	} else {
+		// TODO: SMTPの設定値を書く（環境変数）
+		// emailMailer = smtp.NewEmailSender()
+	}
+
+	authService := services.NewAuthService(queries, emailMailer)
 
 	authController := controllers.NewAuthController(authService)
 
@@ -57,6 +67,9 @@ func main() {
 
 	// ユーザー登録エンドポイント
 	router.POST("/register", authController.Register)
+
+	// ユーザーアクティベーションエンドポイント
+	router.GET("/activate", authController.ActivateUser)
 
 	log.Println("サーバー起動: http://localhost:8080")
 	router.Run()

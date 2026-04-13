@@ -10,6 +10,10 @@ import (
 
 type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateUserActivation(ctx context.Context, arg CreateUserActivationParams) (UserActivation, error)
+	DeleteUserActivation(ctx context.Context, token string) error
+	GetUserActivationByToken(ctx context.Context, token string) (UserActivation, error)
+	UpdateUserIsActive(ctx context.Context, arg UpdateUserIsActiveParams) error
 }
 
 var _ Querier = (*Queries)(nil)

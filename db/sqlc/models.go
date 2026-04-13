@@ -12,6 +12,15 @@ type User struct {
 	ID        int32     `json:"id"`
 	Email     string    `json:"email"`
 	Password  string    `json:"password"`
+	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type UserActivation struct {
+	ID        int32     `json:"id"`
+	UserID    int32     `json:"user_id"`
+	Token     string    `json:"token"`
+	ExpiredAt time.Time `json:"expired_at"`
+	CreatedAt time.Time `json:"created_at"`
 }

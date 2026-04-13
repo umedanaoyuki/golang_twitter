@@ -1,7 +1,13 @@
 -- name: CreateUser :one
 INSERT INTO users (
   email,
-  password
+  password,
+  is_active
 ) VALUES (
-  $1, $2
-) RETURNING *;
+  $1, $2, $3
+) RETURNING id, email, password, is_active, created_at, updated_at;
+
+-- name: UpdateUserIsActive :exec
+UPDATE users
+SET is_active = $2, updated_at = NOW()
+WHERE id = $1;

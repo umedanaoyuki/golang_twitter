@@ -12,26 +12,45 @@ import (
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
   email,
-  password
+  password,
+  is_active
 ) VALUES (
-  $1, $2
-) RETURNING id, email, password, created_at, updated_at
+  $1, $2, $3
+) RETURNING id, email, password, is_active, created_at, updated_at
 `
 
 type CreateUserParams struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	IsActive bool   `json:"is_active"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.queryRow(ctx, q.createUserStmt, createUser, arg.Email, arg.Password)
+	row := q.queryRow(ctx, q.createUserStmt, createUser, arg.Email, arg.Password, arg.IsActive)
 	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
 		&i.Password,
+		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const updateUserIsActive = `-- name: UpdateUserIsActive :exec
+UPDATE users
+SET is_active = $2, updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateUserIsActiveParams struct {
+	ID       int32 `json:"id"`
+	IsActive bool  `json:"is_active"`
+}
+
+func (q *Queries) UpdateUserIsActive(ctx context.Context, arg UpdateUserIsActiveParams) error {
+	_, err := q.exec(ctx, q.updateUserIsActiveStmt, updateUserIsActive, arg.ID, arg.IsActive)
+	return err
 }
