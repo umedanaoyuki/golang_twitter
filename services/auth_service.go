@@ -85,13 +85,13 @@ func (s *authService) ActivateUser(ctx context.Context, token string) error {
 	// 1. トークンを検証（有効期限チェックも含む）
 	activation, err := s.queries.GetUserActivationByToken(ctx, token)
 	if err != nil {
-		return &ServiceError{Message: "無効なトークンまたは期限切れです"}
+		return &ServiceError{Message: messages.ErrInvalidTokenOrExpired}
 	}
 
 	// 2. トランザクション開始
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
-		return &ServiceError{Message: "トランザクション開始に失敗しました"}
+		return &ServiceError{Message: messages.ErrTransactionFailed}
 	}
 	// ロールバックの予約
 	defer tx.Rollback()
@@ -104,34 +104,34 @@ func (s *authService) ActivateUser(ctx context.Context, token string) error {
 		ID:       activation.UserID,
 		IsActive: true,
 	}); err != nil {
-		return &ServiceError{Message: "ユーザーのアクティブ化に失敗しました"}
+		return &ServiceError{Message: messages.ErrUserActivationFailed}
 	}
 
 	// 5. トークンを削除（使用済み）
 	if err := qtx.DeleteUserActivation(ctx, token); err != nil {
-		return &ServiceError{Message: "トークン削除に失敗しました"}
+		return &ServiceError{Message: messages.ErrTokenDeletionFailed}
 	}
 
 	return tx.Commit()
 }
 
-// Login はメールアドレスとパスワードでログイン
+// Login（メールアドレスとパスワード）
 func (s *authService) Login(ctx context.Context, email, password string) (*db.User, error) {
-	// 1. メールアドレスでユーザーを検索
+	// 1. メールアドレスでユーザー検索
 	user, err := s.queries.GetUserByEmail(ctx, email)
 	if err != nil {
-		return nil, &ServiceError{Message: "メールアドレスまたはパスワードが正しくありません"}
+		return nil, &ServiceError{Message: messages.ErrInvalidEmailOrPassword}
 	}
 
 	// 2. アカウントがアクティブ化されているかチェック
 	if !user.IsActive {
-		return nil, &ServiceError{Message: "アカウントが有効化されていません"}
+		return nil, &ServiceError{Message: messages.ErrAccountNotActivated}
 	}
 
-	// 3. パスワードを照合
+	// 3. パスワード確認
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return nil, &ServiceError{Message: "メールアドレスまたはパスワードが正しくありません"}
+		return nil, &ServiceError{Message: messages.ErrInvalidEmailOrPassword}
 	}
 
 	// 4. 認証成功（パスワードは返さない）

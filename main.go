@@ -71,7 +71,7 @@ func main() {
 	// ユーザーアクティベーションエンドポイント
 	router.GET("/activate", authController.ActivateUser)
 
-	// ログインエンドポイント
+	// ログイン
 	router.POST("/login", authController.Login)
 
 	log.Println("サーバー起動: http://localhost:8080")
