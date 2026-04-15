@@ -19,6 +19,7 @@ import (
 type AuthService interface {
 	RegisterUser(ctx context.Context, email, password string) (*db.User, error)
 	ActivateUser(ctx context.Context, token string) error
+	Login(ctx context.Context, email, password string) (*db.User, error)
 }
 
 type authService struct {
@@ -112,6 +113,29 @@ func (s *authService) ActivateUser(ctx context.Context, token string) error {
 	}
 
 	return tx.Commit()
+}
+
+// Login はメールアドレスとパスワードでログイン
+func (s *authService) Login(ctx context.Context, email, password string) (*db.User, error) {
+	// 1. メールアドレスでユーザーを検索
+	user, err := s.queries.GetUserByEmail(ctx, email)
+	if err != nil {
+		return nil, &ServiceError{Message: "メールアドレスまたはパスワードが正しくありません"}
+	}
+
+	// 2. アカウントがアクティブ化されているかチェック
+	if !user.IsActive {
+		return nil, &ServiceError{Message: "アカウントが有効化されていません"}
+	}
+
+	// 3. パスワードを照合
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return nil, &ServiceError{Message: "メールアドレスまたはパスワードが正しくありません"}
+	}
+
+	// 4. 認証成功（パスワードは返さない）
+	return &user, nil
 }
 
 // generateRandomToken はランダムなトークンを生成

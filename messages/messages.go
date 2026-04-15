@@ -13,4 +13,5 @@ const (
 	
 	MsgUserRegistered         = "ユーザー登録が完了しました"
 	MsgUserActivated          = "アカウントが有効化されました"
+	MsgLoginSuccess           = "ログインに成功しました"
 )

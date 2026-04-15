@@ -36,6 +36,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getUserActivationByTokenStmt, err = db.PrepareContext(ctx, getUserActivationByToken); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUserActivationByToken: %w", err)
 	}
+	if q.getUserByEmailStmt, err = db.PrepareContext(ctx, getUserByEmail); err != nil {
+		return nil, fmt.Errorf("error preparing query GetUserByEmail: %w", err)
+	}
 	if q.updateUserIsActiveStmt, err = db.PrepareContext(ctx, updateUserIsActive); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateUserIsActive: %w", err)
 	}
@@ -62,6 +65,11 @@ func (q *Queries) Close() error {
 	if q.getUserActivationByTokenStmt != nil {
 		if cerr := q.getUserActivationByTokenStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getUserActivationByTokenStmt: %w", cerr)
+		}
+	}
+	if q.getUserByEmailStmt != nil {
+		if cerr := q.getUserByEmailStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getUserByEmailStmt: %w", cerr)
 		}
 	}
 	if q.updateUserIsActiveStmt != nil {
@@ -112,6 +120,7 @@ type Queries struct {
 	createUserActivationStmt     *sql.Stmt
 	deleteUserActivationStmt     *sql.Stmt
 	getUserActivationByTokenStmt *sql.Stmt
+	getUserByEmailStmt           *sql.Stmt
 	updateUserIsActiveStmt       *sql.Stmt
 }
 
@@ -123,6 +132,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		createUserActivationStmt:     q.createUserActivationStmt,
 		deleteUserActivationStmt:     q.deleteUserActivationStmt,
 		getUserActivationByTokenStmt: q.getUserActivationByTokenStmt,
+		getUserByEmailStmt:           q.getUserByEmailStmt,
 		updateUserIsActiveStmt:       q.updateUserIsActiveStmt,
 	}
 }
