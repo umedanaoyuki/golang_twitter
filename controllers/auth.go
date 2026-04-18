@@ -5,6 +5,7 @@ import (
 	"golang_twitter/services"
 	"net/http"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -92,7 +93,15 @@ func (ctrl *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	// 3. 成功レスポンス（パスワードは返さない）
+	// 3. セッションにユーザーIDを保存
+	session := sessions.Default(c)
+	session.Set("user_id", user.ID)
+	if err := session.Save(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "セッションの保存に失敗しました"})
+		return
+	}
+
+	// 4. 成功レスポンス（パスワードは返さない）
 	c.JSON(http.StatusOK, gin.H{
 		"message": messages.MsgLoginSuccess,
 		"user": gin.H{
