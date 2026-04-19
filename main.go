@@ -69,16 +69,14 @@ func main() {
 		})
 	})
 
-	// ユーザー登録エンドポイント
+	// ユーザー登録
 	router.POST("/register", authController.Register)
 
-	// ユーザーアクティベーションエンドポイント
+	// ユーザーアクティベーション
 	router.GET("/activate", authController.ActivateUser)
 
-	// ツイート関連エンドポイント（認証が必要）
+	// ツイート関連
 	router.POST("/tweets", tweetController.CreateTweet)
-	router.GET("/tweets", tweetController.GetAllTweets)
-	router.GET("/tweets/me", tweetController.GetMyTweets)
 
 	log.Println("サーバー起動: http://localhost:8080")
 	router.Run()

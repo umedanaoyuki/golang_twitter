@@ -8,9 +8,6 @@ import (
 
 type TweetService interface {
 	CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error)
-	GetUserTweets(ctx context.Context, userID int32) ([]db.Tweet, error)
-	GetAllTweets(ctx context.Context, limit int32) ([]db.Tweet, error)
-	DeleteTweet(ctx context.Context, tweetID int32, userID int32) error
 }
 
 type tweetService struct {
@@ -46,38 +43,4 @@ func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content st
 	}
 
 	return &tweet, nil
-}
-
-// GetUserTweets は特定ユーザーのツイート一覧を取得
-func (s *tweetService) GetUserTweets(ctx context.Context, userID int32) ([]db.Tweet, error) {
-	tweets, err := s.queries.GetTweetsByUserID(ctx, userID)
-	if err != nil {
-		return nil, &ServiceError{Message: "ツイートの取得に失敗しました"}
-	}
-	return tweets, nil
-}
-
-// GetAllTweets は全ツイートを取得
-func (s *tweetService) GetAllTweets(ctx context.Context, limit int32) ([]db.Tweet, error) {
-	if limit <= 0 {
-		limit = 20 // デフォルト20件
-	}
-	
-	tweets, err := s.queries.GetAllTweets(ctx, limit)
-	if err != nil {
-		return nil, &ServiceError{Message: "ツイートの取得に失敗しました"}
-	}
-	return tweets, nil
-}
-
-// DeleteTweet はツイートを削除（自分のツイートのみ）
-func (s *tweetService) DeleteTweet(ctx context.Context, tweetID int32, userID int32) error {
-	err := s.queries.DeleteTweet(ctx, db.DeleteTweetParams{
-		ID:     tweetID,
-		UserID: userID,
-	})
-	if err != nil {
-		return &ServiceError{Message: "ツイートの削除に失敗しました"}
-	}
-	return nil
 }
