@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/hex"
 	db "golang_twitter/db/sqlc"
 	"golang_twitter/mailer"
@@ -18,15 +19,18 @@ import (
 type AuthService interface {
 	RegisterUser(ctx context.Context, email, password string) (*db.User, error)
 	ActivateUser(ctx context.Context, token string) error
+	Login(ctx context.Context, email, password string) (*db.User, error)
 }
 
 type authService struct {
+	db      *sql.DB
 	queries *db.Queries
 	mailer  mailer.Mailer
 }
 
-func NewAuthService(queries *db.Queries, mailer mailer.Mailer) AuthService {
+func NewAuthService(db *sql.DB, queries *db.Queries, mailer mailer.Mailer) AuthService {
 	return &authService{
+		db:      db,
 		queries: queries,
 		mailer:  mailer,
 	}
@@ -81,23 +85,57 @@ func (s *authService) ActivateUser(ctx context.Context, token string) error {
 	// 1. トークンを検証（有効期限チェックも含む）
 	activation, err := s.queries.GetUserActivationByToken(ctx, token)
 	if err != nil {
-		return &ServiceError{Message: "無効なトークンまたは期限切れです"}
+		return &ServiceError{Message: messages.ErrInvalidTokenOrExpired}
 	}
 
-	// 2. ユーザーをアクティブ化
-	if err := s.queries.UpdateUserIsActive(ctx, db.UpdateUserIsActiveParams{
+	// 2. トランザクション開始
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return &ServiceError{Message: messages.ErrTransactionFailed}
+	}
+	// ロールバックの予約
+	defer tx.Rollback()
+
+	// 3. トランザクション用のQueriesを作成
+	qtx := s.queries.WithTx(tx)
+
+	// 4. ユーザーをアクティブ化
+	if err := qtx.UpdateUserIsActive(ctx, db.UpdateUserIsActiveParams{
 		ID:       activation.UserID,
 		IsActive: true,
 	}); err != nil {
-		return &ServiceError{Message: "ユーザーのアクティブ化に失敗しました"}
+		return &ServiceError{Message: messages.ErrUserActivationFailed}
 	}
 
-	// 3. トークンを削除（使用済み）
-	if err := s.queries.DeleteUserActivation(ctx, token); err != nil {
-		log.Printf("[ERROR] トークン削除失敗 - トークン: %s, エラー: %v", token, err)
+	// 5. トークンを削除（使用済み）
+	if err := qtx.DeleteUserActivation(ctx, token); err != nil {
+		return &ServiceError{Message: messages.ErrTokenDeletionFailed}
 	}
 
-	return nil
+	return tx.Commit()
+}
+
+// Login（メールアドレスとパスワード）
+func (s *authService) Login(ctx context.Context, email, password string) (*db.User, error) {
+	// 1. メールアドレスでユーザー検索
+	user, err := s.queries.GetUserByEmail(ctx, email)
+	if err != nil {
+		return nil, &ServiceError{Message: messages.ErrInvalidEmailOrPassword}
+	}
+
+	// 2. アカウントがアクティブ化されているかチェック
+	if !user.IsActive {
+		return nil, &ServiceError{Message: messages.ErrAccountNotActivated}
+	}
+
+	// 3. パスワード確認
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return nil, &ServiceError{Message: messages.ErrInvalidEmailOrPassword}
+	}
+
+	// 4. 認証成功（パスワードは返さない）
+	return &user, nil
 }
 
 // generateRandomToken はランダムなトークンを生成
