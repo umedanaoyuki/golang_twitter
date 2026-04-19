@@ -33,7 +33,7 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 	}
 
 	// 2. ビジネスロジック実行
-	user, err := ctrl.authService.RegisterUser(c.Request.Context(), input.MailAddress, input.Password)
+	user, err := ctrl.authService.RegisterUser(c.Request.Context(), input.Email, input.Password)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -72,7 +72,7 @@ func (ctrl *AuthController) ActivateUser(c *gin.Context) {
 }
 
 type LoginInput struct {
-	MailAddress string `json:"mail_address" binding:"required,email"`
+	Email string `json:"mail_address" binding:"required,email"`
 	Password    string `json:"password" binding:"required"`
 }
 
@@ -87,7 +87,7 @@ func (ctrl *AuthController) Login(c *gin.Context) {
 	}
 
 	// 2. ログイン処理
-	user, err := ctrl.authService.Login(c.Request.Context(), input.MailAddress, input.Password)
+	user, err := ctrl.authService.Login(c.Request.Context(), input.Email, input.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
