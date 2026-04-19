@@ -52,9 +52,13 @@ func main() {
 		// emailMailer = smtp.NewEmailSender()
 	}
 
+	// サービスの初期化
 	authService := services.NewAuthService(queries, emailMailer)
+	tweetService := services.NewTweetService(conn, queries)
 
+	// コントローラーの初期化
 	authController := controllers.NewAuthController(authService)
+	tweetController := controllers.NewTweetController(tweetService)
 
 	// Ginルーター設定
 	router := gin.Default()
@@ -70,6 +74,11 @@ func main() {
 
 	// ユーザーアクティベーションエンドポイント
 	router.GET("/activate", authController.ActivateUser)
+
+	// ツイート関連エンドポイント（認証が必要）
+	router.POST("/tweets", tweetController.CreateTweet)
+	router.GET("/tweets", tweetController.GetAllTweets)
+	router.GET("/tweets/me", tweetController.GetMyTweets)
 
 	log.Println("サーバー起動: http://localhost:8080")
 	router.Run()

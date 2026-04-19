@@ -8,6 +8,14 @@ import (
 	"time"
 )
 
+type Tweet struct {
+	ID        int32     `json:"id"`
+	UserID    int32     `json:"user_id"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type User struct {
 	ID        int32     `json:"id"`
 	Email     string    `json:"email"`
