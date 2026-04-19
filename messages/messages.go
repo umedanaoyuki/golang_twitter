@@ -13,4 +13,13 @@ const (
 	
 	MsgUserRegistered         = "ユーザー登録が完了しました"
 	MsgUserActivated          = "アカウントが有効化されました"
+	MsgLoginSuccess           = "ログインに成功しました"
+
+	ErrInvalidEmailOrPassword = "メールアドレスまたはパスワードが正しくありません"
+	ErrAccountNotActivated    = "アカウントが有効化されていません"
+
+	ErrTransactionFailed      = "トランザクション開始に失敗しました"
+	ErrInvalidTokenOrExpired  = "無効なトークンまたは期限切れです"
+	ErrUserActivationFailed   = "ユーザーのアクティブ化に失敗しました"
+	ErrTokenDeletionFailed    = "トークンの削除に失敗しました"
 )
