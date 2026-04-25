@@ -13,7 +13,7 @@ import (
 	"os"
 
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
+	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
@@ -66,8 +66,17 @@ func main() {
 	// Ginルーター設定
 	router := gin.Default()
 
-	// セッション設定（固定の名前を使用）
-	store := cookie.NewStore([]byte("secret-key-change-in-production"))
+	// Redisセッション設定
+	redisHost := os.Getenv("REDIS_HOST")
+	if redisHost == "" {
+		redisHost = "redis_server:6379"
+	}
+	
+	// Redis Store
+	store, err := redis.NewStore(10, "tcp", redisHost, "", "secret")
+	if err != nil {
+		log.Fatal("Redis接続エラー:", err)
+	}
 	router.Use(sessions.Sessions("golang_twitter_session", store))
 
 	router.GET("/health_check", func(c *gin.Context) {
