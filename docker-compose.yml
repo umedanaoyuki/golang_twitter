@@ -15,11 +15,12 @@ services:
       context: .
       dockerfile: Dockerfile
     env_file:
-      - .env.development
+      - .env
     environment:
       - ENV=${ENV}
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_HOST=redis_server:6379
+      - SESSION_SECRET=${SESSION_SECRET}
     depends_on:
       - postgres
       - redis_server

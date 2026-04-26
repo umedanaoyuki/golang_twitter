@@ -73,7 +73,8 @@ func main() {
 	}
 	
 	// Redis Store
-	store, err := redis.NewStore(10, "tcp", redisHost, "", "secret")
+	// memo: 第5引数がパスワード（今回は空文字）
+	store, err := redis.NewStore(10, "tcp", redisHost, "", "", []byte(os.Getenv("SESSION_SECRET")))
 	if err != nil {
 		log.Fatal("Redis接続エラー:", err)
 	}
