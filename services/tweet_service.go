@@ -46,16 +46,8 @@ func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content st
 	return &tweet, nil
 }
 
-// GetUserTweetsWithCursor はカーソルベースでユーザーのツイート一覧を取得
+// userIDのツイート一覧を取得
 func (s *tweetService) GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]db.Tweet, error) {
-	// limitのデフォルト値と上限設定
-	if limit <= 0 {
-		limit = 20 // デフォルト20件
-	}
-	if limit > 100 {
-		limit = 100 // 最大100件
-	}
-
 	// cursorが指定されていない場合は0を使用（SQLで全件取得）
 	cursorValue := int32(0)
 	if cursor != nil {

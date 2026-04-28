@@ -58,7 +58,7 @@ func (ctrl *TweetController) CreateTweet(c *gin.Context) {
 	})
 }
 
-// GetUserTweets は特定ユーザーのツイート一覧を取得（カーソルベースページネーション）
+// user_idのツイート一覧を取得
 func (ctrl *TweetController) GetUserTweets(c *gin.Context) {
 	// URLパラメータからuser_idを取得
 	userIDStr := c.Param("user_id")
@@ -81,7 +81,8 @@ func (ctrl *TweetController) GetUserTweets(c *gin.Context) {
 		cursor = &cursorVal
 	}
 
-	limit := int32(20) // デフォルト値
+	// デフォルトで20件取得
+	limit := int32(20)
 	if limitStr := c.Query("limit"); limitStr != "" {
 		limit64, err := strconv.ParseInt(limitStr, 10, 32)
 		if err != nil {
