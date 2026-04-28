@@ -60,6 +60,27 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	return i, err
 }
 
+const getUserDetailByUserID = `-- name: GetUserDetailByUserID :one
+SELECT id, email, password, is_active, created_at, updated_at
+FROM users
+WHERE id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetUserDetailByUserID(ctx context.Context, id int32) (User, error) {
+	row := q.queryRow(ctx, q.getUserDetailByUserIDStmt, getUserDetailByUserID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Password,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateUserIsActive = `-- name: UpdateUserIsActive :exec
 UPDATE users
 SET is_active = $2, updated_at = NOW()

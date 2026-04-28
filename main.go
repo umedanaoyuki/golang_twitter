@@ -58,10 +58,12 @@ func main() {
 	// サービスの初期化
 	authService := services.NewAuthService(conn, queries, emailMailer)
 	tweetService := services.NewTweetService(conn, queries)
+	userService := services.NewUserService(queries)
 
 	// コントローラーの初期化
 	authController := controllers.NewAuthController(authService)
 	tweetController := controllers.NewTweetController(tweetService)
+	userController := controllers.NewUserController(userService)
 
 	// Ginルーター設定
 	router := gin.Default()
@@ -100,6 +102,9 @@ func main() {
 	{
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
+
+		// ユーザー情報取得
+		authorized.GET("/user_detail", userController.GetUserDetailByUserID)
 	}
 
 	log.Println("サーバー起動: http://localhost:8080")
