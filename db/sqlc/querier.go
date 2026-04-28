@@ -9,9 +9,14 @@ import (
 )
 
 type Querier interface {
+	CreateTweet(ctx context.Context, arg CreateTweetParams) (Tweet, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserActivation(ctx context.Context, arg CreateUserActivationParams) (UserActivation, error)
+	DeleteTweet(ctx context.Context, arg DeleteTweetParams) error
 	DeleteUserActivation(ctx context.Context, token string) error
+	GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error)
+	GetTweetByID(ctx context.Context, id int32) (Tweet, error)
+	GetTweetsByUserID(ctx context.Context, userID int32) ([]Tweet, error)
 	GetUserActivationByToken(ctx context.Context, token string) (UserActivation, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	UpdateUserIsActive(ctx context.Context, arg UpdateUserIsActiveParams) error

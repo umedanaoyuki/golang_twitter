@@ -7,20 +7,16 @@ import (
 	db "golang_twitter/db/sqlc"
 	"golang_twitter/infrastructure/email/mailcatcher"
 	"golang_twitter/mailer"
+	"golang_twitter/middleware"
 	"golang_twitter/services"
-	"golang_twitter/sessionInfo"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
+	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
-
-var LoginInfo sessionInfo.SessionInfo
 
 func main() {
 	// 環境変数からDATABASE_URLを取得
@@ -59,12 +55,30 @@ func main() {
 		// emailMailer = smtp.NewEmailSender()
 	}
 
+	// サービスの初期化
 	authService := services.NewAuthService(conn, queries, emailMailer)
+	tweetService := services.NewTweetService(conn, queries)
 
+	// コントローラーの初期化
 	authController := controllers.NewAuthController(authService)
+	tweetController := controllers.NewTweetController(tweetService)
 
 	// Ginルーター設定
 	router := gin.Default()
+
+	// Redisセッション設定
+	redisHost := os.Getenv("REDIS_HOST")
+	if redisHost == "" {
+		redisHost = "redis_server:6379"
+	}
+	
+	// Redis Store
+	// memo: 第5引数がパスワード（今回は空文字）
+	store, err := redis.NewStore(10, "tcp", redisHost, "", "", []byte(os.Getenv("SESSION_SECRET")))
+	if err != nil {
+		log.Fatal("Redis接続エラー:", err)
+	}
+	router.Use(sessions.Sessions("golang_twitter_session", store))
 
 	router.GET("/health_check", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -72,41 +86,22 @@ func main() {
 		})
 	})
 
-	// セッションの設定
-	store := cookie.NewStore([]byte("secret"))
-	id, err := uuid.NewV7()
-	// keyは一意な値(uuid)
-	router.Use(sessions.Sessions(id.String(), store))
-
-	// ユーザー登録エンドポイント
+	// 認証不要のエンドポイント
+	// ユーザー登録
 	router.POST("/register", authController.Register)
-
-	// ユーザーアクティベーションエンドポイント
+	// ユーザーアクティベーション
 	router.GET("/activate", authController.ActivateUser)
-
 	// ログイン
 	router.POST("/login", authController.Login)
 
+	// 認証が必要なエンドポイント
+	authorized := router.Group("/")
+	authorized.Use(middleware.AuthRequired())
+	{
+		// ツイート投稿
+		authorized.POST("/tweets", tweetController.CreateTweet)
+	}
+
 	log.Println("サーバー起動: http://localhost:8080")
 	router.Run()
-}
-
-// NOTE: セッションをチェックするために後ほど使用？
-func sessionCheck() gin.HandlerFunc {
-	return func(c *gin.Context) {
-
-		session := sessions.Default(c)
-		LoginInfo.UserId = session.Get("UserId")
-
-		// セッションがない場合、ログインフォームをだす
-		if LoginInfo.UserId == nil {
-			log.Println("ログインしていません")
-			c.Redirect(http.StatusMovedPermanently, "/login")
-			c.Abort() // これがないと続けて処理されてしまう
-		} else {
-			c.Set("UserId", LoginInfo.UserId) // ユーザidをセット
-			c.Next()
-		}
-		log.Println("ログインチェック終わり")
-	}
 }

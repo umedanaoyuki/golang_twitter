@@ -24,14 +24,29 @@ func New(db DBTX) *Queries {
 func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	q := Queries{db: db}
 	var err error
+	if q.createTweetStmt, err = db.PrepareContext(ctx, createTweet); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateTweet: %w", err)
+	}
 	if q.createUserStmt, err = db.PrepareContext(ctx, createUser); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUser: %w", err)
 	}
 	if q.createUserActivationStmt, err = db.PrepareContext(ctx, createUserActivation); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUserActivation: %w", err)
 	}
+	if q.deleteTweetStmt, err = db.PrepareContext(ctx, deleteTweet); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteTweet: %w", err)
+	}
 	if q.deleteUserActivationStmt, err = db.PrepareContext(ctx, deleteUserActivation); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteUserActivation: %w", err)
+	}
+	if q.getAllTweetsStmt, err = db.PrepareContext(ctx, getAllTweets); err != nil {
+		return nil, fmt.Errorf("error preparing query GetAllTweets: %w", err)
+	}
+	if q.getTweetByIDStmt, err = db.PrepareContext(ctx, getTweetByID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetTweetByID: %w", err)
+	}
+	if q.getTweetsByUserIDStmt, err = db.PrepareContext(ctx, getTweetsByUserID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetTweetsByUserID: %w", err)
 	}
 	if q.getUserActivationByTokenStmt, err = db.PrepareContext(ctx, getUserActivationByToken); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUserActivationByToken: %w", err)
@@ -47,6 +62,11 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 
 func (q *Queries) Close() error {
 	var err error
+	if q.createTweetStmt != nil {
+		if cerr := q.createTweetStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createTweetStmt: %w", cerr)
+		}
+	}
 	if q.createUserStmt != nil {
 		if cerr := q.createUserStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createUserStmt: %w", cerr)
@@ -57,9 +77,29 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing createUserActivationStmt: %w", cerr)
 		}
 	}
+	if q.deleteTweetStmt != nil {
+		if cerr := q.deleteTweetStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteTweetStmt: %w", cerr)
+		}
+	}
 	if q.deleteUserActivationStmt != nil {
 		if cerr := q.deleteUserActivationStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteUserActivationStmt: %w", cerr)
+		}
+	}
+	if q.getAllTweetsStmt != nil {
+		if cerr := q.getAllTweetsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getAllTweetsStmt: %w", cerr)
+		}
+	}
+	if q.getTweetByIDStmt != nil {
+		if cerr := q.getTweetByIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getTweetByIDStmt: %w", cerr)
+		}
+	}
+	if q.getTweetsByUserIDStmt != nil {
+		if cerr := q.getTweetsByUserIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getTweetsByUserIDStmt: %w", cerr)
 		}
 	}
 	if q.getUserActivationByTokenStmt != nil {
@@ -116,9 +156,14 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 type Queries struct {
 	db                           DBTX
 	tx                           *sql.Tx
+	createTweetStmt              *sql.Stmt
 	createUserStmt               *sql.Stmt
 	createUserActivationStmt     *sql.Stmt
+	deleteTweetStmt              *sql.Stmt
 	deleteUserActivationStmt     *sql.Stmt
+	getAllTweetsStmt             *sql.Stmt
+	getTweetByIDStmt             *sql.Stmt
+	getTweetsByUserIDStmt        *sql.Stmt
 	getUserActivationByTokenStmt *sql.Stmt
 	getUserByEmailStmt           *sql.Stmt
 	updateUserIsActiveStmt       *sql.Stmt
@@ -128,9 +173,14 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
 		db:                           tx,
 		tx:                           tx,
+		createTweetStmt:              q.createTweetStmt,
 		createUserStmt:               q.createUserStmt,
 		createUserActivationStmt:     q.createUserActivationStmt,
+		deleteTweetStmt:              q.deleteTweetStmt,
 		deleteUserActivationStmt:     q.deleteUserActivationStmt,
+		getAllTweetsStmt:             q.getAllTweetsStmt,
+		getTweetByIDStmt:             q.getTweetByIDStmt,
+		getTweetsByUserIDStmt:        q.getTweetsByUserIDStmt,
 		getUserActivationByTokenStmt: q.getUserActivationByTokenStmt,
 		getUserByEmailStmt:           q.getUserByEmailStmt,
 		updateUserIsActiveStmt:       q.updateUserIsActiveStmt,

@@ -18,7 +18,7 @@ func NewAuthController(authService services.AuthService) *AuthController {
 }
 
 type RegisterInput struct {
-	MailAddress string `json:"mail_address" binding:"required,email"`
+	Email string `json:"email" binding:"required,email"`
 	Password    string `json:"password" binding:"required,min=8,max=15"`
 }
 
@@ -72,7 +72,7 @@ func (ctrl *AuthController) ActivateUser(c *gin.Context) {
 }
 
 type LoginInput struct {
-	Email string `json:"mail_address" binding:"required,email"`
+	Email string `json:"email" binding:"required,email"`
 	Password    string `json:"password" binding:"required"`
 }
 

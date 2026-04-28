@@ -19,8 +19,11 @@ services:
     environment:
       - ENV=${ENV}
       - DATABASE_URL=${DATABASE_URL}
+      - REDIS_HOST=redis_server:6379
+      - SESSION_SECRET=${SESSION_SECRET}
     depends_on:
       - postgres
+      - redis_server
     ports:
       - 8080:8080
     volumes:
@@ -29,6 +32,8 @@ services:
   redis_server:
     container_name: redis_server
     image: redis:latest
+    # 明示的にパスワードなしで起動する設定を追加（安全策）
+    command: ["redis-server", "--protected-mode", "no"]
     ports:
       - "16379:6379"
 
