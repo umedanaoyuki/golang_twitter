@@ -94,6 +94,9 @@ func main() {
 	// ログイン
 	router.POST("/login", authController.Login)
 
+	// 1つのTweet取得
+	router.GET("/tweets/:id", tweetController.GetTweetByID)
+
 	// 認証が必要なエンドポイント
 	authorized := router.Group("/")
 	authorized.Use(middleware.AuthRequired())

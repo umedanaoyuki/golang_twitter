@@ -8,6 +8,7 @@ import (
 
 type TweetService interface {
 	CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error)
+	GetTweetByID(ctx context.Context, id int32) (*db.Tweet, error)
 }
 
 type tweetService struct {
@@ -40,6 +41,15 @@ func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content st
 	})
 	if err != nil {
 		return nil, &ServiceError{Message: "ツイートの投稿に失敗しました"}
+	}
+
+	return &tweet, nil
+}
+
+func (s *tweetService) GetTweetByID(ctx context.Context, id int32) (*db.Tweet, error) {
+	tweet, err := s.queries.GetTweetByID(ctx, id)
+	if err != nil {
+		return nil, &ServiceError{Message: "Tweetが見つかりませんでした"}
 	}
 
 	return &tweet, nil
