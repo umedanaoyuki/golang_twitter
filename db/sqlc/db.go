@@ -24,6 +24,12 @@ func New(db DBTX) *Queries {
 func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	q := Queries{db: db}
 	var err error
+	if q.countLikesByTweetIDStmt, err = db.PrepareContext(ctx, countLikesByTweetID); err != nil {
+		return nil, fmt.Errorf("error preparing query CountLikesByTweetID: %w", err)
+	}
+	if q.createLikeStmt, err = db.PrepareContext(ctx, createLike); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateLike: %w", err)
+	}
 	if q.createTweetStmt, err = db.PrepareContext(ctx, createTweet); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateTweet: %w", err)
 	}
@@ -33,11 +39,17 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createUserActivationStmt, err = db.PrepareContext(ctx, createUserActivation); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUserActivation: %w", err)
 	}
+	if q.deleteLikeStmt, err = db.PrepareContext(ctx, deleteLike); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteLike: %w", err)
+	}
 	if q.deleteTweetStmt, err = db.PrepareContext(ctx, deleteTweet); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteTweet: %w", err)
 	}
 	if q.deleteUserActivationStmt, err = db.PrepareContext(ctx, deleteUserActivation); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteUserActivation: %w", err)
+	}
+	if q.existsLikeStmt, err = db.PrepareContext(ctx, existsLike); err != nil {
+		return nil, fmt.Errorf("error preparing query ExistsLike: %w", err)
 	}
 	if q.getAllTweetsStmt, err = db.PrepareContext(ctx, getAllTweets); err != nil {
 		return nil, fmt.Errorf("error preparing query GetAllTweets: %w", err)
@@ -62,6 +74,16 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 
 func (q *Queries) Close() error {
 	var err error
+	if q.countLikesByTweetIDStmt != nil {
+		if cerr := q.countLikesByTweetIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countLikesByTweetIDStmt: %w", cerr)
+		}
+	}
+	if q.createLikeStmt != nil {
+		if cerr := q.createLikeStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createLikeStmt: %w", cerr)
+		}
+	}
 	if q.createTweetStmt != nil {
 		if cerr := q.createTweetStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createTweetStmt: %w", cerr)
@@ -77,6 +99,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing createUserActivationStmt: %w", cerr)
 		}
 	}
+	if q.deleteLikeStmt != nil {
+		if cerr := q.deleteLikeStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteLikeStmt: %w", cerr)
+		}
+	}
 	if q.deleteTweetStmt != nil {
 		if cerr := q.deleteTweetStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteTweetStmt: %w", cerr)
@@ -85,6 +112,11 @@ func (q *Queries) Close() error {
 	if q.deleteUserActivationStmt != nil {
 		if cerr := q.deleteUserActivationStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteUserActivationStmt: %w", cerr)
+		}
+	}
+	if q.existsLikeStmt != nil {
+		if cerr := q.existsLikeStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing existsLikeStmt: %w", cerr)
 		}
 	}
 	if q.getAllTweetsStmt != nil {
@@ -156,11 +188,15 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 type Queries struct {
 	db                           DBTX
 	tx                           *sql.Tx
+	countLikesByTweetIDStmt      *sql.Stmt
+	createLikeStmt               *sql.Stmt
 	createTweetStmt              *sql.Stmt
 	createUserStmt               *sql.Stmt
 	createUserActivationStmt     *sql.Stmt
+	deleteLikeStmt               *sql.Stmt
 	deleteTweetStmt              *sql.Stmt
 	deleteUserActivationStmt     *sql.Stmt
+	existsLikeStmt               *sql.Stmt
 	getAllTweetsStmt             *sql.Stmt
 	getTweetByIDStmt             *sql.Stmt
 	getTweetsByUserIDStmt        *sql.Stmt
@@ -173,11 +209,15 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
 		db:                           tx,
 		tx:                           tx,
+		countLikesByTweetIDStmt:      q.countLikesByTweetIDStmt,
+		createLikeStmt:               q.createLikeStmt,
 		createTweetStmt:              q.createTweetStmt,
 		createUserStmt:               q.createUserStmt,
 		createUserActivationStmt:     q.createUserActivationStmt,
+		deleteLikeStmt:               q.deleteLikeStmt,
 		deleteTweetStmt:              q.deleteTweetStmt,
 		deleteUserActivationStmt:     q.deleteUserActivationStmt,
+		existsLikeStmt:               q.existsLikeStmt,
 		getAllTweetsStmt:             q.getAllTweetsStmt,
 		getTweetByIDStmt:             q.getTweetByIDStmt,
 		getTweetsByUserIDStmt:        q.getTweetsByUserIDStmt,
