@@ -3,7 +3,6 @@ package controllers
 import (
 	"log"
 	"net/http"
-	"strconv"
 
 	"golang_twitter/middleware"
 	"golang_twitter/services"
@@ -23,6 +22,10 @@ func NewTweetController(tweetService services.TweetService) *TweetController {
 
 type CreateTweetInput struct {
 	Content string `json:"content" binding:"required"`
+}
+
+type GetTweetByIdInput struct {
+	Id int32 `uri:"id" binding:"required,min=1"`
 }
 
 // 投稿
@@ -61,22 +64,14 @@ func (ctrl *TweetController) CreateTweet(c *gin.Context) {
 	})
 }
 
-
 func (ctrl *TweetController) GetTweetByID(c *gin.Context) {
-	id := c.Param("id")
-
-	// strconv.ParseInt(文字列, 進数, ビットサイズ)
-	// bitSize=32 で int32 を指定
-	i64, err := strconv.ParseInt(id, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "IDが不正です"})
+	var input GetTweetByIdInput
+	if err := c.ShouldBindUri(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "無効なパスパラメータです"})
 		return
 	}
-	
-	// int64型で返るため、int32にキャスト
-	i32 := int32(i64)
 
-	tweet, err := ctrl.tweetService.GetTweetByID(c.Request.Context(), int32(i32))
+	tweet, err := ctrl.tweetService.GetTweetByID(c.Request.Context(), input.Id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Tweetが見つかりませんでした"})
 		return
