@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
 
 	"golang_twitter/middleware"
 	"golang_twitter/services"
@@ -22,6 +21,15 @@ func NewTweetController(tweetService services.TweetService) *TweetController {
 
 type CreateTweetInput struct {
 	Content string `json:"content" binding:"required"`
+}
+
+type GetUserTweetsUri struct {
+	UserID int32 `uri:"user_id" binding:"required,min=1"`
+}
+
+type GetUserTweetsQuery struct {
+	Cursor *int32 `form:"cursor" binding:"omitempty,min=1"`
+	Limit  int32  `form:"limit" binding:"omitempty,min=1,max=100"`
 }
 
 // 投稿
@@ -60,40 +68,33 @@ func (ctrl *TweetController) CreateTweet(c *gin.Context) {
 
 // user_idのツイート一覧を取得
 func (ctrl *TweetController) GetUserTweets(c *gin.Context) {
-	// URLパラメータからuser_idを取得
-	userIDStr := c.Param("user_id")
-	userID64, err := strconv.ParseInt(userIDStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "無効なユーザーIDです"})
+	// パスパラメータのバリデーション
+	var uriParams GetUserTweetsUri
+	if err := c.ShouldBindUri(&uriParams); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	userID := int32(userID64)
 
-	// クエリパラメータからcursorとlimitを取得
-	var cursor *int32
-	if cursorStr := c.Query("cursor"); cursorStr != "" {
-		cursor64, err := strconv.ParseInt(cursorStr, 10, 32)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "無効なカーソルです"})
-			return
-		}
-		cursorVal := int32(cursor64)
-		cursor = &cursorVal
+	// クエリパラメータのバリデーション（デフォルト値を設定）
+	var queryParams GetUserTweetsQuery
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
-	// デフォルトで20件取得
-	limit := int32(20)
-	if limitStr := c.Query("limit"); limitStr != "" {
-		limit64, err := strconv.ParseInt(limitStr, 10, 32)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "無効なlimitです"})
-			return
-		}
-		limit = int32(limit64)
+	// limitのデフォルト値を設定
+	limit := queryParams.Limit
+	if limit == 0 {
+		limit = 20
 	}
 
 	// ツイート一覧を取得
-	tweets, err := ctrl.tweetService.GetUserTweetsWithCursor(c.Request.Context(), userID, cursor, limit)
+	tweets, err := ctrl.tweetService.GetUserTweetsWithCursor(
+		c.Request.Context(), 
+		uriParams.UserID, 
+		queryParams.Cursor, 
+		limit,
+	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
