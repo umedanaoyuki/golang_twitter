@@ -71,14 +71,14 @@ func (ctrl *TweetController) GetUserTweets(c *gin.Context) {
 	// パスパラメータのバリデーション
 	var uriParams GetUserTweetsUri
 	if err := c.ShouldBindUri(&uriParams); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "無効なパスパラメータです"})
 		return
 	}
 
 	// クエリパラメータのバリデーション（デフォルト値を設定）
 	var queryParams GetUserTweetsQuery
 	if err := c.ShouldBindQuery(&queryParams); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "無効なクエリパラメータです"})
 		return
 	}
 
