@@ -141,3 +141,47 @@ func (q *Queries) GetTweetsByUserID(ctx context.Context, userID int32) ([]Tweet,
 	}
 	return items, nil
 }
+
+const getTweetsByUserIDWithCursor = `-- name: GetTweetsByUserIDWithCursor :many
+SELECT id, user_id, content, created_at, updated_at
+FROM tweets
+WHERE user_id = $1
+  AND (CASE WHEN $2 = 0 THEN true ELSE id < $2 END)
+ORDER BY id DESC
+LIMIT $3
+`
+
+type GetTweetsByUserIDWithCursorParams struct {
+	UserID  int32       `json:"user_id"`
+	Column2 interface{} `json:"column_2"`
+	Limit   int32       `json:"limit"`
+}
+
+func (q *Queries) GetTweetsByUserIDWithCursor(ctx context.Context, arg GetTweetsByUserIDWithCursorParams) ([]Tweet, error) {
+	rows, err := q.query(ctx, q.getTweetsByUserIDWithCursorStmt, getTweetsByUserIDWithCursor, arg.UserID, arg.Column2, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Tweet{}
+	for rows.Next() {
+		var i Tweet
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Content,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

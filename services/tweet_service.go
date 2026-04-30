@@ -8,6 +8,7 @@ import (
 
 type TweetService interface {
 	CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error)
+	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]db.Tweet, error)
 }
 
 type tweetService struct {
@@ -43,4 +44,25 @@ func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content st
 	}
 
 	return &tweet, nil
+}
+
+// userIDのツイート一覧を取得
+func (s *tweetService) GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]db.Tweet, error) {
+	// cursorが指定されていない場合は0を使用（SQLで全件取得）
+	cursorValue := int32(0)
+	if cursor != nil {
+		cursorValue = *cursor
+	}
+
+	// カーソルベースでツイートを取得
+	tweets, err := s.queries.GetTweetsByUserIDWithCursor(ctx, db.GetTweetsByUserIDWithCursorParams{
+		UserID:  userID,
+		Column2: cursorValue,
+		Limit:   limit,
+	})
+	if err != nil {
+		return nil, &ServiceError{Message: "ツイートの取得に失敗しました"}
+	}
+
+	return tweets, nil
 }
