@@ -48,6 +48,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getTweetsByUserIDStmt, err = db.PrepareContext(ctx, getTweetsByUserID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetTweetsByUserID: %w", err)
 	}
+	if q.getTweetsByUserIDWithCursorStmt, err = db.PrepareContext(ctx, getTweetsByUserIDWithCursor); err != nil {
+		return nil, fmt.Errorf("error preparing query GetTweetsByUserIDWithCursor: %w", err)
+	}
 	if q.getUserActivationByTokenStmt, err = db.PrepareContext(ctx, getUserActivationByToken); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUserActivationByToken: %w", err)
 	}
@@ -102,6 +105,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getTweetsByUserIDStmt: %w", cerr)
 		}
 	}
+	if q.getTweetsByUserIDWithCursorStmt != nil {
+		if cerr := q.getTweetsByUserIDWithCursorStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getTweetsByUserIDWithCursorStmt: %w", cerr)
+		}
+	}
 	if q.getUserActivationByTokenStmt != nil {
 		if cerr := q.getUserActivationByTokenStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getUserActivationByTokenStmt: %w", cerr)
@@ -154,35 +162,37 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                           DBTX
-	tx                           *sql.Tx
-	createTweetStmt              *sql.Stmt
-	createUserStmt               *sql.Stmt
-	createUserActivationStmt     *sql.Stmt
-	deleteTweetStmt              *sql.Stmt
-	deleteUserActivationStmt     *sql.Stmt
-	getAllTweetsStmt             *sql.Stmt
-	getTweetByIDStmt             *sql.Stmt
-	getTweetsByUserIDStmt        *sql.Stmt
-	getUserActivationByTokenStmt *sql.Stmt
-	getUserByEmailStmt           *sql.Stmt
-	updateUserIsActiveStmt       *sql.Stmt
+	db                              DBTX
+	tx                              *sql.Tx
+	createTweetStmt                 *sql.Stmt
+	createUserStmt                  *sql.Stmt
+	createUserActivationStmt        *sql.Stmt
+	deleteTweetStmt                 *sql.Stmt
+	deleteUserActivationStmt        *sql.Stmt
+	getAllTweetsStmt                *sql.Stmt
+	getTweetByIDStmt                *sql.Stmt
+	getTweetsByUserIDStmt           *sql.Stmt
+	getTweetsByUserIDWithCursorStmt *sql.Stmt
+	getUserActivationByTokenStmt    *sql.Stmt
+	getUserByEmailStmt              *sql.Stmt
+	updateUserIsActiveStmt          *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                           tx,
-		tx:                           tx,
-		createTweetStmt:              q.createTweetStmt,
-		createUserStmt:               q.createUserStmt,
-		createUserActivationStmt:     q.createUserActivationStmt,
-		deleteTweetStmt:              q.deleteTweetStmt,
-		deleteUserActivationStmt:     q.deleteUserActivationStmt,
-		getAllTweetsStmt:             q.getAllTweetsStmt,
-		getTweetByIDStmt:             q.getTweetByIDStmt,
-		getTweetsByUserIDStmt:        q.getTweetsByUserIDStmt,
-		getUserActivationByTokenStmt: q.getUserActivationByTokenStmt,
-		getUserByEmailStmt:           q.getUserByEmailStmt,
-		updateUserIsActiveStmt:       q.updateUserIsActiveStmt,
+		db:                              tx,
+		tx:                              tx,
+		createTweetStmt:                 q.createTweetStmt,
+		createUserStmt:                  q.createUserStmt,
+		createUserActivationStmt:        q.createUserActivationStmt,
+		deleteTweetStmt:                 q.deleteTweetStmt,
+		deleteUserActivationStmt:        q.deleteUserActivationStmt,
+		getAllTweetsStmt:                q.getAllTweetsStmt,
+		getTweetByIDStmt:                q.getTweetByIDStmt,
+		getTweetsByUserIDStmt:           q.getTweetsByUserIDStmt,
+		getTweetsByUserIDWithCursorStmt: q.getTweetsByUserIDWithCursorStmt,
+		getUserActivationByTokenStmt:    q.getUserActivationByTokenStmt,
+		getUserByEmailStmt:              q.getUserByEmailStmt,
+		updateUserIsActiveStmt:          q.updateUserIsActiveStmt,
 	}
 }

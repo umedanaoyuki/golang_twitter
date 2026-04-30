@@ -12,6 +12,14 @@ FROM tweets
 WHERE user_id = $1
 ORDER BY created_at DESC;
 
+-- name: GetTweetsByUserIDWithCursor :many
+SELECT id, user_id, content, created_at, updated_at
+FROM tweets
+WHERE user_id = $1
+  AND (CASE WHEN $2 = 0 THEN true ELSE id < $2 END)
+ORDER BY id DESC
+LIMIT $3;
+
 -- name: GetAllTweets :many
 SELECT id, user_id, content, created_at, updated_at
 FROM tweets
