@@ -23,6 +23,9 @@ type CreateTweetInput struct {
 	Content string `json:"content" binding:"required"`
 }
 
+type GetTweetByIdInput struct {
+	Id int32 `uri:"id" binding:"required,min=1"`
+}
 type GetUserTweetsUri struct {
 	UserID int32 `uri:"user_id" binding:"required,min=1"`
 }
@@ -111,5 +114,23 @@ func (ctrl *TweetController) GetUserTweets(c *gin.Context) {
 		"tweets":      tweets,
 		"next_cursor": nextCursor,
 		"has_more":    len(tweets) == int(limit),
+	})
+}
+
+func (ctrl *TweetController) GetTweetByID(c *gin.Context) {
+	var input GetTweetByIdInput
+	if err := c.ShouldBindUri(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "無効なパスパラメータです"})
+		return
+	}
+
+	tweet, err := ctrl.tweetService.GetTweetByID(c.Request.Context(), input.Id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Tweetが見つかりませんでした"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"tweet": tweet,
 	})
 }

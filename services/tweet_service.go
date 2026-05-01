@@ -8,6 +8,7 @@ import (
 
 type TweetService interface {
 	CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error)
+	GetTweetByID(ctx context.Context, id int32) (*db.Tweet, error)
 	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]db.Tweet, error)
 }
 
@@ -65,4 +66,13 @@ func (s *tweetService) GetUserTweetsWithCursor(ctx context.Context, userID int32
 	}
 
 	return tweets, nil
+}
+
+func (s *tweetService) GetTweetByID(ctx context.Context, id int32) (*db.Tweet, error) {
+	tweet, err := s.queries.GetTweetByID(ctx, id)
+	if err != nil {
+		return nil, &ServiceError{Message: "Tweetが見つかりませんでした"}
+	}
+
+	return &tweet, nil
 }

@@ -96,6 +96,9 @@ func main() {
 	// ユーザーのツイート一覧取得（認証不要）
 	router.GET("/users/:user_id/tweets", tweetController.GetUserTweets)
 
+	// 1つのTweet取得
+	router.GET("/tweets/:id", tweetController.GetTweetByID)
+
 	// 認証が必要なエンドポイント
 	authorized := router.Group("/")
 	authorized.Use(middleware.AuthRequired())
