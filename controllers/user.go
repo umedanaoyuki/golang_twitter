@@ -20,7 +20,6 @@ type getUserByIDURI struct {
 	UserID int32 `uri:"user_id" binding:"required,min=1"`
 }
 
-// GetUserByID は /users/:user_id で指定されたユーザーの公開情報を返す。
 func (ctrl *UserController) GetUserByID(c *gin.Context) {
 	var uri getUserByIDURI
 	if err := c.ShouldBindUri(&uri); err != nil {
