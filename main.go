@@ -97,6 +97,8 @@ func main() {
 	router.POST("/login", authController.Login)
 	// ユーザーのツイート一覧取得（認証不要）
 	router.GET("/users/:user_id/tweets", tweetController.GetUserTweets)
+	// ユーザー情報取得（認証不要）
+	router.GET("/users/:user_id", userController.GetUserByID)
 
 	// 認証が必要なエンドポイント
 	authorized := router.Group("/")
@@ -104,9 +106,6 @@ func main() {
 	{
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
-
-		// ユーザー情報取得
-		authorized.GET("/user_detail", userController.GetUserDetailByUserID)
 	}
 
 	log.Println("サーバー起動: http://localhost:8080")

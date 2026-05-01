@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"golang_twitter/middleware"
+	"errors"
 	"golang_twitter/services"
 	"net/http"
 
@@ -16,11 +16,25 @@ func NewUserController(userService services.UserService) *UserController {
 	return &UserController{userService: userService}
 }
 
-func (ctrl *UserController) GetUserDetailByUserID(c *gin.Context) {
-	userID, err := middleware.GetUserID(c)
-	user, err := ctrl.userService.GetUserDetailByUserID(c.Request.Context(), userID)
+type getUserByIDURI struct {
+	UserID int32 `uri:"user_id" binding:"required,min=1"`
+}
+
+// GetUserByID は /users/:user_id で指定されたユーザーの公開情報を返す。
+func (ctrl *UserController) GetUserByID(c *gin.Context) {
+	var uri getUserByIDURI
+	if err := c.ShouldBindUri(&uri); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := ctrl.userService.GetUserDetailByUserID(c.Request.Context(), uri.UserID)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
+		if errors.Is(err, errors.New(err.Error())){
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
