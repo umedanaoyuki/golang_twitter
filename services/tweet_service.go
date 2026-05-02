@@ -3,12 +3,19 @@ package services
 import (
 	"context"
 	"database/sql"
+	"errors"
 	db "golang_twitter/db/sqlc"
 )
 
+type TweetDetail struct {
+	db.Tweet
+	// いいね数
+	LikeCount int64 `json:"like_count"`
+}
+
 type TweetService interface {
 	CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error)
-	GetTweetByID(ctx context.Context, id int32) (*db.Tweet, error)
+	GetTweetByID(ctx context.Context, id int32) (*TweetDetail, error)
 	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]db.Tweet, error)
 }
 
@@ -68,11 +75,19 @@ func (s *tweetService) GetUserTweetsWithCursor(ctx context.Context, userID int32
 	return tweets, nil
 }
 
-func (s *tweetService) GetTweetByID(ctx context.Context, id int32) (*db.Tweet, error) {
+func (s *tweetService) GetTweetByID(ctx context.Context, id int32) (*TweetDetail, error) {
 	tweet, err := s.queries.GetTweetByID(ctx, id)
 	if err != nil {
-		return nil, &ServiceError{Message: "Tweetが見つかりませんでした"}
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("Tweetが見つかりませんでした");
+		}
+		return nil, &ServiceError{Message: "Tweetの取得に失敗しました"}
 	}
 
-	return &tweet, nil
+	likeCount, err := s.queries.CountLikesByTweetID(ctx, id)
+	if err != nil {
+		return nil, &ServiceError{Message: "いいね数の取得に失敗しました"}
+	}
+
+	return &TweetDetail{Tweet: tweet, LikeCount: likeCount}, nil
 }
