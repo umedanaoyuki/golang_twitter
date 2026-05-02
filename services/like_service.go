@@ -6,24 +6,24 @@ import (
 	db "golang_twitter/db/sqlc"
 )
 
-type GoodService interface {
-	CreateGood(ctx context.Context, userID int32, tweetID int32) error
-	DeleteGood(ctx context.Context, userID int32, tweetID int32) error
+type LikeService interface {
+	CreateLike(ctx context.Context, userID int32, tweetID int32) error
+	DeleteLike(ctx context.Context, userID int32, tweetID int32) error
 }
 
-type goodService struct {
+type likeService struct {
 	db      *sql.DB
 	queries *db.Queries
 }
 
-func NewGoodService(db *sql.DB, queries *db.Queries) GoodService {
-	return &goodService{
+func NewLikeService(db *sql.DB, queries *db.Queries) LikeService {
+	return &likeService{
 		db:      db,
 		queries: queries,
 	}
 }
 
-func (s *goodService) CreateGood(ctx context.Context, userID int32, tweetID int32) error {
+func (s *likeService) CreateLike(ctx context.Context, userID int32, tweetID int32) error {
 	_, err := s.queries.CreateLike(ctx, db.CreateLikeParams{
 		UserID:  userID,
 		TweetID: tweetID,
@@ -37,7 +37,7 @@ func (s *goodService) CreateGood(ctx context.Context, userID int32, tweetID int3
 	return nil
 }
 
-func (s *goodService) DeleteGood(ctx context.Context, userID int32, tweetID int32) error {
+func (s *likeService) DeleteLike(ctx context.Context, userID int32, tweetID int32) error {
 	return s.queries.DeleteLike(ctx, db.DeleteLikeParams{
 		UserID:  userID,
 		TweetID: tweetID,

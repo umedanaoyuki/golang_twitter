@@ -58,13 +58,13 @@ func main() {
 	// サービスの初期化
 	authService := services.NewAuthService(conn, queries, emailMailer)
 	tweetService := services.NewTweetService(conn, queries)
-	goodService := services.NewGoodService(conn, queries)
+	likeService := services.NewLikeService(conn, queries)
 	userService := services.NewUserService(queries)
 
 	// コントローラーの初期化
 	authController := controllers.NewAuthController(authService)
 	tweetController := controllers.NewTweetController(tweetService)
-	goodController := controllers.NewGoodController(goodService)
+	likeController := controllers.NewLikeController(likeService)
 	
 	userController := controllers.NewUserController(userService)
 
@@ -114,8 +114,8 @@ func main() {
 		authorized.POST("/tweets", tweetController.CreateTweet)
 
 		// いいね機能（GET /tweets/:id と同じセグメント名 :id に揃える必要がある）
-		authorized.POST("/tweets/:id/good", goodController.CreateGood)
-		authorized.DELETE("/tweets/:id/good", goodController.DeleteGood)
+		authorized.POST("/tweets/:id/like", likeController.CreateLike)
+		authorized.DELETE("/tweets/:id/like", likeController.DeleteLike)
 	}
 
 	log.Println("サーバー起動: http://localhost:8080")
