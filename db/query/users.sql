@@ -17,3 +17,9 @@ SELECT id, email, password, is_active, created_at, updated_at
 FROM users
 WHERE email = $1
 LIMIT 1;
+
+-- name: GetUserDetailByUserID :one
+SELECT id, email, is_active, created_at, updated_at
+FROM users
+WHERE id = $1
+LIMIT 1;
