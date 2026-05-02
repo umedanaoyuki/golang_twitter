@@ -16,7 +16,7 @@ type TweetDetail struct {
 type TweetService interface {
 	CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error)
 	GetTweetByID(ctx context.Context, id int32) (*TweetDetail, error)
-	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]db.Tweet, error)
+	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]TweetDetail, error)
 }
 
 type tweetService struct {
@@ -55,7 +55,7 @@ func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content st
 }
 
 // userIDのツイート一覧を取得
-func (s *tweetService) GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]db.Tweet, error) {
+func (s *tweetService) GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]TweetDetail, error) {
 	// cursorが指定されていない場合は0を使用（SQLで全件取得）
 	cursorValue := int32(0)
 	if cursor != nil {
@@ -72,7 +72,19 @@ func (s *tweetService) GetUserTweetsWithCursor(ctx context.Context, userID int32
 		return nil, &ServiceError{Message: "ツイートの取得に失敗しました"}
 	}
 
-	return tweets, nil
+	if len(tweets) == 0 {
+		return []TweetDetail{}, nil
+	}
+
+	details := make([]TweetDetail, 0, len(tweets))
+	for _, t := range tweets {
+		n, err := s.queries.CountLikesByTweetID(ctx, t.ID)
+		if err != nil {
+			return nil, &ServiceError{Message: "いいね数の取得に失敗しました"}
+		}
+		details = append(details, TweetDetail{Tweet: t, LikeCount: n})
+	}
+	return details, nil
 }
 
 func (s *tweetService) GetTweetByID(ctx context.Context, id int32) (*TweetDetail, error) {
