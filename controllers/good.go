@@ -23,7 +23,7 @@ func NewGoodController(goodService services.GoodService) *GoodController {
 func (ctrl *GoodController) CreateGood(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "ログインが必要です"})
 		return
 	}
 
@@ -43,7 +43,7 @@ func (ctrl *GoodController) CreateGood(c *gin.Context) {
 func (ctrl *GoodController) DeleteGood(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "ログインが必要です"})
 		return
 	}
 
