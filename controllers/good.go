@@ -13,7 +13,7 @@ type GoodController struct {
 }
 
 type GoodTweetId struct {
-	TweetID int32 `uri:"tweet_id" binding:"required,min=1"`
+	TweetID int32 `uri:"id" binding:"required,min=1"`
 }
 
 func NewGoodController(goodService services.GoodService) *GoodController {

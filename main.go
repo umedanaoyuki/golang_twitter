@@ -108,9 +108,9 @@ func main() {
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
 
-		// いいね機能
-		authorized.POST("/tweets/:tweet_id/good", goodController.CreateGood)
-		authorized.DELETE("/tweets/:tweet_id/good", goodController.DeleteGood)
+		// いいね機能（GET /tweets/:id と同じセグメント名 :id に揃える必要がある）
+		authorized.POST("/tweets/:id/good", goodController.CreateGood)
+		authorized.DELETE("/tweets/:id/good", goodController.DeleteGood)
 	}
 
 	log.Println("サーバー起動: http://localhost:8080")
