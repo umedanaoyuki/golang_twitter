@@ -54,6 +54,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getAllTweetsStmt, err = db.PrepareContext(ctx, getAllTweets); err != nil {
 		return nil, fmt.Errorf("error preparing query GetAllTweets: %w", err)
 	}
+	if q.getBookmarksByUserIdStmt, err = db.PrepareContext(ctx, getBookmarksByUserId); err != nil {
+		return nil, fmt.Errorf("error preparing query GetBookmarksByUserId: %w", err)
+	}
 	if q.getTweetByIDStmt, err = db.PrepareContext(ctx, getTweetByID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetTweetByID: %w", err)
 	}
@@ -125,6 +128,11 @@ func (q *Queries) Close() error {
 	if q.getAllTweetsStmt != nil {
 		if cerr := q.getAllTweetsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getAllTweetsStmt: %w", cerr)
+		}
+	}
+	if q.getBookmarksByUserIdStmt != nil {
+		if cerr := q.getBookmarksByUserIdStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getBookmarksByUserIdStmt: %w", cerr)
 		}
 	}
 	if q.getTweetByIDStmt != nil {
@@ -206,6 +214,7 @@ type Queries struct {
 	deleteUserActivationStmt        *sql.Stmt
 	existsBookmarkStmt              *sql.Stmt
 	getAllTweetsStmt                *sql.Stmt
+	getBookmarksByUserIdStmt        *sql.Stmt
 	getTweetByIDStmt                *sql.Stmt
 	getTweetsByUserIDStmt           *sql.Stmt
 	getTweetsByUserIDWithCursorStmt *sql.Stmt
@@ -228,6 +237,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		deleteUserActivationStmt:        q.deleteUserActivationStmt,
 		existsBookmarkStmt:              q.existsBookmarkStmt,
 		getAllTweetsStmt:                q.getAllTweetsStmt,
+		getBookmarksByUserIdStmt:        q.getBookmarksByUserIdStmt,
 		getTweetByIDStmt:                q.getTweetByIDStmt,
 		getTweetsByUserIDStmt:           q.getTweetsByUserIDStmt,
 		getTweetsByUserIDWithCursorStmt: q.getTweetsByUserIDWithCursorStmt,

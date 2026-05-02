@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
 const countBookmarksByTweetID = `-- name: CountBookmarksByTweetID :one
@@ -83,4 +84,54 @@ func (q *Queries) ExistsBookmark(ctx context.Context, arg ExistsBookmarkParams) 
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const getBookmarksByUserId = `-- name: GetBookmarksByUserId :many
+SELECT
+  b.id,
+  b.user_id,
+  b.tweet_id,
+  b.created_at,
+  t.content
+FROM bookmarks b
+INNER JOIN tweets t ON t.id = b.tweet_id
+WHERE b.user_id = $1
+ORDER BY b.created_at DESC
+`
+
+type GetBookmarksByUserIdRow struct {
+	ID        int32     `json:"id"`
+	UserID    int32     `json:"user_id"`
+	TweetID   int32     `json:"tweet_id"`
+	CreatedAt time.Time `json:"created_at"`
+	Content   string    `json:"content"`
+}
+
+func (q *Queries) GetBookmarksByUserId(ctx context.Context, userID int32) ([]GetBookmarksByUserIdRow, error) {
+	rows, err := q.query(ctx, q.getBookmarksByUserIdStmt, getBookmarksByUserId, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetBookmarksByUserIdRow{}
+	for rows.Next() {
+		var i GetBookmarksByUserIdRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.TweetID,
+			&i.CreatedAt,
+			&i.Content,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

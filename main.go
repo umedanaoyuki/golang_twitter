@@ -110,6 +110,7 @@ func main() {
 		// ブックマーク機能
 		authorized.POST("/tweets/:id/bookmark", bookmarkController.CreateBookmark)
 		authorized.DELETE("/tweets/:id/bookmark", bookmarkController.DeleteBookmark)
+		authorized.GET("/tweets/bookmarks", bookmarkController.GetBookmarksByUserId)
 	}
 
 	log.Println("サーバー起動: http://localhost:8080")

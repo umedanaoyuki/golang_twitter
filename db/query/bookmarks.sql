@@ -23,3 +23,15 @@ SELECT EXISTS(
   FROM bookmarks
   WHERE user_id = $1 AND tweet_id = $2
 ) AS exists;
+
+-- name: GetBookmarksByUserId :many
+SELECT
+  b.id,
+  b.user_id,
+  b.tweet_id,
+  b.created_at,
+  t.content
+FROM bookmarks b
+INNER JOIN tweets t ON t.id = b.tweet_id
+WHERE b.user_id = $1
+ORDER BY b.created_at DESC;

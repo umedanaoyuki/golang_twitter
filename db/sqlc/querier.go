@@ -19,6 +19,7 @@ type Querier interface {
 	DeleteUserActivation(ctx context.Context, token string) error
 	ExistsBookmark(ctx context.Context, arg ExistsBookmarkParams) (bool, error)
 	GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error)
+	GetBookmarksByUserId(ctx context.Context, userID int32) ([]GetBookmarksByUserIdRow, error)
 	GetTweetByID(ctx context.Context, id int32) (Tweet, error)
 	GetTweetsByUserID(ctx context.Context, userID int32) ([]Tweet, error)
 	GetTweetsByUserIDWithCursor(ctx context.Context, arg GetTweetsByUserIDWithCursorParams) ([]Tweet, error)

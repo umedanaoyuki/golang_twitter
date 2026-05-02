@@ -9,6 +9,7 @@ import (
 type BookmarkService interface {
 	CreateBookmark(ctx context.Context, userID int32, tweetID int32) error
 	DeleteBookmark(ctx context.Context, userID int32, tweetID int32) error
+	GetBookmarksByUserId(ctx context.Context, userID int32) ([]db.GetBookmarksByUserIdRow, error)
 }
 
 type bookmarkService struct {
@@ -42,4 +43,12 @@ func (s *bookmarkService) DeleteBookmark(ctx context.Context, userID int32, twee
 		UserID:  userID,
 		TweetID: tweetID,
 	})
+}
+
+func (s *bookmarkService) GetBookmarksByUserId(ctx context.Context, userID int32) ([]db.GetBookmarksByUserIdRow, error) {
+	bookmarks, err := s.queries.GetBookmarksByUserId(ctx, userID)
+	if err != nil {
+		return nil, &ServiceError{Message: "ブックマークの取得に失敗しました"}
+	}
+	return bookmarks, nil
 }

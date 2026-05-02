@@ -59,3 +59,18 @@ func (ctrl *BookmarkController) DeleteBookmark(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
+
+func (ctrl *BookmarkController) GetBookmarksByUserId(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "ログインが必要です"})
+		return
+	}
+
+	bookmarks, err := ctrl.BookmarkService.GetBookmarksByUserId(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, bookmarks)
+}
