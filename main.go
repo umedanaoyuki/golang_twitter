@@ -58,11 +58,12 @@ func main() {
 	// サービスの初期化
 	authService := services.NewAuthService(conn, queries, emailMailer)
 	tweetService := services.NewTweetService(conn, queries)
+	bookmarkService := services.NewBookmarkService(conn, queries)
 
 	// コントローラーの初期化
 	authController := controllers.NewAuthController(authService)
 	tweetController := controllers.NewTweetController(tweetService)
-
+	bookmarkController := controllers.NewBookmarkController(bookmarkService)
 	// Ginルーター設定
 	router := gin.Default()
 
@@ -105,6 +106,10 @@ func main() {
 	{
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
+
+		// ブックマーク機能
+		authorized.POST("/tweets/:id/bookmark", bookmarkController.CreateBookmark)
+		authorized.DELETE("/tweets/:id/bookmark", bookmarkController.DeleteBookmark)
 	}
 
 	log.Println("サーバー起動: http://localhost:8080")
