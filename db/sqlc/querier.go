@@ -9,6 +9,7 @@ import (
 )
 
 type Querier interface {
+	CountLikesByTweetID(ctx context.Context, tweetID int32) (int64, error)
 	CreateRetweet(ctx context.Context, arg CreateRetweetParams) (Retweet, error)
 	CreateTweet(ctx context.Context, arg CreateTweetParams) (Tweet, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
@@ -16,6 +17,7 @@ type Querier interface {
 	DeleteRetweet(ctx context.Context, arg DeleteRetweetParams) error
 	DeleteTweet(ctx context.Context, arg DeleteTweetParams) error
 	DeleteUserActivation(ctx context.Context, token string) error
+	ExistsRetweet(ctx context.Context, arg ExistsRetweetParams) (bool, error)
 	GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error)
 	GetTweetByID(ctx context.Context, id int32) (Tweet, error)
 	GetTweetsByUserID(ctx context.Context, userID int32) ([]Tweet, error)

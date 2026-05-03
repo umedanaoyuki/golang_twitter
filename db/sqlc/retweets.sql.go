@@ -9,6 +9,19 @@ import (
 	"context"
 )
 
+const countLikesByTweetID = `-- name: CountLikesByTweetID :one
+SELECT COUNT(*)::bigint AS retweet_count
+FROM retweets
+WHERE tweet_id = $1
+`
+
+func (q *Queries) CountLikesByTweetID(ctx context.Context, tweetID int32) (int64, error) {
+	row := q.queryRow(ctx, q.countLikesByTweetIDStmt, countLikesByTweetID, tweetID)
+	var retweet_count int64
+	err := row.Scan(&retweet_count)
+	return retweet_count, err
+}
+
 const createRetweet = `-- name: CreateRetweet :one
 INSERT INTO retweets (
   user_id,
@@ -50,4 +63,24 @@ type DeleteRetweetParams struct {
 func (q *Queries) DeleteRetweet(ctx context.Context, arg DeleteRetweetParams) error {
 	_, err := q.exec(ctx, q.deleteRetweetStmt, deleteRetweet, arg.UserID, arg.TweetID)
 	return err
+}
+
+const existsRetweet = `-- name: ExistsRetweet :one
+SELECT EXISTS(
+  SELECT 1
+  FROM retweets
+  WHERE user_id = $1 AND tweet_id = $2
+) AS exists
+`
+
+type ExistsRetweetParams struct {
+	UserID  int32 `json:"user_id"`
+	TweetID int32 `json:"tweet_id"`
+}
+
+func (q *Queries) ExistsRetweet(ctx context.Context, arg ExistsRetweetParams) (bool, error) {
+	row := q.queryRow(ctx, q.existsRetweetStmt, existsRetweet, arg.UserID, arg.TweetID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }

@@ -24,6 +24,9 @@ func New(db DBTX) *Queries {
 func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	q := Queries{db: db}
 	var err error
+	if q.countLikesByTweetIDStmt, err = db.PrepareContext(ctx, countLikesByTweetID); err != nil {
+		return nil, fmt.Errorf("error preparing query CountLikesByTweetID: %w", err)
+	}
 	if q.createRetweetStmt, err = db.PrepareContext(ctx, createRetweet); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateRetweet: %w", err)
 	}
@@ -44,6 +47,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.deleteUserActivationStmt, err = db.PrepareContext(ctx, deleteUserActivation); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteUserActivation: %w", err)
+	}
+	if q.existsRetweetStmt, err = db.PrepareContext(ctx, existsRetweet); err != nil {
+		return nil, fmt.Errorf("error preparing query ExistsRetweet: %w", err)
 	}
 	if q.getAllTweetsStmt, err = db.PrepareContext(ctx, getAllTweets); err != nil {
 		return nil, fmt.Errorf("error preparing query GetAllTweets: %w", err)
@@ -74,6 +80,11 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 
 func (q *Queries) Close() error {
 	var err error
+	if q.countLikesByTweetIDStmt != nil {
+		if cerr := q.countLikesByTweetIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countLikesByTweetIDStmt: %w", cerr)
+		}
+	}
 	if q.createRetweetStmt != nil {
 		if cerr := q.createRetweetStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createRetweetStmt: %w", cerr)
@@ -107,6 +118,11 @@ func (q *Queries) Close() error {
 	if q.deleteUserActivationStmt != nil {
 		if cerr := q.deleteUserActivationStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteUserActivationStmt: %w", cerr)
+		}
+	}
+	if q.existsRetweetStmt != nil {
+		if cerr := q.existsRetweetStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing existsRetweetStmt: %w", cerr)
 		}
 	}
 	if q.getAllTweetsStmt != nil {
@@ -188,6 +204,7 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 type Queries struct {
 	db                              DBTX
 	tx                              *sql.Tx
+	countLikesByTweetIDStmt         *sql.Stmt
 	createRetweetStmt               *sql.Stmt
 	createTweetStmt                 *sql.Stmt
 	createUserStmt                  *sql.Stmt
@@ -195,6 +212,7 @@ type Queries struct {
 	deleteRetweetStmt               *sql.Stmt
 	deleteTweetStmt                 *sql.Stmt
 	deleteUserActivationStmt        *sql.Stmt
+	existsRetweetStmt               *sql.Stmt
 	getAllTweetsStmt                *sql.Stmt
 	getTweetByIDStmt                *sql.Stmt
 	getTweetsByUserIDStmt           *sql.Stmt
@@ -209,6 +227,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
 		db:                              tx,
 		tx:                              tx,
+		countLikesByTweetIDStmt:         q.countLikesByTweetIDStmt,
 		createRetweetStmt:               q.createRetweetStmt,
 		createTweetStmt:                 q.createTweetStmt,
 		createUserStmt:                  q.createUserStmt,
@@ -216,6 +235,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		deleteRetweetStmt:               q.deleteRetweetStmt,
 		deleteTweetStmt:                 q.deleteTweetStmt,
 		deleteUserActivationStmt:        q.deleteUserActivationStmt,
+		existsRetweetStmt:               q.existsRetweetStmt,
 		getAllTweetsStmt:                q.getAllTweetsStmt,
 		getTweetByIDStmt:                q.getTweetByIDStmt,
 		getTweetsByUserIDStmt:           q.getTweetsByUserIDStmt,
