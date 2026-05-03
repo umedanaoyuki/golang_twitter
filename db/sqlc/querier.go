@@ -13,6 +13,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserActivation(ctx context.Context, arg CreateUserActivationParams) (UserActivation, error)
 	DeleteTweet(ctx context.Context, arg DeleteTweetParams) error
+	DeleteUser(ctx context.Context, id int32) error
 	DeleteUserActivation(ctx context.Context, token string) error
 	GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error)
 	GetTweetByID(ctx context.Context, id int32) (Tweet, error)
