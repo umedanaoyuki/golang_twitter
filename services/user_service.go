@@ -9,6 +9,7 @@ import (
 
 type UserService interface {
 	GetUserDetailByUserID(ctx context.Context, userID int32) (*db.GetUserDetailByUserIDRow, error)
+	DeleteUser(ctx context.Context, userID int32) error
 }
 
 type userService struct {
