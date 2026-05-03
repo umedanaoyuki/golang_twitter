@@ -109,6 +109,9 @@ func main() {
 	{
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
+
+		// 退会
+		authorized.DELETE("/user", userController.DeleteUser)
 	}
 
 	log.Println("サーバー起動: http://localhost:8080")

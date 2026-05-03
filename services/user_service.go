@@ -29,3 +29,11 @@ func (s *userService) GetUserDetailByUserID(ctx context.Context, userID int32) (
 	}
 	return &user, nil
 }
+
+func (s *userService) DeleteUser(ctx context.Context, userID int32) error {
+	err := s.queries.DeleteUser(ctx, userID)
+	if err != nil {
+		return &ServiceError{Message: "ユーザーの削除に失敗しました"}
+	}
+	return nil
+}
