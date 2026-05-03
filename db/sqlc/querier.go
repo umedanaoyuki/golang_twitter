@@ -9,9 +9,11 @@ import (
 )
 
 type Querier interface {
+	CreateRetweet(ctx context.Context, arg CreateRetweetParams) (Retweet, error)
 	CreateTweet(ctx context.Context, arg CreateTweetParams) (Tweet, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserActivation(ctx context.Context, arg CreateUserActivationParams) (UserActivation, error)
+	DeleteRetweet(ctx context.Context, arg DeleteRetweetParams) error
 	DeleteTweet(ctx context.Context, arg DeleteTweetParams) error
 	DeleteUserActivation(ctx context.Context, token string) error
 	GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error)

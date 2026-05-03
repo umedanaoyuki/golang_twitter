@@ -24,6 +24,9 @@ func New(db DBTX) *Queries {
 func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	q := Queries{db: db}
 	var err error
+	if q.createRetweetStmt, err = db.PrepareContext(ctx, createRetweet); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateRetweet: %w", err)
+	}
 	if q.createTweetStmt, err = db.PrepareContext(ctx, createTweet); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateTweet: %w", err)
 	}
@@ -32,6 +35,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.createUserActivationStmt, err = db.PrepareContext(ctx, createUserActivation); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUserActivation: %w", err)
+	}
+	if q.deleteRetweetStmt, err = db.PrepareContext(ctx, deleteRetweet); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteRetweet: %w", err)
 	}
 	if q.deleteTweetStmt, err = db.PrepareContext(ctx, deleteTweet); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteTweet: %w", err)
@@ -68,6 +74,11 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 
 func (q *Queries) Close() error {
 	var err error
+	if q.createRetweetStmt != nil {
+		if cerr := q.createRetweetStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createRetweetStmt: %w", cerr)
+		}
+	}
 	if q.createTweetStmt != nil {
 		if cerr := q.createTweetStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createTweetStmt: %w", cerr)
@@ -81,6 +92,11 @@ func (q *Queries) Close() error {
 	if q.createUserActivationStmt != nil {
 		if cerr := q.createUserActivationStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createUserActivationStmt: %w", cerr)
+		}
+	}
+	if q.deleteRetweetStmt != nil {
+		if cerr := q.deleteRetweetStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteRetweetStmt: %w", cerr)
 		}
 	}
 	if q.deleteTweetStmt != nil {
@@ -172,9 +188,11 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 type Queries struct {
 	db                              DBTX
 	tx                              *sql.Tx
+	createRetweetStmt               *sql.Stmt
 	createTweetStmt                 *sql.Stmt
 	createUserStmt                  *sql.Stmt
 	createUserActivationStmt        *sql.Stmt
+	deleteRetweetStmt               *sql.Stmt
 	deleteTweetStmt                 *sql.Stmt
 	deleteUserActivationStmt        *sql.Stmt
 	getAllTweetsStmt                *sql.Stmt
@@ -191,9 +209,11 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
 		db:                              tx,
 		tx:                              tx,
+		createRetweetStmt:               q.createRetweetStmt,
 		createTweetStmt:                 q.createTweetStmt,
 		createUserStmt:                  q.createUserStmt,
 		createUserActivationStmt:        q.createUserActivationStmt,
+		deleteRetweetStmt:               q.deleteRetweetStmt,
 		deleteTweetStmt:                 q.deleteTweetStmt,
 		deleteUserActivationStmt:        q.deleteUserActivationStmt,
 		getAllTweetsStmt:                q.getAllTweetsStmt,
