@@ -55,4 +55,5 @@ func (ctrl *UserController) DeleteUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
