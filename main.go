@@ -58,11 +58,13 @@ func main() {
 	// サービスの初期化
 	authService := services.NewAuthService(conn, queries, emailMailer)
 	tweetService := services.NewTweetService(conn, queries)
+	userService := services.NewUserService(queries)
 	bookmarkService := services.NewBookmarkService(conn, queries)
 
 	// コントローラーの初期化
 	authController := controllers.NewAuthController(authService)
 	tweetController := controllers.NewTweetController(tweetService)
+	userController := controllers.NewUserController(userService)
 	bookmarkController := controllers.NewBookmarkController(bookmarkService)
 	// Ginルーター設定
 	router := gin.Default()
@@ -96,6 +98,8 @@ func main() {
 	router.POST("/login", authController.Login)
 	// ユーザーのツイート一覧取得（認証不要）
 	router.GET("/users/:user_id/tweets", tweetController.GetUserTweets)
+	// ユーザー情報取得（認証不要）
+	router.GET("/users/:user_id", userController.GetUserByID)
 
 	// 1つのTweet取得
 	router.GET("/tweets/:id", tweetController.GetTweetByID)
