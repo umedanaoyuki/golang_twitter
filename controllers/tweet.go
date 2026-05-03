@@ -125,7 +125,7 @@ func (ctrl *TweetController) GetTweetByID(c *gin.Context) {
 		return
 	}
 
-	detail, err := ctrl.tweetService.GetTweetByID(c.Request.Context(), input.Id)
+	tweet, err := ctrl.tweetService.GetTweetByID(c.Request.Context(), input.Id)
 	if err != nil {
 		if errors.Is(err, errors.New("Tweetが見つかりませんでした")) {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -136,6 +136,6 @@ func (ctrl *TweetController) GetTweetByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"tweet": detail,
+		"tweet": tweet,
 	})
 }

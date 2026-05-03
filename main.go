@@ -113,7 +113,7 @@ func main() {
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
 
-		// いいね機能（GET /tweets/:id と同じセグメント名 :id に揃える必要がある）
+		// いいね機能
 		authorized.POST("/tweets/:id/like", likeController.CreateLike)
 		authorized.DELETE("/tweets/:id/like", likeController.DeleteLike)
 	}
