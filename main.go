@@ -109,6 +109,10 @@ func main() {
 	{
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
+
+		// リツイート機能
+		authorized.POST("/tweets/:id/retweet", retweetController.CreateRetweet)
+		authorized.DELETE("/tweets/:id/retweet", retweetController.DeleteRetweet)
 	}
 
 	log.Println("サーバー起動: http://localhost:8080")
