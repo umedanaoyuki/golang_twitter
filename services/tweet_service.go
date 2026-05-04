@@ -3,13 +3,20 @@ package services
 import (
 	"context"
 	"database/sql"
+	"errors"
 	db "golang_twitter/db/sqlc"
 )
 
+type TweetDetail struct {
+	db.Tweet
+	// いいね数
+	LikeCount int64 `json:"like_count"`
+}
+
 type TweetService interface {
 	CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error)
-	GetTweetByID(ctx context.Context, id int32) (*db.Tweet, error)
-	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]db.Tweet, error)
+	GetTweetByID(ctx context.Context, id int32) (*TweetDetail, error)
+	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]TweetDetail, error)
 }
 
 type tweetService struct {
@@ -48,7 +55,7 @@ func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content st
 }
 
 // userIDのツイート一覧を取得
-func (s *tweetService) GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]db.Tweet, error) {
+func (s *tweetService) GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]TweetDetail, error) {
 	// cursorが指定されていない場合は0を使用（SQLで全件取得）
 	cursorValue := int32(0)
 	if cursor != nil {
@@ -65,14 +72,34 @@ func (s *tweetService) GetUserTweetsWithCursor(ctx context.Context, userID int32
 		return nil, &ServiceError{Message: "ツイートの取得に失敗しました"}
 	}
 
-	return tweets, nil
-}
-
-func (s *tweetService) GetTweetByID(ctx context.Context, id int32) (*db.Tweet, error) {
-	tweet, err := s.queries.GetTweetByID(ctx, id)
-	if err != nil {
-		return nil, &ServiceError{Message: "Tweetが見つかりませんでした"}
+	if len(tweets) == 0 {
+		return []TweetDetail{}, nil
 	}
 
-	return &tweet, nil
+	details := make([]TweetDetail, 0, len(tweets))
+	for _, t := range tweets {
+		n, err := s.queries.CountLikesByTweetID(ctx, t.ID)
+		if err != nil {
+			return nil, &ServiceError{Message: "いいね数の取得に失敗しました"}
+		}
+		details = append(details, TweetDetail{Tweet: t, LikeCount: n})
+	}
+	return details, nil
+}
+
+func (s *tweetService) GetTweetByID(ctx context.Context, id int32) (*TweetDetail, error) {
+	tweet, err := s.queries.GetTweetByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("Tweetが見つかりませんでした");
+		}
+		return nil, &ServiceError{Message: "Tweetの取得に失敗しました"}
+	}
+
+	likeCount, err := s.queries.CountLikesByTweetID(ctx, id)
+	if err != nil {
+		return nil, &ServiceError{Message: "いいね数の取得に失敗しました"}
+	}
+
+	return &TweetDetail{Tweet: tweet, LikeCount: likeCount}, nil
 }

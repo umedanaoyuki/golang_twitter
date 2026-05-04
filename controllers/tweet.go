@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 
 	"golang_twitter/middleware"
@@ -126,7 +127,11 @@ func (ctrl *TweetController) GetTweetByID(c *gin.Context) {
 
 	tweet, err := ctrl.tweetService.GetTweetByID(c.Request.Context(), input.Id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Tweetが見つかりませんでした"})
+		if errors.Is(err, errors.New("Tweetが見つかりませんでした")) {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
