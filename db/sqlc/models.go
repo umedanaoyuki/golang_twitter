@@ -15,6 +15,13 @@ type Bookmark struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type Like struct {
+	ID        int32     `json:"id"`
+	UserID    int32     `json:"user_id"`
+	TweetID   int32     `json:"tweet_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type Tweet struct {
 	ID        int32     `json:"id"`
 	UserID    int32     `json:"user_id"`

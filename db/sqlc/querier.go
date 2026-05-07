@@ -10,14 +10,18 @@ import (
 
 type Querier interface {
 	CountBookmarksByTweetID(ctx context.Context, tweetID int32) (int64, error)
+	CountLikesByTweetID(ctx context.Context, tweetID int32) (int64, error)
 	CreateBookmark(ctx context.Context, arg CreateBookmarkParams) (Bookmark, error)
+	CreateLike(ctx context.Context, arg CreateLikeParams) (Like, error)
 	CreateTweet(ctx context.Context, arg CreateTweetParams) (Tweet, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserActivation(ctx context.Context, arg CreateUserActivationParams) (UserActivation, error)
 	DeleteBookmark(ctx context.Context, arg DeleteBookmarkParams) error
+	DeleteLike(ctx context.Context, arg DeleteLikeParams) error
 	DeleteTweet(ctx context.Context, arg DeleteTweetParams) error
 	DeleteUserActivation(ctx context.Context, token string) error
 	ExistsBookmark(ctx context.Context, arg ExistsBookmarkParams) (bool, error)
+	ExistsLike(ctx context.Context, arg ExistsLikeParams) (bool, error)
 	GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error)
 	GetBookmarksByUserId(ctx context.Context, userID int32) ([]GetBookmarksByUserIdRow, error)
 	GetTweetByID(ctx context.Context, id int32) (Tweet, error)
