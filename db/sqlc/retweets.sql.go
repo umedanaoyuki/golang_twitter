@@ -9,14 +9,14 @@ import (
 	"context"
 )
 
-const countLikesByTweetID = `-- name: CountLikesByTweetID :one
+const countRetweetsByTweetID = `-- name: CountRetweetsByTweetID :one
 SELECT COUNT(*)::bigint AS retweet_count
 FROM retweets
 WHERE tweet_id = $1
 `
 
-func (q *Queries) CountLikesByTweetID(ctx context.Context, tweetID int32) (int64, error) {
-	row := q.queryRow(ctx, q.countLikesByTweetIDStmt, countLikesByTweetID, tweetID)
+func (q *Queries) CountRetweetsByTweetID(ctx context.Context, tweetID int32) (int64, error) {
+	row := q.queryRow(ctx, q.countRetweetsByTweetIDStmt, countRetweetsByTweetID, tweetID)
 	var retweet_count int64
 	err := row.Scan(&retweet_count)
 	return retweet_count, err

@@ -1,5 +1,5 @@
--- name: CreateRetweet :one
-INSERT INTO retweets (
+-- name: CreateLike :one
+INSERT INTO likes (
   user_id,
   tweet_id
 ) VALUES (
@@ -8,18 +8,18 @@ INSERT INTO retweets (
 ON CONFLICT (user_id, tweet_id) DO NOTHING
 RETURNING id, user_id, tweet_id, created_at;
 
--- name: DeleteRetweet :exec
-DELETE FROM retweets
+-- name: DeleteLike :exec
+DELETE FROM likes
 WHERE user_id = $1 AND tweet_id = $2;
 
--- name: CountRetweetsByTweetID :one
-SELECT COUNT(*)::bigint AS retweet_count
-FROM retweets
+-- name: CountLikesByTweetID :one
+SELECT COUNT(*)::bigint AS like_count
+FROM likes
 WHERE tweet_id = $1;
 
--- name: ExistsRetweet :one
+-- name: ExistsLike :one
 SELECT EXISTS(
   SELECT 1
-  FROM retweets
+  FROM likes
   WHERE user_id = $1 AND tweet_id = $2
 ) AS exists;
