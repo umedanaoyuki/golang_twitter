@@ -58,13 +58,17 @@ func main() {
 	// サービスの初期化
 	authService := services.NewAuthService(conn, queries, emailMailer)
 	tweetService := services.NewTweetService(conn, queries)
+	likeService := services.NewLikeService(conn, queries)
 	userService := services.NewUserService(queries)
+	bookmarkService := services.NewBookmarkService(conn, queries)
 
 	// コントローラーの初期化
 	authController := controllers.NewAuthController(authService)
 	tweetController := controllers.NewTweetController(tweetService)
+	likeController := controllers.NewLikeController(likeService)
+	
 	userController := controllers.NewUserController(userService)
-
+	bookmarkController := controllers.NewBookmarkController(bookmarkService)
 	// Ginルーター設定
 	router := gin.Default()
 
@@ -112,6 +116,13 @@ func main() {
 
 		// 退会
 		authorized.DELETE("/user", userController.DeleteUser)
+		// ブックマーク機能
+		authorized.POST("/tweets/:id/bookmark", bookmarkController.CreateBookmark)
+		authorized.DELETE("/tweets/:id/bookmark", bookmarkController.DeleteBookmark)
+		authorized.GET("/tweets/bookmarks", bookmarkController.GetBookmarksByUserId)
+		// いいね機能
+		authorized.POST("/tweets/:id/like", likeController.CreateLike)
+		authorized.DELETE("/tweets/:id/like", likeController.DeleteLike)
 	}
 
 	log.Println("サーバー起動: http://localhost:8080")
