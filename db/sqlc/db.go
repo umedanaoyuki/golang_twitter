@@ -24,8 +24,14 @@ func New(db DBTX) *Queries {
 func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	q := Queries{db: db}
 	var err error
+	if q.countBookmarksByTweetIDStmt, err = db.PrepareContext(ctx, countBookmarksByTweetID); err != nil {
+		return nil, fmt.Errorf("error preparing query CountBookmarksByTweetID: %w", err)
+	}
 	if q.countLikesByTweetIDStmt, err = db.PrepareContext(ctx, countLikesByTweetID); err != nil {
 		return nil, fmt.Errorf("error preparing query CountLikesByTweetID: %w", err)
+	}
+	if q.createBookmarkStmt, err = db.PrepareContext(ctx, createBookmark); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateBookmark: %w", err)
 	}
 	if q.createLikeStmt, err = db.PrepareContext(ctx, createLike); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateLike: %w", err)
@@ -39,6 +45,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createUserActivationStmt, err = db.PrepareContext(ctx, createUserActivation); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUserActivation: %w", err)
 	}
+	if q.deleteBookmarkStmt, err = db.PrepareContext(ctx, deleteBookmark); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteBookmark: %w", err)
+	}
 	if q.deleteLikeStmt, err = db.PrepareContext(ctx, deleteLike); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteLike: %w", err)
 	}
@@ -48,11 +57,17 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.deleteUserActivationStmt, err = db.PrepareContext(ctx, deleteUserActivation); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteUserActivation: %w", err)
 	}
+	if q.existsBookmarkStmt, err = db.PrepareContext(ctx, existsBookmark); err != nil {
+		return nil, fmt.Errorf("error preparing query ExistsBookmark: %w", err)
+	}
 	if q.existsLikeStmt, err = db.PrepareContext(ctx, existsLike); err != nil {
 		return nil, fmt.Errorf("error preparing query ExistsLike: %w", err)
 	}
 	if q.getAllTweetsStmt, err = db.PrepareContext(ctx, getAllTweets); err != nil {
 		return nil, fmt.Errorf("error preparing query GetAllTweets: %w", err)
+	}
+	if q.getBookmarksByUserIdStmt, err = db.PrepareContext(ctx, getBookmarksByUserId); err != nil {
+		return nil, fmt.Errorf("error preparing query GetBookmarksByUserId: %w", err)
 	}
 	if q.getTweetByIDStmt, err = db.PrepareContext(ctx, getTweetByID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetTweetByID: %w", err)
@@ -80,9 +95,19 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 
 func (q *Queries) Close() error {
 	var err error
+	if q.countBookmarksByTweetIDStmt != nil {
+		if cerr := q.countBookmarksByTweetIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countBookmarksByTweetIDStmt: %w", cerr)
+		}
+	}
 	if q.countLikesByTweetIDStmt != nil {
 		if cerr := q.countLikesByTweetIDStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing countLikesByTweetIDStmt: %w", cerr)
+		}
+	}
+	if q.createBookmarkStmt != nil {
+		if cerr := q.createBookmarkStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createBookmarkStmt: %w", cerr)
 		}
 	}
 	if q.createLikeStmt != nil {
@@ -105,6 +130,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing createUserActivationStmt: %w", cerr)
 		}
 	}
+	if q.deleteBookmarkStmt != nil {
+		if cerr := q.deleteBookmarkStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteBookmarkStmt: %w", cerr)
+		}
+	}
 	if q.deleteLikeStmt != nil {
 		if cerr := q.deleteLikeStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteLikeStmt: %w", cerr)
@@ -120,6 +150,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing deleteUserActivationStmt: %w", cerr)
 		}
 	}
+	if q.existsBookmarkStmt != nil {
+		if cerr := q.existsBookmarkStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing existsBookmarkStmt: %w", cerr)
+		}
+	}
 	if q.existsLikeStmt != nil {
 		if cerr := q.existsLikeStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing existsLikeStmt: %w", cerr)
@@ -128,6 +163,11 @@ func (q *Queries) Close() error {
 	if q.getAllTweetsStmt != nil {
 		if cerr := q.getAllTweetsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getAllTweetsStmt: %w", cerr)
+		}
+	}
+	if q.getBookmarksByUserIdStmt != nil {
+		if cerr := q.getBookmarksByUserIdStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getBookmarksByUserIdStmt: %w", cerr)
 		}
 	}
 	if q.getTweetByIDStmt != nil {
@@ -204,16 +244,21 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 type Queries struct {
 	db                              DBTX
 	tx                              *sql.Tx
+	countBookmarksByTweetIDStmt     *sql.Stmt
 	countLikesByTweetIDStmt         *sql.Stmt
+	createBookmarkStmt              *sql.Stmt
 	createLikeStmt                  *sql.Stmt
 	createTweetStmt                 *sql.Stmt
 	createUserStmt                  *sql.Stmt
 	createUserActivationStmt        *sql.Stmt
+	deleteBookmarkStmt              *sql.Stmt
 	deleteLikeStmt                  *sql.Stmt
 	deleteTweetStmt                 *sql.Stmt
 	deleteUserActivationStmt        *sql.Stmt
+	existsBookmarkStmt              *sql.Stmt
 	existsLikeStmt                  *sql.Stmt
 	getAllTweetsStmt                *sql.Stmt
+	getBookmarksByUserIdStmt        *sql.Stmt
 	getTweetByIDStmt                *sql.Stmt
 	getTweetsByUserIDStmt           *sql.Stmt
 	getTweetsByUserIDWithCursorStmt *sql.Stmt
@@ -227,16 +272,21 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
 		db:                              tx,
 		tx:                              tx,
+		countBookmarksByTweetIDStmt:     q.countBookmarksByTweetIDStmt,
 		countLikesByTweetIDStmt:         q.countLikesByTweetIDStmt,
+		createBookmarkStmt:              q.createBookmarkStmt,
 		createLikeStmt:                  q.createLikeStmt,
 		createTweetStmt:                 q.createTweetStmt,
 		createUserStmt:                  q.createUserStmt,
 		createUserActivationStmt:        q.createUserActivationStmt,
+		deleteBookmarkStmt:              q.deleteBookmarkStmt,
 		deleteLikeStmt:                  q.deleteLikeStmt,
 		deleteTweetStmt:                 q.deleteTweetStmt,
 		deleteUserActivationStmt:        q.deleteUserActivationStmt,
+		existsBookmarkStmt:              q.existsBookmarkStmt,
 		existsLikeStmt:                  q.existsLikeStmt,
 		getAllTweetsStmt:                q.getAllTweetsStmt,
+		getBookmarksByUserIdStmt:        q.getBookmarksByUserIdStmt,
 		getTweetByIDStmt:                q.getTweetByIDStmt,
 		getTweetsByUserIDStmt:           q.getTweetsByUserIDStmt,
 		getTweetsByUserIDWithCursorStmt: q.getTweetsByUserIDWithCursorStmt,

@@ -60,6 +60,7 @@ func main() {
 	tweetService := services.NewTweetService(conn, queries)
 	likeService := services.NewLikeService(conn, queries)
 	userService := services.NewUserService(queries)
+	bookmarkService := services.NewBookmarkService(conn, queries)
 
 	// コントローラーの初期化
 	authController := controllers.NewAuthController(authService)
@@ -67,7 +68,7 @@ func main() {
 	likeController := controllers.NewLikeController(likeService)
 	
 	userController := controllers.NewUserController(userService)
-
+	bookmarkController := controllers.NewBookmarkController(bookmarkService)
 	// Ginルーター設定
 	router := gin.Default()
 
@@ -113,6 +114,10 @@ func main() {
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
 
+		// ブックマーク機能
+		authorized.POST("/tweets/:id/bookmark", bookmarkController.CreateBookmark)
+		authorized.DELETE("/tweets/:id/bookmark", bookmarkController.DeleteBookmark)
+		authorized.GET("/tweets/bookmarks", bookmarkController.GetBookmarksByUserId)
 		// いいね機能
 		authorized.POST("/tweets/:id/like", likeController.CreateLike)
 		authorized.DELETE("/tweets/:id/like", likeController.DeleteLike)
