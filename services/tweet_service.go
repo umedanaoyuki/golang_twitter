@@ -11,6 +11,8 @@ type TweetDetail struct {
 	db.Tweet
 	// いいね数
 	LikeCount int64 `json:"like_count"`
+	// リツイート数
+	RetweetCount int64 `json:"retweet_count"`
 }
 
 type TweetService interface {
@@ -82,7 +84,11 @@ func (s *tweetService) GetUserTweetsWithCursor(ctx context.Context, userID int32
 		if err != nil {
 			return nil, &ServiceError{Message: "いいね数の取得に失敗しました"}
 		}
-		details = append(details, TweetDetail{Tweet: t, LikeCount: n})
+		rt, err := s.queries.CountRetweetsByTweetID(ctx, t.ID)
+		if err != nil {
+			return nil, &ServiceError{Message: "リツイート数の取得に失敗しました"}
+		}
+		details = append(details, TweetDetail{Tweet: t, LikeCount: n, RetweetCount: rt})
 	}
 	return details, nil
 }
@@ -101,5 +107,9 @@ func (s *tweetService) GetTweetByID(ctx context.Context, id int32) (*TweetDetail
 		return nil, &ServiceError{Message: "いいね数の取得に失敗しました"}
 	}
 
-	return &TweetDetail{Tweet: tweet, LikeCount: likeCount}, nil
+	retweetCount, err := s.queries.CountRetweetsByTweetID(ctx, id)
+	if err != nil {
+		return nil, &ServiceError{Message: "リツイート数の取得に失敗しました"}
+	}
+	return &TweetDetail{Tweet: tweet, LikeCount: likeCount, RetweetCount: retweetCount}, nil
 }
