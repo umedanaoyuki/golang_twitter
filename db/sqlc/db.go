@@ -99,6 +99,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getUserDetailByUserIDStmt, err = db.PrepareContext(ctx, getUserDetailByUserID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUserDetailByUserID: %w", err)
 	}
+	if q.getUserRetweetsWithCursorStmt, err = db.PrepareContext(ctx, getUserRetweetsWithCursor); err != nil {
+		return nil, fmt.Errorf("error preparing query GetUserRetweetsWithCursor: %w", err)
+	}
 	if q.updateUserIsActiveStmt, err = db.PrepareContext(ctx, updateUserIsActive); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateUserIsActive: %w", err)
 	}
@@ -232,6 +235,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getUserDetailByUserIDStmt: %w", cerr)
 		}
 	}
+	if q.getUserRetweetsWithCursorStmt != nil {
+		if cerr := q.getUserRetweetsWithCursorStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getUserRetweetsWithCursorStmt: %w", cerr)
+		}
+	}
 	if q.updateUserIsActiveStmt != nil {
 		if cerr := q.updateUserIsActiveStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updateUserIsActiveStmt: %w", cerr)
@@ -301,6 +309,7 @@ type Queries struct {
 	getUserActivationByTokenStmt    *sql.Stmt
 	getUserByEmailStmt              *sql.Stmt
 	getUserDetailByUserIDStmt       *sql.Stmt
+	getUserRetweetsWithCursorStmt   *sql.Stmt
 	updateUserIsActiveStmt          *sql.Stmt
 }
 
@@ -333,6 +342,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getUserActivationByTokenStmt:    q.getUserActivationByTokenStmt,
 		getUserByEmailStmt:              q.getUserByEmailStmt,
 		getUserDetailByUserIDStmt:       q.getUserDetailByUserIDStmt,
+		getUserRetweetsWithCursorStmt:   q.getUserRetweetsWithCursorStmt,
 		updateUserIsActiveStmt:          q.updateUserIsActiveStmt,
 	}
 }

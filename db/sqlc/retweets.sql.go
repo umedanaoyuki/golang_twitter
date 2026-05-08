@@ -84,3 +84,46 @@ func (q *Queries) ExistsRetweet(ctx context.Context, arg ExistsRetweetParams) (b
 	err := row.Scan(&exists)
 	return exists, err
 }
+
+const getUserRetweetsWithCursor = `-- name: GetUserRetweetsWithCursor :many
+SELECT id, user_id, tweet_id, created_at
+FROM retweets
+WHERE user_id = $1
+  AND (CASE WHEN $2 = 0 THEN true ELSE id < $2 END)
+ORDER BY id DESC
+LIMIT $3
+`
+
+type GetUserRetweetsWithCursorParams struct {
+	UserID  int32       `json:"user_id"`
+	Column2 interface{} `json:"column_2"`
+	Limit   int32       `json:"limit"`
+}
+
+func (q *Queries) GetUserRetweetsWithCursor(ctx context.Context, arg GetUserRetweetsWithCursorParams) ([]Retweet, error) {
+	rows, err := q.query(ctx, q.getUserRetweetsWithCursorStmt, getUserRetweetsWithCursor, arg.UserID, arg.Column2, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Retweet{}
+	for rows.Next() {
+		var i Retweet
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.TweetID,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

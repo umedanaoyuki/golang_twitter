@@ -101,9 +101,11 @@ func main() {
 	router.GET("/activate", authController.ActivateUser)
 	// ログイン
 	router.POST("/login", authController.Login)
-	// ユーザーのツイート一覧取得（認証不要）
+	// ユーザーのツイート一覧取得
 	router.GET("/users/:user_id/tweets", tweetController.GetUserTweets)
-	// ユーザー情報取得（認証不要）
+	// ユーザーのリツイート一覧取得
+	router.GET("/users/:user_id/retweets", retweetController.GetUserRetweets)
+	// ユーザー情報取得
 	router.GET("/users/:user_id", userController.GetUserByID)
 
 	// 1つのTweet取得

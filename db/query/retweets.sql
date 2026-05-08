@@ -23,3 +23,11 @@ SELECT EXISTS(
   FROM retweets
   WHERE user_id = $1 AND tweet_id = $2
 ) AS exists;
+
+-- name: GetUserRetweetsWithCursor :many
+SELECT id, user_id, tweet_id, created_at
+FROM retweets
+WHERE user_id = $1
+  AND (CASE WHEN $2 = 0 THEN true ELSE id < $2 END)
+ORDER BY id DESC
+LIMIT $3;
