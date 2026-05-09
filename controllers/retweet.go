@@ -85,11 +85,11 @@ func (ctrl *RetweetController) GetUserRetweets(c *gin.Context) {
 		limit = 20
 	}
 
-	// リツイート一覧を取得
-	tweets, err := ctrl.RetweetService.GetUserRetweetsWithCursor(
-		c.Request.Context(), 
-		uriParams.UserID, 
-		queryParams.Cursor, 
+	// リツイート一覧（ツイート詳細付き）を取得
+	retweets, err := ctrl.RetweetService.GetUserRetweetsWithCursor(
+		c.Request.Context(),
+		uriParams.UserID,
+		queryParams.Cursor,
 		limit,
 	)
 	if err != nil {
@@ -97,16 +97,16 @@ func (ctrl *RetweetController) GetUserRetweets(c *gin.Context) {
 		return
 	}
 
-	// 次のカーソルを計算
+	// 次のカーソルを計算（retweets テーブルの id）
 	var nextCursor *int32
-	if len(tweets) > 0 {
-		lastTweetID := tweets[len(tweets)-1].ID
-		nextCursor = &lastTweetID
+	if len(retweets) > 0 {
+		lastID := retweets[len(retweets)-1].RetweetRowID
+		nextCursor = &lastID
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"tweets":      tweets,
+		"retweets":    retweets,
 		"next_cursor": nextCursor,
-		"has_more":    len(tweets) == int(limit),
+		"has_more":    len(retweets) == int(limit),
 	})
 }

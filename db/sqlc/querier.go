@@ -29,6 +29,7 @@ type Querier interface {
 	GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error)
 	GetBookmarksByUserId(ctx context.Context, userID int32) ([]GetBookmarksByUserIdRow, error)
 	GetTweetByID(ctx context.Context, id int32) (Tweet, error)
+	GetTweetsByIDs(ctx context.Context, dollar_1 []int32) ([]Tweet, error)
 	GetTweetsByUserID(ctx context.Context, userID int32) ([]Tweet, error)
 	GetTweetsByUserIDWithCursor(ctx context.Context, arg GetTweetsByUserIDWithCursorParams) ([]Tweet, error)
 	GetUserActivationByToken(ctx context.Context, token string) (UserActivation, error)

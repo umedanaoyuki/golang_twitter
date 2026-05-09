@@ -61,7 +61,7 @@ func main() {
 	likeService := services.NewLikeService(conn, queries)
 	userService := services.NewUserService(queries)
 	bookmarkService := services.NewBookmarkService(conn, queries)
-	retweetService := services.NewRetweetService(conn, queries)
+	retweetService := services.NewRetweetService(conn, queries, tweetService)
 
 	// コントローラーの初期化
 	authController := controllers.NewAuthController(authService)
