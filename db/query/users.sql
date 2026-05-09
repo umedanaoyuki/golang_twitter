@@ -23,3 +23,7 @@ SELECT id, email, is_active, created_at, updated_at
 FROM users
 WHERE id = $1
 LIMIT 1;
+
+-- name: DeleteUser :exec
+DELETE FROM users
+WHERE id = $1;

@@ -121,6 +121,8 @@ func main() {
 		// リツイート機能
 		authorized.POST("/tweets/:id/retweet", retweetController.CreateRetweet)
 		authorized.DELETE("/tweets/:id/retweet", retweetController.DeleteRetweet)
+		// 退会
+		authorized.DELETE("/user", userController.DeleteUser)
 		// ブックマーク機能
 		authorized.POST("/tweets/:id/bookmark", bookmarkController.CreateBookmark)
 		authorized.DELETE("/tweets/:id/bookmark", bookmarkController.DeleteBookmark)
