@@ -61,6 +61,8 @@ func main() {
 	likeService := services.NewLikeService(conn, queries)
 	userService := services.NewUserService(queries)
 	bookmarkService := services.NewBookmarkService(conn, queries)
+	groupService := services.NewGroupService(conn, queries)
+	messageService := services.NewMessageService(conn, queries)
 
 	// コントローラーの初期化
 	authController := controllers.NewAuthController(authService)
@@ -69,6 +71,8 @@ func main() {
 	
 	userController := controllers.NewUserController(userService)
 	bookmarkController := controllers.NewBookmarkController(bookmarkService)
+	groupController := controllers.NewGroupController(groupService)
+	messageController := controllers.NewMessageController(messageService)
 	// Ginルーター設定
 	router := gin.Default()
 
@@ -123,6 +127,17 @@ func main() {
 		// いいね機能
 		authorized.POST("/tweets/:id/like", likeController.CreateLike)
 		authorized.DELETE("/tweets/:id/like", likeController.DeleteLike)
+
+		/* グループ内でのメッセージ機能 */
+		// グループ作成
+		authorized.POST("/groups", groupController.CreateGroup)
+		// グループ一覧取得
+		authorized.GET("/groups", groupController.GetGroups)
+		// グループ内でのメッセージ送信
+		authorized.POST("/groups/:group_id/messages", messageController.CreateMessage)
+		// グループ内でのメッセージ一覧取得
+		authorized.GET("/groups/:group_id/messages", messageController.GetMessages)
+
 	}
 
 	log.Println("サーバー起動: http://localhost:8080")
