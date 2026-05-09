@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"golang_twitter/middleware"
 	"golang_twitter/services"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,14 +12,45 @@ type GroupController struct {
 	GroupService services.GroupService
 }
 
+type CreateGroupBody struct {
+	Name string `json:"name" binding:"required"`
+}
+
 func NewGroupController(GroupService services.GroupService) *GroupController {
 	return &GroupController{GroupService: GroupService}
 }
 
 func (ctrl *GroupController) CreateGroup(c *gin.Context) {
-	return;
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "ログインが必要です"})
+		return
+	}
+
+	var body CreateGroupBody
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := ctrl.GroupService.CreateGroup(c.Request.Context(), userID, body.Name); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
 func (ctrl *GroupController) GetGroups(c *gin.Context) {
-	return;
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "ログインが必要です"})
+		return
+	}
+
+	groups, err := ctrl.GroupService.GetGroups(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, groups)
 }
