@@ -19,6 +19,7 @@ type Querier interface {
 	DeleteBookmark(ctx context.Context, arg DeleteBookmarkParams) error
 	DeleteLike(ctx context.Context, arg DeleteLikeParams) error
 	DeleteTweet(ctx context.Context, arg DeleteTweetParams) error
+	DeleteUser(ctx context.Context, id int32) error
 	DeleteUserActivation(ctx context.Context, token string) error
 	ExistsBookmark(ctx context.Context, arg ExistsBookmarkParams) (bool, error)
 	ExistsLike(ctx context.Context, arg ExistsLikeParams) (bool, error)

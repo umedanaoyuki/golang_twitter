@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"golang_twitter/middleware"
 	"golang_twitter/services"
 	"net/http"
 
@@ -40,4 +41,19 @@ func (ctrl *UserController) GetUserByID(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"user": user,
 	})
+}
+
+func (ctrl *UserController) DeleteUser(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "ログインが必要です"})
+		return
+	}
+
+	err = ctrl.userService.DeleteUser(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }

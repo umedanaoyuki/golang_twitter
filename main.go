@@ -114,6 +114,8 @@ func main() {
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
 
+		// 退会
+		authorized.DELETE("/user", userController.DeleteUser)
 		// ブックマーク機能
 		authorized.POST("/tweets/:id/bookmark", bookmarkController.CreateBookmark)
 		authorized.DELETE("/tweets/:id/bookmark", bookmarkController.DeleteBookmark)
