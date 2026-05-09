@@ -15,10 +15,25 @@ type Bookmark struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type Group struct {
+	ID        int32     `json:"id"`
+	Name      string    `json:"name"`
+	UserID    int32     `json:"user_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type Like struct {
 	ID        int32     `json:"id"`
 	UserID    int32     `json:"user_id"`
 	TweetID   int32     `json:"tweet_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type Message struct {
+	ID        int32     `json:"id"`
+	UserID    int32     `json:"user_id"`
+	GroupID   int32     `json:"group_id"`
+	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
 }
 

@@ -33,8 +33,14 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createBookmarkStmt, err = db.PrepareContext(ctx, createBookmark); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateBookmark: %w", err)
 	}
+	if q.createGroupStmt, err = db.PrepareContext(ctx, createGroup); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateGroup: %w", err)
+	}
 	if q.createLikeStmt, err = db.PrepareContext(ctx, createLike); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateLike: %w", err)
+	}
+	if q.createMessageStmt, err = db.PrepareContext(ctx, createMessage); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateMessage: %w", err)
 	}
 	if q.createTweetStmt, err = db.PrepareContext(ctx, createTweet); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateTweet: %w", err)
@@ -71,6 +77,15 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.getBookmarksByUserIdStmt, err = db.PrepareContext(ctx, getBookmarksByUserId); err != nil {
 		return nil, fmt.Errorf("error preparing query GetBookmarksByUserId: %w", err)
+	}
+	if q.getGroupByIDStmt, err = db.PrepareContext(ctx, getGroupByID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetGroupByID: %w", err)
+	}
+	if q.getGroupsByUserIDStmt, err = db.PrepareContext(ctx, getGroupsByUserID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetGroupsByUserID: %w", err)
+	}
+	if q.getMessagesByGroupIDStmt, err = db.PrepareContext(ctx, getMessagesByGroupID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetMessagesByGroupID: %w", err)
 	}
 	if q.getTweetByIDStmt, err = db.PrepareContext(ctx, getTweetByID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetTweetByID: %w", err)
@@ -113,9 +128,19 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing createBookmarkStmt: %w", cerr)
 		}
 	}
+	if q.createGroupStmt != nil {
+		if cerr := q.createGroupStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createGroupStmt: %w", cerr)
+		}
+	}
 	if q.createLikeStmt != nil {
 		if cerr := q.createLikeStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createLikeStmt: %w", cerr)
+		}
+	}
+	if q.createMessageStmt != nil {
+		if cerr := q.createMessageStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createMessageStmt: %w", cerr)
 		}
 	}
 	if q.createTweetStmt != nil {
@@ -176,6 +201,21 @@ func (q *Queries) Close() error {
 	if q.getBookmarksByUserIdStmt != nil {
 		if cerr := q.getBookmarksByUserIdStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getBookmarksByUserIdStmt: %w", cerr)
+		}
+	}
+	if q.getGroupByIDStmt != nil {
+		if cerr := q.getGroupByIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getGroupByIDStmt: %w", cerr)
+		}
+	}
+	if q.getGroupsByUserIDStmt != nil {
+		if cerr := q.getGroupsByUserIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getGroupsByUserIDStmt: %w", cerr)
+		}
+	}
+	if q.getMessagesByGroupIDStmt != nil {
+		if cerr := q.getMessagesByGroupIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getMessagesByGroupIDStmt: %w", cerr)
 		}
 	}
 	if q.getTweetByIDStmt != nil {
@@ -255,7 +295,9 @@ type Queries struct {
 	countBookmarksByTweetIDStmt     *sql.Stmt
 	countLikesByTweetIDStmt         *sql.Stmt
 	createBookmarkStmt              *sql.Stmt
+	createGroupStmt                 *sql.Stmt
 	createLikeStmt                  *sql.Stmt
+	createMessageStmt               *sql.Stmt
 	createTweetStmt                 *sql.Stmt
 	createUserStmt                  *sql.Stmt
 	createUserActivationStmt        *sql.Stmt
@@ -268,6 +310,9 @@ type Queries struct {
 	existsLikeStmt                  *sql.Stmt
 	getAllTweetsStmt                *sql.Stmt
 	getBookmarksByUserIdStmt        *sql.Stmt
+	getGroupByIDStmt                *sql.Stmt
+	getGroupsByUserIDStmt           *sql.Stmt
+	getMessagesByGroupIDStmt        *sql.Stmt
 	getTweetByIDStmt                *sql.Stmt
 	getTweetsByUserIDStmt           *sql.Stmt
 	getTweetsByUserIDWithCursorStmt *sql.Stmt
@@ -284,7 +329,9 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		countBookmarksByTweetIDStmt:     q.countBookmarksByTweetIDStmt,
 		countLikesByTweetIDStmt:         q.countLikesByTweetIDStmt,
 		createBookmarkStmt:              q.createBookmarkStmt,
+		createGroupStmt:                 q.createGroupStmt,
 		createLikeStmt:                  q.createLikeStmt,
+		createMessageStmt:               q.createMessageStmt,
 		createTweetStmt:                 q.createTweetStmt,
 		createUserStmt:                  q.createUserStmt,
 		createUserActivationStmt:        q.createUserActivationStmt,
@@ -297,6 +344,9 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		existsLikeStmt:                  q.existsLikeStmt,
 		getAllTweetsStmt:                q.getAllTweetsStmt,
 		getBookmarksByUserIdStmt:        q.getBookmarksByUserIdStmt,
+		getGroupByIDStmt:                q.getGroupByIDStmt,
+		getGroupsByUserIDStmt:           q.getGroupsByUserIDStmt,
+		getMessagesByGroupIDStmt:        q.getMessagesByGroupIDStmt,
 		getTweetByIDStmt:                q.getTweetByIDStmt,
 		getTweetsByUserIDStmt:           q.getTweetsByUserIDStmt,
 		getTweetsByUserIDWithCursorStmt: q.getTweetsByUserIDWithCursorStmt,
