@@ -30,8 +30,14 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.countLikesByTweetIDStmt, err = db.PrepareContext(ctx, countLikesByTweetID); err != nil {
 		return nil, fmt.Errorf("error preparing query CountLikesByTweetID: %w", err)
 	}
+	if q.countLikesByTweetIDsStmt, err = db.PrepareContext(ctx, countLikesByTweetIDs); err != nil {
+		return nil, fmt.Errorf("error preparing query CountLikesByTweetIDs: %w", err)
+	}
 	if q.countRetweetsByTweetIDStmt, err = db.PrepareContext(ctx, countRetweetsByTweetID); err != nil {
 		return nil, fmt.Errorf("error preparing query CountRetweetsByTweetID: %w", err)
+	}
+	if q.countRetweetsByTweetIDsStmt, err = db.PrepareContext(ctx, countRetweetsByTweetIDs); err != nil {
+		return nil, fmt.Errorf("error preparing query CountRetweetsByTweetIDs: %w", err)
 	}
 	if q.createBookmarkStmt, err = db.PrepareContext(ctx, createBookmark); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateBookmark: %w", err)
@@ -126,9 +132,19 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing countLikesByTweetIDStmt: %w", cerr)
 		}
 	}
+	if q.countLikesByTweetIDsStmt != nil {
+		if cerr := q.countLikesByTweetIDsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countLikesByTweetIDsStmt: %w", cerr)
+		}
+	}
 	if q.countRetweetsByTweetIDStmt != nil {
 		if cerr := q.countRetweetsByTweetIDStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing countRetweetsByTweetIDStmt: %w", cerr)
+		}
+	}
+	if q.countRetweetsByTweetIDsStmt != nil {
+		if cerr := q.countRetweetsByTweetIDsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countRetweetsByTweetIDsStmt: %w", cerr)
 		}
 	}
 	if q.createBookmarkStmt != nil {
@@ -302,7 +318,9 @@ type Queries struct {
 	tx                              *sql.Tx
 	countBookmarksByTweetIDStmt     *sql.Stmt
 	countLikesByTweetIDStmt         *sql.Stmt
+	countLikesByTweetIDsStmt        *sql.Stmt
 	countRetweetsByTweetIDStmt      *sql.Stmt
+	countRetweetsByTweetIDsStmt     *sql.Stmt
 	createBookmarkStmt              *sql.Stmt
 	createLikeStmt                  *sql.Stmt
 	createRetweetStmt               *sql.Stmt
@@ -337,7 +355,9 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		tx:                              tx,
 		countBookmarksByTweetIDStmt:     q.countBookmarksByTweetIDStmt,
 		countLikesByTweetIDStmt:         q.countLikesByTweetIDStmt,
+		countLikesByTweetIDsStmt:        q.countLikesByTweetIDsStmt,
 		countRetweetsByTweetIDStmt:      q.countRetweetsByTweetIDStmt,
+		countRetweetsByTweetIDsStmt:     q.countRetweetsByTweetIDsStmt,
 		createBookmarkStmt:              q.createBookmarkStmt,
 		createLikeStmt:                  q.createLikeStmt,
 		createRetweetStmt:               q.createRetweetStmt,

@@ -11,7 +11,9 @@ import (
 type Querier interface {
 	CountBookmarksByTweetID(ctx context.Context, tweetID int32) (int64, error)
 	CountLikesByTweetID(ctx context.Context, tweetID int32) (int64, error)
+	CountLikesByTweetIDs(ctx context.Context, dollar_1 []int32) ([]CountLikesByTweetIDsRow, error)
 	CountRetweetsByTweetID(ctx context.Context, tweetID int32) (int64, error)
+	CountRetweetsByTweetIDs(ctx context.Context, dollar_1 []int32) ([]CountRetweetsByTweetIDsRow, error)
 	CreateBookmark(ctx context.Context, arg CreateBookmarkParams) (Bookmark, error)
 	CreateLike(ctx context.Context, arg CreateLikeParams) (Like, error)
 	CreateRetweet(ctx context.Context, arg CreateRetweetParams) (Retweet, error)
