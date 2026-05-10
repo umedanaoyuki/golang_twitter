@@ -17,6 +17,12 @@ SELECT COUNT(*)::bigint AS retweet_count
 FROM retweets
 WHERE tweet_id = $1;
 
+-- name: CountRetweetsByTweetIDs :many
+SELECT tweet_id, COUNT(*)::bigint AS retweet_count
+FROM retweets
+WHERE tweet_id = ANY($1::int[])
+GROUP BY tweet_id;
+
 -- name: ExistsRetweet :one
 SELECT EXISTS(
   SELECT 1
