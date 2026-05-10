@@ -135,17 +135,31 @@ func (s *tweetService) GetTweetDetailsByIDs(ctx context.Context, ids []int32) (m
 		return nil, &ServiceError{Message: "ツイートの取得に失敗しました"}
 	}
 
+	likeRows, err := s.queries.CountLikesByTweetIDs(ctx, unique)
+	if err != nil {
+		return nil, &ServiceError{Message: "いいね数の取得に失敗しました"}
+	}
+	retweetRows, err := s.queries.CountRetweetsByTweetIDs(ctx, unique)
+	if err != nil {
+		return nil, &ServiceError{Message: "リツイート数の取得に失敗しました"}
+	}
+
+	likeByTweetID := make(map[int32]int64, len(likeRows))
+	for _, row := range likeRows {
+		likeByTweetID[row.TweetID] = row.LikeCount
+	}
+	retweetByTweetID := make(map[int32]int64, len(retweetRows))
+	for _, row := range retweetRows {
+		retweetByTweetID[row.TweetID] = row.RetweetCount
+	}
+
 	out := make(map[int32]TweetDetail, len(tweets))
-	for _, t := range tweets {
-		n, err := s.queries.CountLikesByTweetID(ctx, t.ID)
-		if err != nil {
-			return nil, &ServiceError{Message: "いいね数の取得に失敗しました"}
+	for _, tweet := range tweets {
+		out[tweet.ID] = TweetDetail{
+			Tweet:        tweet,
+			LikeCount:    likeByTweetID[tweet.ID],
+			RetweetCount: retweetByTweetID[tweet.ID],
 		}
-		rt, err := s.queries.CountRetweetsByTweetID(ctx, t.ID)
-		if err != nil {
-			return nil, &ServiceError{Message: "リツイート数の取得に失敗しました"}
-		}
-		out[t.ID] = TweetDetail{Tweet: t, LikeCount: n, RetweetCount: rt}
 	}
 	return out, nil
 }
