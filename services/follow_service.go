@@ -26,6 +26,10 @@ func NewFollowService(db *sql.DB, queries *db.Queries) FollowService {
 }
 
 func (s *followService) CreateFollow(ctx context.Context, userID int32, followedUserID int32) error {
+	if userID == followedUserID {
+		return &ValidationError{Message: "自分自身をフォローすることはできません"}
+	}
+
 	_, err := s.queries.CreateFollow(ctx, db.CreateFollowParams{
 		UserID: userID,
 		FollowedUserID: followedUserID,

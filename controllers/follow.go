@@ -34,6 +34,10 @@ func (ctrl *FollowController) CreateFollow(c *gin.Context) {
 	}
 
 	if err := ctrl.followService.CreateFollow(c.Request.Context(), userID, uri.FollowedUserID); err != nil {
+		if _, ok := err.(*services.ValidationError); ok {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
