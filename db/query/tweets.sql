@@ -31,6 +31,11 @@ SELECT id, user_id, content, created_at, updated_at
 FROM tweets
 WHERE id = $1;
 
+-- name: GetTweetsByIDs :many
+SELECT id, user_id, content, created_at, updated_at
+FROM tweets
+WHERE id = ANY($1::int[]);
+
 -- name: DeleteTweet :exec
 DELETE FROM tweets
 WHERE id = $1 AND user_id = $2;

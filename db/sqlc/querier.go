@@ -11,26 +11,34 @@ import (
 type Querier interface {
 	CountBookmarksByTweetID(ctx context.Context, tweetID int32) (int64, error)
 	CountLikesByTweetID(ctx context.Context, tweetID int32) (int64, error)
+	CountLikesByTweetIDs(ctx context.Context, dollar_1 []int32) ([]CountLikesByTweetIDsRow, error)
+	CountRetweetsByTweetID(ctx context.Context, tweetID int32) (int64, error)
+	CountRetweetsByTweetIDs(ctx context.Context, dollar_1 []int32) ([]CountRetweetsByTweetIDsRow, error)
 	CreateBookmark(ctx context.Context, arg CreateBookmarkParams) (Bookmark, error)
 	CreateLike(ctx context.Context, arg CreateLikeParams) (Like, error)
+	CreateRetweet(ctx context.Context, arg CreateRetweetParams) (Retweet, error)
 	CreateTweet(ctx context.Context, arg CreateTweetParams) (Tweet, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserActivation(ctx context.Context, arg CreateUserActivationParams) (UserActivation, error)
 	DeleteBookmark(ctx context.Context, arg DeleteBookmarkParams) error
 	DeleteLike(ctx context.Context, arg DeleteLikeParams) error
+	DeleteRetweet(ctx context.Context, arg DeleteRetweetParams) error
 	DeleteTweet(ctx context.Context, arg DeleteTweetParams) error
 	DeleteUser(ctx context.Context, id int32) error
 	DeleteUserActivation(ctx context.Context, token string) error
 	ExistsBookmark(ctx context.Context, arg ExistsBookmarkParams) (bool, error)
 	ExistsLike(ctx context.Context, arg ExistsLikeParams) (bool, error)
+	ExistsRetweet(ctx context.Context, arg ExistsRetweetParams) (bool, error)
 	GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error)
 	GetBookmarksByUserId(ctx context.Context, userID int32) ([]GetBookmarksByUserIdRow, error)
 	GetTweetByID(ctx context.Context, id int32) (Tweet, error)
+	GetTweetsByIDs(ctx context.Context, dollar_1 []int32) ([]Tweet, error)
 	GetTweetsByUserID(ctx context.Context, userID int32) ([]Tweet, error)
 	GetTweetsByUserIDWithCursor(ctx context.Context, arg GetTweetsByUserIDWithCursorParams) ([]Tweet, error)
 	GetUserActivationByToken(ctx context.Context, token string) (UserActivation, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserDetailByUserID(ctx context.Context, id int32) (GetUserDetailByUserIDRow, error)
+	GetUserRetweetsWithCursor(ctx context.Context, arg GetUserRetweetsWithCursorParams) ([]Retweet, error)
 	UpdateUserIsActive(ctx context.Context, arg UpdateUserIsActiveParams) error
 }
 

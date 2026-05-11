@@ -17,6 +17,12 @@ SELECT COUNT(*)::bigint AS like_count
 FROM likes
 WHERE tweet_id = $1;
 
+-- name: CountLikesByTweetIDs :many
+SELECT tweet_id, COUNT(*)::bigint AS like_count
+FROM likes
+WHERE tweet_id = ANY($1::int[])
+GROUP BY tweet_id;
+
 -- name: ExistsLike :one
 SELECT EXISTS(
   SELECT 1
