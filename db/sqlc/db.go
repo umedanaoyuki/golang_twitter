@@ -30,6 +30,15 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.countLikesByTweetIDStmt, err = db.PrepareContext(ctx, countLikesByTweetID); err != nil {
 		return nil, fmt.Errorf("error preparing query CountLikesByTweetID: %w", err)
 	}
+	if q.countLikesByTweetIDsStmt, err = db.PrepareContext(ctx, countLikesByTweetIDs); err != nil {
+		return nil, fmt.Errorf("error preparing query CountLikesByTweetIDs: %w", err)
+	}
+	if q.countRetweetsByTweetIDStmt, err = db.PrepareContext(ctx, countRetweetsByTweetID); err != nil {
+		return nil, fmt.Errorf("error preparing query CountRetweetsByTweetID: %w", err)
+	}
+	if q.countRetweetsByTweetIDsStmt, err = db.PrepareContext(ctx, countRetweetsByTweetIDs); err != nil {
+		return nil, fmt.Errorf("error preparing query CountRetweetsByTweetIDs: %w", err)
+	}
 	if q.createBookmarkStmt, err = db.PrepareContext(ctx, createBookmark); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateBookmark: %w", err)
 	}
@@ -41,6 +50,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.createMessageStmt, err = db.PrepareContext(ctx, createMessage); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateMessage: %w", err)
+	}
+	if q.createRetweetStmt, err = db.PrepareContext(ctx, createRetweet); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateRetweet: %w", err)
 	}
 	if q.createTweetStmt, err = db.PrepareContext(ctx, createTweet); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateTweet: %w", err)
@@ -57,6 +69,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.deleteLikeStmt, err = db.PrepareContext(ctx, deleteLike); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteLike: %w", err)
 	}
+	if q.deleteRetweetStmt, err = db.PrepareContext(ctx, deleteRetweet); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteRetweet: %w", err)
+	}
 	if q.deleteTweetStmt, err = db.PrepareContext(ctx, deleteTweet); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteTweet: %w", err)
 	}
@@ -71,6 +86,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.existsLikeStmt, err = db.PrepareContext(ctx, existsLike); err != nil {
 		return nil, fmt.Errorf("error preparing query ExistsLike: %w", err)
+	}
+	if q.existsRetweetStmt, err = db.PrepareContext(ctx, existsRetweet); err != nil {
+		return nil, fmt.Errorf("error preparing query ExistsRetweet: %w", err)
 	}
 	if q.getAllTweetsStmt, err = db.PrepareContext(ctx, getAllTweets); err != nil {
 		return nil, fmt.Errorf("error preparing query GetAllTweets: %w", err)
@@ -90,6 +108,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getTweetByIDStmt, err = db.PrepareContext(ctx, getTweetByID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetTweetByID: %w", err)
 	}
+	if q.getTweetsByIDsStmt, err = db.PrepareContext(ctx, getTweetsByIDs); err != nil {
+		return nil, fmt.Errorf("error preparing query GetTweetsByIDs: %w", err)
+	}
 	if q.getTweetsByUserIDStmt, err = db.PrepareContext(ctx, getTweetsByUserID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetTweetsByUserID: %w", err)
 	}
@@ -104,6 +125,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.getUserDetailByUserIDStmt, err = db.PrepareContext(ctx, getUserDetailByUserID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUserDetailByUserID: %w", err)
+	}
+	if q.getUserRetweetsWithCursorStmt, err = db.PrepareContext(ctx, getUserRetweetsWithCursor); err != nil {
+		return nil, fmt.Errorf("error preparing query GetUserRetweetsWithCursor: %w", err)
 	}
 	if q.updateUserIsActiveStmt, err = db.PrepareContext(ctx, updateUserIsActive); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateUserIsActive: %w", err)
@@ -121,6 +145,21 @@ func (q *Queries) Close() error {
 	if q.countLikesByTweetIDStmt != nil {
 		if cerr := q.countLikesByTweetIDStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing countLikesByTweetIDStmt: %w", cerr)
+		}
+	}
+	if q.countLikesByTweetIDsStmt != nil {
+		if cerr := q.countLikesByTweetIDsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countLikesByTweetIDsStmt: %w", cerr)
+		}
+	}
+	if q.countRetweetsByTweetIDStmt != nil {
+		if cerr := q.countRetweetsByTweetIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countRetweetsByTweetIDStmt: %w", cerr)
+		}
+	}
+	if q.countRetweetsByTweetIDsStmt != nil {
+		if cerr := q.countRetweetsByTweetIDsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countRetweetsByTweetIDsStmt: %w", cerr)
 		}
 	}
 	if q.createBookmarkStmt != nil {
@@ -141,6 +180,11 @@ func (q *Queries) Close() error {
 	if q.createMessageStmt != nil {
 		if cerr := q.createMessageStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createMessageStmt: %w", cerr)
+		}
+	}
+	if q.createRetweetStmt != nil {
+		if cerr := q.createRetweetStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createRetweetStmt: %w", cerr)
 		}
 	}
 	if q.createTweetStmt != nil {
@@ -168,6 +212,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing deleteLikeStmt: %w", cerr)
 		}
 	}
+	if q.deleteRetweetStmt != nil {
+		if cerr := q.deleteRetweetStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteRetweetStmt: %w", cerr)
+		}
+	}
 	if q.deleteTweetStmt != nil {
 		if cerr := q.deleteTweetStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteTweetStmt: %w", cerr)
@@ -191,6 +240,11 @@ func (q *Queries) Close() error {
 	if q.existsLikeStmt != nil {
 		if cerr := q.existsLikeStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing existsLikeStmt: %w", cerr)
+		}
+	}
+	if q.existsRetweetStmt != nil {
+		if cerr := q.existsRetweetStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing existsRetweetStmt: %w", cerr)
 		}
 	}
 	if q.getAllTweetsStmt != nil {
@@ -223,6 +277,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getTweetByIDStmt: %w", cerr)
 		}
 	}
+	if q.getTweetsByIDsStmt != nil {
+		if cerr := q.getTweetsByIDsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getTweetsByIDsStmt: %w", cerr)
+		}
+	}
 	if q.getTweetsByUserIDStmt != nil {
 		if cerr := q.getTweetsByUserIDStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getTweetsByUserIDStmt: %w", cerr)
@@ -246,6 +305,11 @@ func (q *Queries) Close() error {
 	if q.getUserDetailByUserIDStmt != nil {
 		if cerr := q.getUserDetailByUserIDStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getUserDetailByUserIDStmt: %w", cerr)
+		}
+	}
+	if q.getUserRetweetsWithCursorStmt != nil {
+		if cerr := q.getUserRetweetsWithCursorStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getUserRetweetsWithCursorStmt: %w", cerr)
 		}
 	}
 	if q.updateUserIsActiveStmt != nil {
@@ -294,31 +358,39 @@ type Queries struct {
 	tx                              *sql.Tx
 	countBookmarksByTweetIDStmt     *sql.Stmt
 	countLikesByTweetIDStmt         *sql.Stmt
+	countLikesByTweetIDsStmt        *sql.Stmt
+	countRetweetsByTweetIDStmt      *sql.Stmt
+	countRetweetsByTweetIDsStmt     *sql.Stmt
 	createBookmarkStmt              *sql.Stmt
 	createGroupStmt                 *sql.Stmt
 	createLikeStmt                  *sql.Stmt
 	createMessageStmt               *sql.Stmt
+	createRetweetStmt               *sql.Stmt
 	createTweetStmt                 *sql.Stmt
 	createUserStmt                  *sql.Stmt
 	createUserActivationStmt        *sql.Stmt
 	deleteBookmarkStmt              *sql.Stmt
 	deleteLikeStmt                  *sql.Stmt
+	deleteRetweetStmt               *sql.Stmt
 	deleteTweetStmt                 *sql.Stmt
 	deleteUserStmt                  *sql.Stmt
 	deleteUserActivationStmt        *sql.Stmt
 	existsBookmarkStmt              *sql.Stmt
 	existsLikeStmt                  *sql.Stmt
+	existsRetweetStmt               *sql.Stmt
 	getAllTweetsStmt                *sql.Stmt
 	getBookmarksByUserIdStmt        *sql.Stmt
 	getGroupByIDStmt                *sql.Stmt
 	getGroupsByUserIDStmt           *sql.Stmt
 	getMessagesByGroupIDStmt        *sql.Stmt
 	getTweetByIDStmt                *sql.Stmt
+	getTweetsByIDsStmt              *sql.Stmt
 	getTweetsByUserIDStmt           *sql.Stmt
 	getTweetsByUserIDWithCursorStmt *sql.Stmt
 	getUserActivationByTokenStmt    *sql.Stmt
 	getUserByEmailStmt              *sql.Stmt
 	getUserDetailByUserIDStmt       *sql.Stmt
+	getUserRetweetsWithCursorStmt   *sql.Stmt
 	updateUserIsActiveStmt          *sql.Stmt
 }
 
@@ -328,31 +400,39 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		tx:                              tx,
 		countBookmarksByTweetIDStmt:     q.countBookmarksByTweetIDStmt,
 		countLikesByTweetIDStmt:         q.countLikesByTweetIDStmt,
+		countLikesByTweetIDsStmt:        q.countLikesByTweetIDsStmt,
+		countRetweetsByTweetIDStmt:      q.countRetweetsByTweetIDStmt,
+		countRetweetsByTweetIDsStmt:     q.countRetweetsByTweetIDsStmt,
 		createBookmarkStmt:              q.createBookmarkStmt,
 		createGroupStmt:                 q.createGroupStmt,
 		createLikeStmt:                  q.createLikeStmt,
 		createMessageStmt:               q.createMessageStmt,
+		createRetweetStmt:               q.createRetweetStmt,
 		createTweetStmt:                 q.createTweetStmt,
 		createUserStmt:                  q.createUserStmt,
 		createUserActivationStmt:        q.createUserActivationStmt,
 		deleteBookmarkStmt:              q.deleteBookmarkStmt,
 		deleteLikeStmt:                  q.deleteLikeStmt,
+		deleteRetweetStmt:               q.deleteRetweetStmt,
 		deleteTweetStmt:                 q.deleteTweetStmt,
 		deleteUserStmt:                  q.deleteUserStmt,
 		deleteUserActivationStmt:        q.deleteUserActivationStmt,
 		existsBookmarkStmt:              q.existsBookmarkStmt,
 		existsLikeStmt:                  q.existsLikeStmt,
+		existsRetweetStmt:               q.existsRetweetStmt,
 		getAllTweetsStmt:                q.getAllTweetsStmt,
 		getBookmarksByUserIdStmt:        q.getBookmarksByUserIdStmt,
 		getGroupByIDStmt:                q.getGroupByIDStmt,
 		getGroupsByUserIDStmt:           q.getGroupsByUserIDStmt,
 		getMessagesByGroupIDStmt:        q.getMessagesByGroupIDStmt,
 		getTweetByIDStmt:                q.getTweetByIDStmt,
+		getTweetsByIDsStmt:              q.getTweetsByIDsStmt,
 		getTweetsByUserIDStmt:           q.getTweetsByUserIDStmt,
 		getTweetsByUserIDWithCursorStmt: q.getTweetsByUserIDWithCursorStmt,
 		getUserActivationByTokenStmt:    q.getUserActivationByTokenStmt,
 		getUserByEmailStmt:              q.getUserByEmailStmt,
 		getUserDetailByUserIDStmt:       q.getUserDetailByUserIDStmt,
+		getUserRetweetsWithCursorStmt:   q.getUserRetweetsWithCursorStmt,
 		updateUserIsActiveStmt:          q.updateUserIsActiveStmt,
 	}
 }
