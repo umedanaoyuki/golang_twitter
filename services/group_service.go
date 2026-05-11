@@ -3,8 +3,13 @@ package services
 import (
 	"context"
 	"database/sql"
+	"errors"
 	db "golang_twitter/db/sqlc"
+
+	"github.com/lib/pq"
 )
+
+const pgUniqueViolation = "23505"
 
 type GroupService interface {
 	CreateGroup(ctx context.Context, userID int32, name string) error
@@ -29,8 +34,12 @@ func (s *groupService) CreateGroup(ctx context.Context, userID int32, name strin
 		UserID: userID,
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil
+		}
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == pgUniqueViolation {
+			return &ValidationError{Message: "同じ名前のグループが既に存在します"}
 		}
 		return err
 	}

@@ -34,6 +34,10 @@ func (ctrl *GroupController) CreateGroup(c *gin.Context) {
 	}
 
 	if err := ctrl.GroupService.CreateGroup(c.Request.Context(), userID, body.Name); err != nil {
+		if _, ok := err.(*services.ValidationError); ok {
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
