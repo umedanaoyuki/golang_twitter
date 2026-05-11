@@ -66,4 +66,21 @@ func (ctrl *MessageController) CreateMessage(c *gin.Context) {
 }
 
 func (ctrl *MessageController) GetMessages(c *gin.Context) {
+	// パスパラメータのバリデーション（:group_id）
+	var uri CreateMessageURI
+	if err := c.ShouldBindUri(&uri); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "無効なパスパラメータです"})
+		return
+	}
+
+	// メッセージ一覧を取得
+	messages, err := ctrl.messageService.GetMessages(c.Request.Context(), uri.GroupID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"messages": messages,
+	})
 }

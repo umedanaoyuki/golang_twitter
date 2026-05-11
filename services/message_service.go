@@ -9,7 +9,7 @@ import (
 
 type MessageService interface {
 	CreateMessage(ctx context.Context, userID int32, groupID int32, content string) (*db.Message, error)
-	GetMessages(ctx context.Context, groupID int32) error
+	GetMessages(ctx context.Context, groupID int32) ([]db.Message, error)
 }
 
 type messageService struct {
@@ -36,6 +36,14 @@ func (s *messageService) CreateMessage(ctx context.Context, userID int32, groupI
 	return &message, nil
 }
 
-func (s *messageService) GetMessages(ctx context.Context, groupID int32) error {
-	return nil;
+func (s *messageService) GetMessages(ctx context.Context, groupID int32) ([]db.Message, error) {
+	messages, err := s.queries.GetMessagesByGroupID(ctx, groupID)
+	if err != nil {
+		// :many のクエリは通常 ErrNoRows ではなく空スライスになるが、他のエラーはここで握り直す
+		if err == sql.ErrNoRows {
+			return []db.Message{}, nil
+		}
+		return nil, &ServiceError{Message: "メッセージの取得に失敗しました"}
+	}
+	return messages, nil
 }
