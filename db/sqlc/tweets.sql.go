@@ -7,6 +7,8 @@ package db
 
 import (
 	"context"
+
+	"github.com/lib/pq"
 )
 
 const createTweet = `-- name: CreateTweet :one
@@ -104,6 +106,41 @@ func (q *Queries) GetTweetByID(ctx context.Context, id int32) (Tweet, error) {
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getTweetsByIDs = `-- name: GetTweetsByIDs :many
+SELECT id, user_id, content, created_at, updated_at
+FROM tweets
+WHERE id = ANY($1::int[])
+`
+
+func (q *Queries) GetTweetsByIDs(ctx context.Context, dollar_1 []int32) ([]Tweet, error) {
+	rows, err := q.query(ctx, q.getTweetsByIDsStmt, getTweetsByIDs, pq.Array(dollar_1))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Tweet{}
+	for rows.Next() {
+		var i Tweet
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Content,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getTweetsByUserID = `-- name: GetTweetsByUserID :many

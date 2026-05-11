@@ -7,6 +7,8 @@ package db
 
 import (
 	"context"
+
+	"github.com/lib/pq"
 )
 
 const countLikesByTweetID = `-- name: CountLikesByTweetID :one
@@ -20,6 +22,41 @@ func (q *Queries) CountLikesByTweetID(ctx context.Context, tweetID int32) (int64
 	var like_count int64
 	err := row.Scan(&like_count)
 	return like_count, err
+}
+
+const countLikesByTweetIDs = `-- name: CountLikesByTweetIDs :many
+SELECT tweet_id, COUNT(*)::bigint AS like_count
+FROM likes
+WHERE tweet_id = ANY($1::int[])
+GROUP BY tweet_id
+`
+
+type CountLikesByTweetIDsRow struct {
+	TweetID   int32 `json:"tweet_id"`
+	LikeCount int64 `json:"like_count"`
+}
+
+func (q *Queries) CountLikesByTweetIDs(ctx context.Context, dollar_1 []int32) ([]CountLikesByTweetIDsRow, error) {
+	rows, err := q.query(ctx, q.countLikesByTweetIDsStmt, countLikesByTweetIDs, pq.Array(dollar_1))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CountLikesByTweetIDsRow{}
+	for rows.Next() {
+		var i CountLikesByTweetIDsRow
+		if err := rows.Scan(&i.TweetID, &i.LikeCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const createLike = `-- name: CreateLike :one

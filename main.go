@@ -61,6 +61,7 @@ func main() {
 	likeService := services.NewLikeService(conn, queries)
 	userService := services.NewUserService(queries)
 	bookmarkService := services.NewBookmarkService(conn, queries)
+	retweetService := services.NewRetweetService(conn, queries, tweetService)
 
 	// コントローラーの初期化
 	authController := controllers.NewAuthController(authService)
@@ -69,6 +70,7 @@ func main() {
 	
 	userController := controllers.NewUserController(userService)
 	bookmarkController := controllers.NewBookmarkController(bookmarkService)
+	retweetController := controllers.NewRetweetController(retweetService)
 	// Ginルーター設定
 	router := gin.Default()
 
@@ -99,9 +101,11 @@ func main() {
 	router.GET("/activate", authController.ActivateUser)
 	// ログイン
 	router.POST("/login", authController.Login)
-	// ユーザーのツイート一覧取得（認証不要）
+	// ユーザーのツイート一覧取得
 	router.GET("/users/:user_id/tweets", tweetController.GetUserTweets)
-	// ユーザー情報取得（認証不要）
+	// ユーザーのリツイート一覧取得
+	router.GET("/users/:user_id/retweets", retweetController.GetUserRetweets)
+	// ユーザー情報取得
 	router.GET("/users/:user_id", userController.GetUserByID)
 
 	// 1つのTweet取得
@@ -114,6 +118,9 @@ func main() {
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
 
+		// リツイート機能
+		authorized.POST("/tweets/:id/retweet", retweetController.CreateRetweet)
+		authorized.DELETE("/tweets/:id/retweet", retweetController.DeleteRetweet)
 		// 退会
 		authorized.DELETE("/user", userController.DeleteUser)
 		// ブックマーク機能
