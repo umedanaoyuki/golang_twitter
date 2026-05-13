@@ -15,11 +15,19 @@ type Bookmark struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+<<<<<<< HEAD
 type Group struct {
 	ID        int32     `json:"id"`
 	Name      string    `json:"name"`
 	UserID    int32     `json:"user_id"`
 	CreatedAt time.Time `json:"created_at"`
+=======
+type Follow struct {
+	ID             int32     `json:"id"`
+	UserID         int32     `json:"user_id"`
+	FollowedUserID int32     `json:"followed_user_id"`
+	CreatedAt      time.Time `json:"created_at"`
+>>>>>>> main
 }
 
 type Like struct {

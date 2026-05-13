@@ -64,6 +64,7 @@ func main() {
 	groupService := services.NewGroupService(conn, queries)
 	messageService := services.NewMessageService(conn, queries)
 	retweetService := services.NewRetweetService(conn, queries, tweetService)
+	followService := services.NewFollowService(conn, queries)
 
 	// コントローラーの初期化
 	authController := controllers.NewAuthController(authService)
@@ -75,6 +76,7 @@ func main() {
 	groupController := controllers.NewGroupController(groupService)
 	messageController := controllers.NewMessageController(messageService)
 	retweetController := controllers.NewRetweetController(retweetService)
+	followController := controllers.NewFollowController(followService)
 	// Ginルーター設定
 	router := gin.Default()
 
@@ -145,6 +147,13 @@ func main() {
 		// グループ内でのメッセージ一覧取得
 		authorized.GET("/groups/:group_id/messages", messageController.GetMessages)
 
+		// ユーザーフォロー機能
+		authorized.POST("/users/:user_id/follow", followController.CreateFollow)
+		authorized.DELETE("/users/:user_id/follow", followController.DeleteFollow)
+		// ユーザーフォロワー一覧取得
+		authorized.GET("/users/:user_id/followers", followController.GetFollowersByUserId)
+		// ユーザーフォロー中一覧取得
+		authorized.GET("/users/:user_id/following", followController.GetFollowingByUserId)
 	}
 
 	log.Println("サーバー起動: http://localhost:8080")

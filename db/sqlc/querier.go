@@ -15,7 +15,11 @@ type Querier interface {
 	CountRetweetsByTweetID(ctx context.Context, tweetID int32) (int64, error)
 	CountRetweetsByTweetIDs(ctx context.Context, dollar_1 []int32) ([]CountRetweetsByTweetIDsRow, error)
 	CreateBookmark(ctx context.Context, arg CreateBookmarkParams) (Bookmark, error)
+<<<<<<< HEAD
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
+=======
+	CreateFollow(ctx context.Context, arg CreateFollowParams) (Follow, error)
+>>>>>>> main
 	CreateLike(ctx context.Context, arg CreateLikeParams) (Like, error)
 	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
 	CreateRetweet(ctx context.Context, arg CreateRetweetParams) (Retweet, error)
@@ -23,6 +27,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserActivation(ctx context.Context, arg CreateUserActivationParams) (UserActivation, error)
 	DeleteBookmark(ctx context.Context, arg DeleteBookmarkParams) error
+	DeleteFollow(ctx context.Context, arg DeleteFollowParams) error
 	DeleteLike(ctx context.Context, arg DeleteLikeParams) error
 	DeleteRetweet(ctx context.Context, arg DeleteRetweetParams) error
 	DeleteTweet(ctx context.Context, arg DeleteTweetParams) error
@@ -33,9 +38,14 @@ type Querier interface {
 	ExistsRetweet(ctx context.Context, arg ExistsRetweetParams) (bool, error)
 	GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error)
 	GetBookmarksByUserId(ctx context.Context, userID int32) ([]GetBookmarksByUserIdRow, error)
+<<<<<<< HEAD
 	GetGroupByID(ctx context.Context, id int32) (Group, error)
 	GetGroupsByUserID(ctx context.Context, userID int32) ([]Group, error)
 	GetMessagesByGroupID(ctx context.Context, groupID int32) ([]Message, error)
+=======
+	GetFollowersByUserIdWithCursor(ctx context.Context, arg GetFollowersByUserIdWithCursorParams) ([]Follow, error)
+	GetFollowingByUserIdWithCursor(ctx context.Context, arg GetFollowingByUserIdWithCursorParams) ([]Follow, error)
+>>>>>>> main
 	GetTweetByID(ctx context.Context, id int32) (Tweet, error)
 	GetTweetsByIDs(ctx context.Context, dollar_1 []int32) ([]Tweet, error)
 	GetTweetsByUserID(ctx context.Context, userID int32) ([]Tweet, error)
