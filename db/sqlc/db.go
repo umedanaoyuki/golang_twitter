@@ -48,6 +48,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createGroupStmt, err = db.PrepareContext(ctx, createGroup); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateGroup: %w", err)
 	}
+	if q.createGroupMemberStmt, err = db.PrepareContext(ctx, createGroupMember); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateGroupMember: %w", err)
+	}
 	if q.createLikeStmt, err = db.PrepareContext(ctx, createLike); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateLike: %w", err)
 	}
@@ -187,6 +190,11 @@ func (q *Queries) Close() error {
 	if q.createGroupStmt != nil {
 		if cerr := q.createGroupStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createGroupStmt: %w", cerr)
+		}
+	}
+	if q.createGroupMemberStmt != nil {
+		if cerr := q.createGroupMemberStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createGroupMemberStmt: %w", cerr)
 		}
 	}
 	if q.createLikeStmt != nil {
@@ -396,6 +404,7 @@ type Queries struct {
 	createBookmarkStmt                 *sql.Stmt
 	createFollowStmt                   *sql.Stmt
 	createGroupStmt                    *sql.Stmt
+	createGroupMemberStmt              *sql.Stmt
 	createLikeStmt                     *sql.Stmt
 	createMessageStmt                  *sql.Stmt
 	createRetweetStmt                  *sql.Stmt
@@ -442,6 +451,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		createBookmarkStmt:                 q.createBookmarkStmt,
 		createFollowStmt:                   q.createFollowStmt,
 		createGroupStmt:                    q.createGroupStmt,
+		createGroupMemberStmt:              q.createGroupMemberStmt,
 		createLikeStmt:                     q.createLikeStmt,
 		createMessageStmt:                  q.createMessageStmt,
 		createRetweetStmt:                  q.createRetweetStmt,

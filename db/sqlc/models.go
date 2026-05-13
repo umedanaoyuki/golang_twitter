@@ -5,8 +5,95 @@
 package db
 
 import (
+	"database/sql"
+	"database/sql/driver"
+	"fmt"
 	"time"
 )
+
+type GroupMemberRole string
+
+const (
+	GroupMemberRoleAdmin  GroupMemberRole = "admin"
+	GroupMemberRoleMember GroupMemberRole = "member"
+)
+
+func (e *GroupMemberRole) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = GroupMemberRole(s)
+	case string:
+		*e = GroupMemberRole(s)
+	default:
+		return fmt.Errorf("unsupported scan type for GroupMemberRole: %T", src)
+	}
+	return nil
+}
+
+type NullGroupMemberRole struct {
+	GroupMemberRole GroupMemberRole `json:"group_member_role"`
+	Valid           bool            `json:"valid"` // Valid is true if GroupMemberRole is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullGroupMemberRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.GroupMemberRole, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.GroupMemberRole.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullGroupMemberRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.GroupMemberRole), nil
+}
+
+type GroupMemberStatus string
+
+const (
+	GroupMemberStatusInvited  GroupMemberStatus = "invited"
+	GroupMemberStatusAccepted GroupMemberStatus = "accepted"
+)
+
+func (e *GroupMemberStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = GroupMemberStatus(s)
+	case string:
+		*e = GroupMemberStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for GroupMemberStatus: %T", src)
+	}
+	return nil
+}
+
+type NullGroupMemberStatus struct {
+	GroupMemberStatus GroupMemberStatus `json:"group_member_status"`
+	Valid             bool              `json:"valid"` // Valid is true if GroupMemberStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullGroupMemberStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.GroupMemberStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.GroupMemberStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullGroupMemberStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.GroupMemberStatus), nil
+}
 
 type Bookmark struct {
 	ID        int32     `json:"id"`
@@ -27,6 +114,17 @@ type Group struct {
 	Name      string    `json:"name"`
 	UserID    int32     `json:"user_id"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+type GroupMember struct {
+	ID         int32             `json:"id"`
+	GroupID    int32             `json:"group_id"`
+	UserID     int32             `json:"user_id"`
+	Role       GroupMemberRole   `json:"role"`
+	Status     GroupMemberStatus `json:"status"`
+	InvitedBy  sql.NullInt32     `json:"invited_by"`
+	AcceptedAt sql.NullTime      `json:"accepted_at"`
+	CreatedAt  time.Time         `json:"created_at"`
 }
 
 type Like struct {
