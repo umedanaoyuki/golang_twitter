@@ -7,52 +7,33 @@ package db
 
 import (
 	"context"
-	"database/sql"
+	"time"
 )
 
 const createGroupMember = `-- name: CreateGroupMember :one
 INSERT INTO group_members (
   group_id,
-  user_id,
-  role,
-  status,
-  invited_by,
-  accepted_at
+  user_id
 ) VALUES (
-  $1, $2, $3, $4, $5, $6
+  $1, $2
 )
-ON CONFLICT (group_id, user_id) DO NOTHING
-RETURNING id, group_id, user_id, role, status, invited_by, accepted_at, created_at
+RETURNING group_id, user_id, created_at
 `
 
 type CreateGroupMemberParams struct {
-	GroupID    int32             `json:"group_id"`
-	UserID     int32             `json:"user_id"`
-	Role       GroupMemberRole   `json:"role"`
-	Status     GroupMemberStatus `json:"status"`
-	InvitedBy  sql.NullInt32     `json:"invited_by"`
-	AcceptedAt sql.NullTime      `json:"accepted_at"`
+	GroupID int32 `json:"group_id"`
+	UserID  int32 `json:"user_id"`
 }
 
-func (q *Queries) CreateGroupMember(ctx context.Context, arg CreateGroupMemberParams) (GroupMember, error) {
-	row := q.queryRow(ctx, q.createGroupMemberStmt, createGroupMember,
-		arg.GroupID,
-		arg.UserID,
-		arg.Role,
-		arg.Status,
-		arg.InvitedBy,
-		arg.AcceptedAt,
-	)
-	var i GroupMember
-	err := row.Scan(
-		&i.ID,
-		&i.GroupID,
-		&i.UserID,
-		&i.Role,
-		&i.Status,
-		&i.InvitedBy,
-		&i.AcceptedAt,
-		&i.CreatedAt,
-	)
+type CreateGroupMemberRow struct {
+	GroupID   int32     `json:"group_id"`
+	UserID    int32     `json:"user_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+func (q *Queries) CreateGroupMember(ctx context.Context, arg CreateGroupMemberParams) (CreateGroupMemberRow, error) {
+	row := q.queryRow(ctx, q.createGroupMemberStmt, createGroupMember, arg.GroupID, arg.UserID)
+	var i CreateGroupMemberRow
+	err := row.Scan(&i.GroupID, &i.UserID, &i.CreatedAt)
 	return i, err
 }

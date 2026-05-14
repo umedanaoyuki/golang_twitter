@@ -17,7 +17,7 @@ type Querier interface {
 	CreateBookmark(ctx context.Context, arg CreateBookmarkParams) (Bookmark, error)
 	CreateFollow(ctx context.Context, arg CreateFollowParams) (Follow, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
-	CreateGroupMember(ctx context.Context, arg CreateGroupMemberParams) (GroupMember, error)
+	CreateGroupMember(ctx context.Context, arg CreateGroupMemberParams) (CreateGroupMemberRow, error)
 	CreateLike(ctx context.Context, arg CreateLikeParams) (Like, error)
 	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
 	CreateRetweet(ctx context.Context, arg CreateRetweetParams) (Retweet, error)
