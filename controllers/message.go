@@ -49,7 +49,7 @@ func (ctrl *MessageController) CreateMessage(c *gin.Context) {
 	message, err := ctrl.messageService.CreateMessage(c.Request.Context(), userID, uri.GroupID, input.Content)
 	if err != nil {
 		if _, ok := err.(*services.ValidationError); ok {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -66,16 +66,24 @@ func (ctrl *MessageController) CreateMessage(c *gin.Context) {
 }
 
 func (ctrl *MessageController) GetMessages(c *gin.Context) {
-	// パスパラメータのバリデーション（:group_id）
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "ログインが必要です"})
+		return
+	}
+
 	var uri CreateMessageURI
 	if err := c.ShouldBindUri(&uri); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "無効なパスパラメータです"})
 		return
 	}
 
-	// メッセージ一覧を取得
-	messages, err := ctrl.messageService.GetMessages(c.Request.Context(), uri.GroupID)
+	messages, err := ctrl.messageService.GetMessages(c.Request.Context(), userID, uri.GroupID)
 	if err != nil {
+		if _, ok := err.(*services.ValidationError); ok {
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
