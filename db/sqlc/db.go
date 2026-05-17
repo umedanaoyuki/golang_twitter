@@ -114,6 +114,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getGroupByIDStmt, err = db.PrepareContext(ctx, getGroupByID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetGroupByID: %w", err)
 	}
+	if q.getGroupsByMemberUserIDStmt, err = db.PrepareContext(ctx, getGroupsByMemberUserID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetGroupsByMemberUserID: %w", err)
+	}
 	if q.getGroupsByUserIDStmt, err = db.PrepareContext(ctx, getGroupsByUserID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetGroupsByUserID: %w", err)
 	}
@@ -302,6 +305,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getGroupByIDStmt: %w", cerr)
 		}
 	}
+	if q.getGroupsByMemberUserIDStmt != nil {
+		if cerr := q.getGroupsByMemberUserIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getGroupsByMemberUserIDStmt: %w", cerr)
+		}
+	}
 	if q.getGroupsByUserIDStmt != nil {
 		if cerr := q.getGroupsByUserIDStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getGroupsByUserIDStmt: %w", cerr)
@@ -426,6 +434,7 @@ type Queries struct {
 	getFollowersByUserIdWithCursorStmt *sql.Stmt
 	getFollowingByUserIdWithCursorStmt *sql.Stmt
 	getGroupByIDStmt                   *sql.Stmt
+	getGroupsByMemberUserIDStmt        *sql.Stmt
 	getGroupsByUserIDStmt              *sql.Stmt
 	getMessagesByGroupIDStmt           *sql.Stmt
 	getTweetByIDStmt                   *sql.Stmt
@@ -473,6 +482,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getFollowersByUserIdWithCursorStmt: q.getFollowersByUserIdWithCursorStmt,
 		getFollowingByUserIdWithCursorStmt: q.getFollowingByUserIdWithCursorStmt,
 		getGroupByIDStmt:                   q.getGroupByIDStmt,
+		getGroupsByMemberUserIDStmt:        q.getGroupsByMemberUserIDStmt,
 		getGroupsByUserIDStmt:              q.getGroupsByUserIDStmt,
 		getMessagesByGroupIDStmt:           q.getMessagesByGroupIDStmt,
 		getTweetByIDStmt:                   q.getTweetByIDStmt,

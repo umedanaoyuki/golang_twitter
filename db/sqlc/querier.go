@@ -39,6 +39,7 @@ type Querier interface {
 	GetFollowersByUserIdWithCursor(ctx context.Context, arg GetFollowersByUserIdWithCursorParams) ([]Follow, error)
 	GetFollowingByUserIdWithCursor(ctx context.Context, arg GetFollowingByUserIdWithCursorParams) ([]Follow, error)
 	GetGroupByID(ctx context.Context, id int32) (Group, error)
+	GetGroupsByMemberUserID(ctx context.Context, userID int32) ([]Group, error)
 	GetGroupsByUserID(ctx context.Context, userID int32) ([]Group, error)
 	GetMessagesByGroupID(ctx context.Context, groupID int32) ([]Message, error)
 	GetTweetByID(ctx context.Context, id int32) (Tweet, error)

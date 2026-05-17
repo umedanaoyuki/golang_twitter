@@ -54,6 +54,42 @@ func (q *Queries) GetGroupByID(ctx context.Context, id int32) (Group, error) {
 	return i, err
 }
 
+const getGroupsByMemberUserID = `-- name: GetGroupsByMemberUserID :many
+SELECT g.id, g.name, g.user_id, g.created_at
+FROM groups g
+INNER JOIN group_members gm ON g.id = gm.group_id
+WHERE gm.user_id = $1
+ORDER BY g.id DESC
+`
+
+func (q *Queries) GetGroupsByMemberUserID(ctx context.Context, userID int32) ([]Group, error) {
+	rows, err := q.query(ctx, q.getGroupsByMemberUserIDStmt, getGroupsByMemberUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Group{}
+	for rows.Next() {
+		var i Group
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.UserID,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getGroupsByUserID = `-- name: GetGroupsByUserID :many
 SELECT id, name, user_id, created_at
 FROM groups

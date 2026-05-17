@@ -13,7 +13,8 @@ type GroupController struct {
 }
 
 type CreateGroupBody struct {
-	Name string `json:"name" binding:"required"`
+	Name          string  `json:"name" binding:"required"`
+	MemberUserIDs []int32 `json:"member_user_ids"`
 }
 
 func NewGroupController(GroupService services.GroupService) *GroupController {
@@ -33,7 +34,8 @@ func (ctrl *GroupController) CreateGroup(c *gin.Context) {
 		return
 	}
 
-	if err := ctrl.GroupService.CreateGroup(c.Request.Context(), userID, body.Name); err != nil {
+	group, err := ctrl.GroupService.CreateGroup(c.Request.Context(), userID, body.Name, body.MemberUserIDs)
+	if err != nil {
 		if _, ok := err.(*services.ValidationError); ok {
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 			return
@@ -41,7 +43,15 @@ func (ctrl *GroupController) CreateGroup(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+
+	c.JSON(http.StatusCreated, gin.H{
+		"group": gin.H{
+			"id":         group.ID,
+			"name":       group.Name,
+			"user_id":    group.UserID,
+			"created_at": group.CreatedAt,
+		},
+	})
 }
 
 func (ctrl *GroupController) GetGroups(c *gin.Context) {
