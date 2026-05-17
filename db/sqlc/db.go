@@ -93,6 +93,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.existsBookmarkStmt, err = db.PrepareContext(ctx, existsBookmark); err != nil {
 		return nil, fmt.Errorf("error preparing query ExistsBookmark: %w", err)
 	}
+	if q.existsGroupMemberStmt, err = db.PrepareContext(ctx, existsGroupMember); err != nil {
+		return nil, fmt.Errorf("error preparing query ExistsGroupMember: %w", err)
+	}
 	if q.existsLikeStmt, err = db.PrepareContext(ctx, existsLike); err != nil {
 		return nil, fmt.Errorf("error preparing query ExistsLike: %w", err)
 	}
@@ -270,6 +273,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing existsBookmarkStmt: %w", cerr)
 		}
 	}
+	if q.existsGroupMemberStmt != nil {
+		if cerr := q.existsGroupMemberStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing existsGroupMemberStmt: %w", cerr)
+		}
+	}
 	if q.existsLikeStmt != nil {
 		if cerr := q.existsLikeStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing existsLikeStmt: %w", cerr)
@@ -427,6 +435,7 @@ type Queries struct {
 	deleteUserStmt                     *sql.Stmt
 	deleteUserActivationStmt           *sql.Stmt
 	existsBookmarkStmt                 *sql.Stmt
+	existsGroupMemberStmt              *sql.Stmt
 	existsLikeStmt                     *sql.Stmt
 	existsRetweetStmt                  *sql.Stmt
 	getAllTweetsStmt                   *sql.Stmt
@@ -475,6 +484,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		deleteUserStmt:                     q.deleteUserStmt,
 		deleteUserActivationStmt:           q.deleteUserActivationStmt,
 		existsBookmarkStmt:                 q.existsBookmarkStmt,
+		existsGroupMemberStmt:              q.existsGroupMemberStmt,
 		existsLikeStmt:                     q.existsLikeStmt,
 		existsRetweetStmt:                  q.existsRetweetStmt,
 		getAllTweetsStmt:                   q.getAllTweetsStmt,

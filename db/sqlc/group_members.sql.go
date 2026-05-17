@@ -37,3 +37,23 @@ func (q *Queries) CreateGroupMember(ctx context.Context, arg CreateGroupMemberPa
 	err := row.Scan(&i.GroupID, &i.UserID, &i.CreatedAt)
 	return i, err
 }
+
+const existsGroupMember = `-- name: ExistsGroupMember :one
+SELECT EXISTS(
+  SELECT 1
+  FROM group_members
+  WHERE group_id = $1 AND user_id = $2
+) AS exists
+`
+
+type ExistsGroupMemberParams struct {
+	GroupID int32 `json:"group_id"`
+	UserID  int32 `json:"user_id"`
+}
+
+func (q *Queries) ExistsGroupMember(ctx context.Context, arg ExistsGroupMemberParams) (bool, error) {
+	row := q.queryRow(ctx, q.existsGroupMemberStmt, existsGroupMember, arg.GroupID, arg.UserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}

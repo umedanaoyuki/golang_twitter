@@ -25,6 +25,13 @@ func NewMessageService(db *sql.DB, queries *db.Queries) MessageService {
 }
 
 func (s *messageService) CreateMessage(ctx context.Context, userID int32, groupID int32, content string) (*db.Message, error) {
+	if _, err := s.queries.ExistsGroupMember(ctx, db.ExistsGroupMemberParams{
+		GroupID: groupID,
+		UserID:  userID,
+	}); err != nil {
+		return nil, &ServiceError{Message: "グループにメンバーではありません"}
+	}
+
 	message, err := s.queries.CreateMessage(ctx, db.CreateMessageParams{
 		UserID:  userID,
 		GroupID: groupID,

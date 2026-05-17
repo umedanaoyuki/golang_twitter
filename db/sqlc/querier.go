@@ -32,6 +32,7 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id int32) error
 	DeleteUserActivation(ctx context.Context, token string) error
 	ExistsBookmark(ctx context.Context, arg ExistsBookmarkParams) (bool, error)
+	ExistsGroupMember(ctx context.Context, arg ExistsGroupMemberParams) (bool, error)
 	ExistsLike(ctx context.Context, arg ExistsLikeParams) (bool, error)
 	ExistsRetweet(ctx context.Context, arg ExistsRetweetParams) (bool, error)
 	GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error)
