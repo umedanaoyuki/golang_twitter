@@ -45,8 +45,17 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createFollowStmt, err = db.PrepareContext(ctx, createFollow); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateFollow: %w", err)
 	}
+	if q.createGroupStmt, err = db.PrepareContext(ctx, createGroup); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateGroup: %w", err)
+	}
+	if q.createGroupMemberStmt, err = db.PrepareContext(ctx, createGroupMember); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateGroupMember: %w", err)
+	}
 	if q.createLikeStmt, err = db.PrepareContext(ctx, createLike); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateLike: %w", err)
+	}
+	if q.createMessageStmt, err = db.PrepareContext(ctx, createMessage); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateMessage: %w", err)
 	}
 	if q.createRetweetStmt, err = db.PrepareContext(ctx, createRetweet); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateRetweet: %w", err)
@@ -84,6 +93,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.existsBookmarkStmt, err = db.PrepareContext(ctx, existsBookmark); err != nil {
 		return nil, fmt.Errorf("error preparing query ExistsBookmark: %w", err)
 	}
+	if q.existsGroupMemberStmt, err = db.PrepareContext(ctx, existsGroupMember); err != nil {
+		return nil, fmt.Errorf("error preparing query ExistsGroupMember: %w", err)
+	}
 	if q.existsLikeStmt, err = db.PrepareContext(ctx, existsLike); err != nil {
 		return nil, fmt.Errorf("error preparing query ExistsLike: %w", err)
 	}
@@ -101,6 +113,18 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.getFollowingByUserIdWithCursorStmt, err = db.PrepareContext(ctx, getFollowingByUserIdWithCursor); err != nil {
 		return nil, fmt.Errorf("error preparing query GetFollowingByUserIdWithCursor: %w", err)
+	}
+	if q.getGroupByIDStmt, err = db.PrepareContext(ctx, getGroupByID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetGroupByID: %w", err)
+	}
+	if q.getGroupsByMemberUserIDStmt, err = db.PrepareContext(ctx, getGroupsByMemberUserID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetGroupsByMemberUserID: %w", err)
+	}
+	if q.getGroupsByUserIDStmt, err = db.PrepareContext(ctx, getGroupsByUserID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetGroupsByUserID: %w", err)
+	}
+	if q.getMessagesByGroupIDStmt, err = db.PrepareContext(ctx, getMessagesByGroupID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetMessagesByGroupID: %w", err)
 	}
 	if q.getTweetByIDStmt, err = db.PrepareContext(ctx, getTweetByID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetTweetByID: %w", err)
@@ -169,9 +193,24 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing createFollowStmt: %w", cerr)
 		}
 	}
+	if q.createGroupStmt != nil {
+		if cerr := q.createGroupStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createGroupStmt: %w", cerr)
+		}
+	}
+	if q.createGroupMemberStmt != nil {
+		if cerr := q.createGroupMemberStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createGroupMemberStmt: %w", cerr)
+		}
+	}
 	if q.createLikeStmt != nil {
 		if cerr := q.createLikeStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createLikeStmt: %w", cerr)
+		}
+	}
+	if q.createMessageStmt != nil {
+		if cerr := q.createMessageStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createMessageStmt: %w", cerr)
 		}
 	}
 	if q.createRetweetStmt != nil {
@@ -234,6 +273,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing existsBookmarkStmt: %w", cerr)
 		}
 	}
+	if q.existsGroupMemberStmt != nil {
+		if cerr := q.existsGroupMemberStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing existsGroupMemberStmt: %w", cerr)
+		}
+	}
 	if q.existsLikeStmt != nil {
 		if cerr := q.existsLikeStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing existsLikeStmt: %w", cerr)
@@ -262,6 +306,26 @@ func (q *Queries) Close() error {
 	if q.getFollowingByUserIdWithCursorStmt != nil {
 		if cerr := q.getFollowingByUserIdWithCursorStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getFollowingByUserIdWithCursorStmt: %w", cerr)
+		}
+	}
+	if q.getGroupByIDStmt != nil {
+		if cerr := q.getGroupByIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getGroupByIDStmt: %w", cerr)
+		}
+	}
+	if q.getGroupsByMemberUserIDStmt != nil {
+		if cerr := q.getGroupsByMemberUserIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getGroupsByMemberUserIDStmt: %w", cerr)
+		}
+	}
+	if q.getGroupsByUserIDStmt != nil {
+		if cerr := q.getGroupsByUserIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getGroupsByUserIDStmt: %w", cerr)
+		}
+	}
+	if q.getMessagesByGroupIDStmt != nil {
+		if cerr := q.getMessagesByGroupIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getMessagesByGroupIDStmt: %w", cerr)
 		}
 	}
 	if q.getTweetByIDStmt != nil {
@@ -355,7 +419,10 @@ type Queries struct {
 	countRetweetsByTweetIDsStmt        *sql.Stmt
 	createBookmarkStmt                 *sql.Stmt
 	createFollowStmt                   *sql.Stmt
+	createGroupStmt                    *sql.Stmt
+	createGroupMemberStmt              *sql.Stmt
 	createLikeStmt                     *sql.Stmt
+	createMessageStmt                  *sql.Stmt
 	createRetweetStmt                  *sql.Stmt
 	createTweetStmt                    *sql.Stmt
 	createUserStmt                     *sql.Stmt
@@ -368,12 +435,17 @@ type Queries struct {
 	deleteUserStmt                     *sql.Stmt
 	deleteUserActivationStmt           *sql.Stmt
 	existsBookmarkStmt                 *sql.Stmt
+	existsGroupMemberStmt              *sql.Stmt
 	existsLikeStmt                     *sql.Stmt
 	existsRetweetStmt                  *sql.Stmt
 	getAllTweetsStmt                   *sql.Stmt
 	getBookmarksByUserIdStmt           *sql.Stmt
 	getFollowersByUserIdWithCursorStmt *sql.Stmt
 	getFollowingByUserIdWithCursorStmt *sql.Stmt
+	getGroupByIDStmt                   *sql.Stmt
+	getGroupsByMemberUserIDStmt        *sql.Stmt
+	getGroupsByUserIDStmt              *sql.Stmt
+	getMessagesByGroupIDStmt           *sql.Stmt
 	getTweetByIDStmt                   *sql.Stmt
 	getTweetsByIDsStmt                 *sql.Stmt
 	getTweetsByUserIDStmt              *sql.Stmt
@@ -396,7 +468,10 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		countRetweetsByTweetIDsStmt:        q.countRetweetsByTweetIDsStmt,
 		createBookmarkStmt:                 q.createBookmarkStmt,
 		createFollowStmt:                   q.createFollowStmt,
+		createGroupStmt:                    q.createGroupStmt,
+		createGroupMemberStmt:              q.createGroupMemberStmt,
 		createLikeStmt:                     q.createLikeStmt,
+		createMessageStmt:                  q.createMessageStmt,
 		createRetweetStmt:                  q.createRetweetStmt,
 		createTweetStmt:                    q.createTweetStmt,
 		createUserStmt:                     q.createUserStmt,
@@ -409,12 +484,17 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		deleteUserStmt:                     q.deleteUserStmt,
 		deleteUserActivationStmt:           q.deleteUserActivationStmt,
 		existsBookmarkStmt:                 q.existsBookmarkStmt,
+		existsGroupMemberStmt:              q.existsGroupMemberStmt,
 		existsLikeStmt:                     q.existsLikeStmt,
 		existsRetweetStmt:                  q.existsRetweetStmt,
 		getAllTweetsStmt:                   q.getAllTweetsStmt,
 		getBookmarksByUserIdStmt:           q.getBookmarksByUserIdStmt,
 		getFollowersByUserIdWithCursorStmt: q.getFollowersByUserIdWithCursorStmt,
 		getFollowingByUserIdWithCursorStmt: q.getFollowingByUserIdWithCursorStmt,
+		getGroupByIDStmt:                   q.getGroupByIDStmt,
+		getGroupsByMemberUserIDStmt:        q.getGroupsByMemberUserIDStmt,
+		getGroupsByUserIDStmt:              q.getGroupsByUserIDStmt,
+		getMessagesByGroupIDStmt:           q.getMessagesByGroupIDStmt,
 		getTweetByIDStmt:                   q.getTweetByIDStmt,
 		getTweetsByIDsStmt:                 q.getTweetsByIDsStmt,
 		getTweetsByUserIDStmt:              q.getTweetsByUserIDStmt,

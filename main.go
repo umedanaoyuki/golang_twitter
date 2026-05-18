@@ -61,6 +61,8 @@ func main() {
 	likeService := services.NewLikeService(conn, queries)
 	userService := services.NewUserService(queries)
 	bookmarkService := services.NewBookmarkService(conn, queries)
+	groupService := services.NewGroupService(conn, queries)
+	messageService := services.NewMessageService(conn, queries)
 	retweetService := services.NewRetweetService(conn, queries, tweetService)
 	followService := services.NewFollowService(conn, queries)
 
@@ -71,6 +73,8 @@ func main() {
 	
 	userController := controllers.NewUserController(userService)
 	bookmarkController := controllers.NewBookmarkController(bookmarkService)
+	groupController := controllers.NewGroupController(groupService)
+	messageController := controllers.NewMessageController(messageService)
 	retweetController := controllers.NewRetweetController(retweetService)
 	followController := controllers.NewFollowController(followService)
 	// Ginルーター設定
@@ -132,6 +136,16 @@ func main() {
 		// いいね機能
 		authorized.POST("/tweets/:id/like", likeController.CreateLike)
 		authorized.DELETE("/tweets/:id/like", likeController.DeleteLike)
+
+		/* グループ内でのメッセージ機能 */
+		// グループ作成
+		authorized.POST("/groups", groupController.CreateGroup)
+		// グループ一覧取得
+		authorized.GET("/groups", groupController.GetGroups)
+		// グループ内でのメッセージ送信
+		authorized.POST("/groups/:group_id/messages", messageController.CreateMessage)
+		// グループ内でのメッセージ一覧取得
+		authorized.GET("/groups/:group_id/messages", messageController.GetMessages)
 
 		// ユーザーフォロー機能
 		authorized.POST("/users/:user_id/follow", followController.CreateFollow)
