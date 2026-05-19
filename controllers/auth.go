@@ -18,11 +18,20 @@ func NewAuthController(authService services.AuthService) *AuthController {
 }
 
 type RegisterInput struct {
-	Email string `json:"email" binding:"required,email"`
-	Password    string `json:"password" binding:"required,min=8,max=15"`
+	Email    string `json:"email" binding:"required,email" example:"user@example.com"`
+	Password string `json:"password" binding:"required,min=8,max=15" example:"Password1!"`
 }
 
-// ユーザー登録
+// Register godoc
+// @Summary      ユーザー登録
+// @Description  メールアドレスとパスワードで新規ユーザーを登録する
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        input  body      RegisterInput  true  "登録情報"
+// @Success      201    {object}  RegisterResponse
+// @Failure      400    {object}  ErrorResponse
+// @Router       /register [post]
 func (ctrl *AuthController) Register(c *gin.Context) {
 	var input RegisterInput
 
@@ -50,7 +59,15 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 	})
 }
 
-// ユーザーアクティベーション
+// ActivateUser godoc
+// @Summary      アカウント有効化
+// @Description  メールで送付されたトークンでアカウントを有効化する
+// @Tags         auth
+// @Produce      json
+// @Param        token  query     string  true  "アクティベーショントークン"
+// @Success      200    {object}  MessageResponse
+// @Failure      400    {object}  ErrorResponse
+// @Router       /activate [get]
 func (ctrl *AuthController) ActivateUser(c *gin.Context) {
 	// 1. クエリパラメータからトークンを取得
 	token := c.Query("token")
@@ -74,25 +91,6 @@ func (ctrl *AuthController) ActivateUser(c *gin.Context) {
 type LoginInput struct {
 	Email    string `json:"email" binding:"required,email" example:"user@example.com"`
 	Password string `json:"password" binding:"required" example:"Password1!"`
-}
-
-// LoginResponse はログイン成功時のレスポンス（Swagger 用）
-type LoginResponse struct {
-	Message string    `json:"message" example:"ログインに成功しました"`
-	User    LoginUser `json:"user"`
-}
-
-// LoginUser はログイン成功時に返すユーザー情報（Swagger 用）
-type LoginUser struct {
-	ID        int32  `json:"id" example:"1"`
-	Email     string `json:"email" example:"user@example.com"`
-	IsActive  bool   `json:"is_active" example:"true"`
-	CreatedAt string `json:"created_at" example:"2024-01-01T00:00:00Z"`
-}
-
-// ErrorResponse はエラー時のレスポンス（Swagger 用）
-type ErrorResponse struct {
-	Error string `json:"error" example:"エラーメッセージ"`
 }
 
 // Login godoc

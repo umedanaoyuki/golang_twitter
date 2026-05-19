@@ -21,6 +21,17 @@ type getUserByIDURI struct {
 	UserID int32 `uri:"user_id" binding:"required,min=1"`
 }
 
+// GetUserByID godoc
+// @Summary      ユーザー情報取得
+// @Description  指定IDのユーザー情報を取得する
+// @Tags         users
+// @Produce      json
+// @Param        user_id  path      int  true  "ユーザーID"
+// @Success      200      {object}  GetUserResponse
+// @Failure      400      {object}  ErrorResponse
+// @Failure      404      {object}  ErrorResponse
+// @Failure      500      {object}  ErrorResponse
+// @Router       /users/{user_id} [get]
 func (ctrl *UserController) GetUserByID(c *gin.Context) {
 	var uri getUserByIDURI
 	if err := c.ShouldBindUri(&uri); err != nil {
@@ -43,6 +54,16 @@ func (ctrl *UserController) GetUserByID(c *gin.Context) {
 	})
 }
 
+// DeleteUser godoc
+// @Summary      退会
+// @Description  ログイン中のユーザーアカウントを削除する
+// @Tags         users
+// @Produce      json
+// @Security     SessionAuth
+// @Success      200  {object}  StatusOKResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /user [delete]
 func (ctrl *UserController) DeleteUser(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {

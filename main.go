@@ -26,6 +26,9 @@ import (
 // @description     Twitter クローン API
 // @host            localhost:8080
 // @BasePath        /
+// @securityDefinitions.apikey  SessionAuth
+// @in                          cookie
+// @name                        golang_twitter_session
 
 func main() {
 	// 環境変数からDATABASE_URLを取得
@@ -105,11 +108,7 @@ func main() {
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	router.GET("/health_check", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status": "ok",
-		})
-	})
+	router.GET("/health_check", controllers.HealthCheck)
 
 	// 認証不要のエンドポイント
 	// ユーザー登録

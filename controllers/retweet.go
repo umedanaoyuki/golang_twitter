@@ -24,6 +24,18 @@ func NewRetweetController(RetweetService services.RetweetService) *RetweetContro
 	return &RetweetController{RetweetService: RetweetService}
 }
 
+// CreateRetweet godoc
+// @Summary      リツイート
+// @Description  指定ツイートをリツイートする
+// @Tags         retweets
+// @Produce      json
+// @Security     SessionAuth
+// @Param        id   path      int  true  "ツイートID"
+// @Success      200  {object}  StatusOKResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /tweets/{id}/retweet [post]
 func (ctrl *RetweetController) CreateRetweet(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
@@ -44,6 +56,18 @@ func (ctrl *RetweetController) CreateRetweet(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
+// DeleteRetweet godoc
+// @Summary      リツイート解除
+// @Description  指定ツイートのリツイートを解除する
+// @Tags         retweets
+// @Produce      json
+// @Security     SessionAuth
+// @Param        id   path      int  true  "ツイートID"
+// @Success      200  {object}  StatusOKResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /tweets/{id}/retweet [delete]
 func (ctrl *RetweetController) DeleteRetweet(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
@@ -64,6 +88,18 @@ func (ctrl *RetweetController) DeleteRetweet(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
+// GetUserRetweets godoc
+// @Summary      ユーザーのリツイート一覧取得
+// @Description  指定ユーザーのリツイートをカーソルページネーションで取得する
+// @Tags         retweets
+// @Produce      json
+// @Param        user_id  path      int   true   "ユーザーID"
+// @Param        cursor   query     int   false  "ページネーションカーソル（最後に取得したリツイートID）"
+// @Param        limit    query     int   false  "取得件数（1〜100、デフォルト20）"  default(20)
+// @Success      200      {object}  GetUserRetweetsResponse
+// @Failure      400      {object}  ErrorResponse
+// @Failure      500      {object}  ErrorResponse
+// @Router       /users/{user_id}/retweets [get]
 func (ctrl *RetweetController) GetUserRetweets(c *gin.Context) {
 	// パスパラメータのバリデーション
 	var uriParams GetUserTweetsUri

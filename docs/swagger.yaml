@@ -1,9 +1,147 @@
 basePath: /
 definitions:
+  controllers.CreateGroupBody:
+    properties:
+      member_user_ids:
+        example:
+        - 2
+        - 3
+        items:
+          type: integer
+        type: array
+      name:
+        example: グループ名
+        type: string
+    required:
+    - name
+    type: object
+  controllers.CreateGroupResponse:
+    properties:
+      group:
+        $ref: '#/definitions/controllers.SwaggerGroup'
+    type: object
+  controllers.CreateMessageInput:
+    properties:
+      content:
+        example: メッセージ本文
+        type: string
+    required:
+    - content
+    type: object
+  controllers.CreateMessageItem:
+    properties:
+      content:
+        example: メッセージ本文
+        type: string
+      group_id:
+        example: 1
+        type: integer
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  controllers.CreateMessageResponse:
+    properties:
+      message:
+        $ref: '#/definitions/controllers.CreateMessageItem'
+    type: object
+  controllers.CreateTweetInput:
+    properties:
+      content:
+        example: Hello, world!
+        type: string
+    required:
+    - content
+    type: object
+  controllers.CreateTweetItem:
+    properties:
+      content:
+        example: Hello, world!
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  controllers.CreateTweetResponse:
+    properties:
+      tweet:
+        $ref: '#/definitions/controllers.CreateTweetItem'
+    type: object
   controllers.ErrorResponse:
     properties:
       error:
         example: エラーメッセージ
+        type: string
+    type: object
+  controllers.GetFollowersResponse:
+    properties:
+      followers:
+        items:
+          $ref: '#/definitions/controllers.SwaggerFollow'
+        type: array
+      has_more:
+        example: false
+        type: boolean
+      next_cursor:
+        type: integer
+    type: object
+  controllers.GetFollowingResponse:
+    properties:
+      following:
+        items:
+          $ref: '#/definitions/controllers.SwaggerFollow'
+        type: array
+      has_more:
+        example: false
+        type: boolean
+      next_cursor:
+        type: integer
+    type: object
+  controllers.GetMessagesResponse:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/controllers.SwaggerMessage'
+        type: array
+    type: object
+  controllers.GetTweetResponse:
+    properties:
+      tweet:
+        $ref: '#/definitions/controllers.SwaggerTweet'
+    type: object
+  controllers.GetUserResponse:
+    properties:
+      user:
+        $ref: '#/definitions/controllers.SwaggerUserDetail'
+    type: object
+  controllers.GetUserRetweetsResponse:
+    properties:
+      has_more:
+        example: false
+        type: boolean
+      next_cursor:
+        type: integer
+      retweets:
+        items:
+          $ref: '#/definitions/controllers.SwaggerRetweetItem'
+        type: array
+    type: object
+  controllers.GetUserTweetsResponse:
+    properties:
+      has_more:
+        example: false
+        type: boolean
+      next_cursor:
+        type: integer
+      tweets:
+        items:
+          $ref: '#/definitions/controllers.SwaggerTweet'
+        type: array
+    type: object
+  controllers.HealthCheckResponse:
+    properties:
+      status:
+        example: ok
         type: string
     type: object
   controllers.LoginInput:
@@ -41,6 +179,165 @@ definitions:
         example: true
         type: boolean
     type: object
+  controllers.MessageResponse:
+    properties:
+      message:
+        example: 処理が完了しました
+        type: string
+    type: object
+  controllers.RegisterInput:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: Password1!
+        maxLength: 15
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  controllers.RegisterResponse:
+    properties:
+      message:
+        example: ユーザー登録が完了しました
+        type: string
+      user:
+        $ref: '#/definitions/controllers.RegisterUserResponse'
+    type: object
+  controllers.RegisterUserResponse:
+    properties:
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+    type: object
+  controllers.StatusOKResponse:
+    properties:
+      status:
+        example: ok
+        type: string
+    type: object
+  controllers.SwaggerBookmark:
+    properties:
+      content:
+        example: ツイート本文
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      id:
+        example: 1
+        type: integer
+      tweet_id:
+        example: 1
+        type: integer
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  controllers.SwaggerFollow:
+    properties:
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      followed_user_id:
+        example: 2
+        type: integer
+      id:
+        example: 1
+        type: integer
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  controllers.SwaggerGroup:
+    properties:
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: グループ名
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  controllers.SwaggerMessage:
+    properties:
+      content:
+        example: メッセージ本文
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      group_id:
+        example: 1
+        type: integer
+      id:
+        example: 1
+        type: integer
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  controllers.SwaggerRetweetItem:
+    properties:
+      tweet:
+        $ref: '#/definitions/controllers.SwaggerTweet'
+    type: object
+  controllers.SwaggerTweet:
+    properties:
+      content:
+        example: Hello, world!
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      id:
+        example: 1
+        type: integer
+      like_count:
+        example: 0
+        type: integer
+      retweet_count:
+        example: 0
+        type: integer
+      updated_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  controllers.SwaggerUserDetail:
+    properties:
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      is_active:
+        example: true
+        type: boolean
+      updated_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -48,6 +345,187 @@ info:
   title: Golang Twitter API
   version: "1.0"
 paths:
+  /activate:
+    get:
+      description: メールで送付されたトークンでアカウントを有効化する
+      parameters:
+      - description: アクティベーショントークン
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      summary: アカウント有効化
+      tags:
+      - auth
+  /groups:
+    get:
+      description: ログイン中のユーザーが所属するグループ一覧を取得する
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controllers.SwaggerGroup'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: グループ一覧取得
+      tags:
+      - groups
+    post:
+      consumes:
+      - application/json
+      description: グループを作成し、メンバーを追加する
+      parameters:
+      - description: グループ情報
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.CreateGroupBody'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.CreateGroupResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: グループ作成
+      tags:
+      - groups
+  /groups/{group_id}/messages:
+    get:
+      description: グループ内のメッセージ一覧を取得する（グループメンバーのみ）
+      parameters:
+      - description: グループID
+        in: path
+        name: group_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.GetMessagesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: メッセージ一覧取得
+      tags:
+      - messages
+    post:
+      consumes:
+      - application/json
+      description: グループ内にメッセージを送信する（グループメンバーのみ）
+      parameters:
+      - description: グループID
+        in: path
+        name: group_id
+        required: true
+        type: integer
+      - description: メッセージ内容
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.CreateMessageInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.CreateMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: メッセージ送信
+      tags:
+      - messages
+  /health_check:
+    get:
+      description: サーバーの稼働状態を確認する
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.HealthCheckResponse'
+      summary: ヘルスチェック
+      tags:
+      - health
   /login:
     post:
       consumes:
@@ -82,4 +560,597 @@ paths:
       summary: ログイン
       tags:
       - auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: メールアドレスとパスワードで新規ユーザーを登録する
+      parameters:
+      - description: 登録情報
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.RegisterInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.RegisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      summary: ユーザー登録
+      tags:
+      - auth
+  /tweets:
+    post:
+      consumes:
+      - application/json
+      description: 認証済みユーザーとしてツイートを投稿する
+      parameters:
+      - description: ツイート内容
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.CreateTweetInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.CreateTweetResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: ツイート投稿
+      tags:
+      - tweets
+  /tweets/{id}:
+    get:
+      description: 指定IDのツイートを取得する
+      parameters:
+      - description: ツイートID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.GetTweetResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      summary: ツイート取得
+      tags:
+      - tweets
+  /tweets/{id}/bookmark:
+    delete:
+      description: 指定ツイートのブックマークを解除する
+      parameters:
+      - description: ツイートID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.StatusOKResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: ブックマーク解除
+      tags:
+      - bookmarks
+    post:
+      description: 指定ツイートをブックマークする
+      parameters:
+      - description: ツイートID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.StatusOKResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: ブックマーク追加
+      tags:
+      - bookmarks
+  /tweets/{id}/like:
+    delete:
+      description: 指定ツイートのいいねを解除する
+      parameters:
+      - description: ツイートID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.StatusOKResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: いいね解除
+      tags:
+      - likes
+    post:
+      description: 指定ツイートにいいねする
+      parameters:
+      - description: ツイートID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.StatusOKResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: いいね
+      tags:
+      - likes
+  /tweets/{id}/retweet:
+    delete:
+      description: 指定ツイートのリツイートを解除する
+      parameters:
+      - description: ツイートID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.StatusOKResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: リツイート解除
+      tags:
+      - retweets
+    post:
+      description: 指定ツイートをリツイートする
+      parameters:
+      - description: ツイートID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.StatusOKResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: リツイート
+      tags:
+      - retweets
+  /tweets/bookmarks:
+    get:
+      description: ログイン中のユーザーのブックマーク一覧を取得する
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controllers.SwaggerBookmark'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: ブックマーク一覧取得
+      tags:
+      - bookmarks
+  /user:
+    delete:
+      description: ログイン中のユーザーアカウントを削除する
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.StatusOKResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: 退会
+      tags:
+      - users
+  /users/{user_id}:
+    get:
+      description: 指定IDのユーザー情報を取得する
+      parameters:
+      - description: ユーザーID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.GetUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      summary: ユーザー情報取得
+      tags:
+      - users
+  /users/{user_id}/follow:
+    delete:
+      description: 指定ユーザーのフォローを解除する
+      parameters:
+      - description: フォロー解除対象のユーザーID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.StatusOKResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: フォロー解除
+      tags:
+      - follows
+    post:
+      description: 指定ユーザーをフォローする
+      parameters:
+      - description: フォロー対象のユーザーID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.StatusOKResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: フォロー
+      tags:
+      - follows
+  /users/{user_id}/followers:
+    get:
+      description: 指定ユーザーのフォロワーをカーソルページネーションで取得する
+      parameters:
+      - description: ユーザーID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: ページネーションカーソル
+        in: query
+        name: cursor
+        type: integer
+      - default: 20
+        description: 取得件数（1〜100、デフォルト20）
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.GetFollowersResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: フォロワー一覧取得
+      tags:
+      - follows
+  /users/{user_id}/following:
+    get:
+      description: 指定ユーザーがフォローしているユーザーをカーソルページネーションで取得する
+      parameters:
+      - description: ユーザーID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: ページネーションカーソル
+        in: query
+        name: cursor
+        type: integer
+      - default: 20
+        description: 取得件数（1〜100、デフォルト20）
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.GetFollowingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: フォロー中一覧取得
+      tags:
+      - follows
+  /users/{user_id}/retweets:
+    get:
+      description: 指定ユーザーのリツイートをカーソルページネーションで取得する
+      parameters:
+      - description: ユーザーID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: ページネーションカーソル（最後に取得したリツイートID）
+        in: query
+        name: cursor
+        type: integer
+      - default: 20
+        description: 取得件数（1〜100、デフォルト20）
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.GetUserRetweetsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      summary: ユーザーのリツイート一覧取得
+      tags:
+      - retweets
+  /users/{user_id}/tweets:
+    get:
+      description: 指定ユーザーのツイートをカーソルページネーションで取得する
+      parameters:
+      - description: ユーザーID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: ページネーションカーソル（最後に取得したツイートID）
+        in: query
+        name: cursor
+        type: integer
+      - default: 20
+        description: 取得件数（1〜100、デフォルト20）
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.GetUserTweetsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      summary: ユーザーのツイート一覧取得
+      tags:
+      - tweets
+securityDefinitions:
+  SessionAuth:
+    in: cookie
+    name: golang_twitter_session
+    type: apiKey
 swagger: "2.0"

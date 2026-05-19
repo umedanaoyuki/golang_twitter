@@ -21,7 +21,7 @@ func NewTweetController(tweetService services.TweetService) *TweetController {
 }
 
 type CreateTweetInput struct {
-	Content string `json:"content" binding:"required"`
+	Content string `json:"content" binding:"required" example:"Hello, world!"`
 }
 
 type GetTweetByIdInput struct {
@@ -36,7 +36,19 @@ type GetUserTweetsQuery struct {
 	Limit  int32  `form:"limit" binding:"omitempty,min=1,max=100"`
 }
 
-// 投稿
+// CreateTweet godoc
+// @Summary      ツイート投稿
+// @Description  認証済みユーザーとしてツイートを投稿する
+// @Tags         tweets
+// @Accept       json
+// @Produce      json
+// @Security     SessionAuth
+// @Param        input  body      CreateTweetInput  true  "ツイート内容"
+// @Success      201    {object}  CreateTweetResponse
+// @Failure      400    {object}  ErrorResponse
+// @Failure      401    {object}  ErrorResponse
+// @Failure      500    {object}  ErrorResponse
+// @Router       /tweets [post]
 func (ctrl *TweetController) CreateTweet(c *gin.Context) {
 	// ミドルウェアからユーザーIDを取得
 	userID, err := middleware.GetUserID(c)
@@ -70,7 +82,18 @@ func (ctrl *TweetController) CreateTweet(c *gin.Context) {
 	})
 }
 
-// user_idのツイート一覧を取得
+// GetUserTweets godoc
+// @Summary      ユーザーのツイート一覧取得
+// @Description  指定ユーザーのツイートをカーソルページネーションで取得する
+// @Tags         tweets
+// @Produce      json
+// @Param        user_id  path      int   true   "ユーザーID"
+// @Param        cursor   query     int   false  "ページネーションカーソル（最後に取得したツイートID）"
+// @Param        limit    query     int   false  "取得件数（1〜100、デフォルト20）"  default(20)
+// @Success      200      {object}  GetUserTweetsResponse
+// @Failure      400      {object}  ErrorResponse
+// @Failure      500      {object}  ErrorResponse
+// @Router       /users/{user_id}/tweets [get]
 func (ctrl *TweetController) GetUserTweets(c *gin.Context) {
 	// パスパラメータのバリデーション
 	var uriParams GetUserTweetsUri
@@ -118,6 +141,17 @@ func (ctrl *TweetController) GetUserTweets(c *gin.Context) {
 	})
 }
 
+// GetTweetByID godoc
+// @Summary      ツイート取得
+// @Description  指定IDのツイートを取得する
+// @Tags         tweets
+// @Produce      json
+// @Param        id   path      int  true  "ツイートID"
+// @Success      200  {object}  GetTweetResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /tweets/{id} [get]
 func (ctrl *TweetController) GetTweetByID(c *gin.Context) {
 	var input GetTweetByIdInput
 	if err := c.ShouldBindUri(&input); err != nil {
