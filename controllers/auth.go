@@ -72,11 +72,41 @@ func (ctrl *AuthController) ActivateUser(c *gin.Context) {
 }
 
 type LoginInput struct {
-	Email string `json:"email" binding:"required,email"`
-	Password    string `json:"password" binding:"required"`
+	Email    string `json:"email" binding:"required,email" example:"user@example.com"`
+	Password string `json:"password" binding:"required" example:"Password1!"`
 }
 
-// ログイン
+// LoginResponse はログイン成功時のレスポンス（Swagger 用）
+type LoginResponse struct {
+	Message string    `json:"message" example:"ログインに成功しました"`
+	User    LoginUser `json:"user"`
+}
+
+// LoginUser はログイン成功時に返すユーザー情報（Swagger 用）
+type LoginUser struct {
+	ID        int32  `json:"id" example:"1"`
+	Email     string `json:"email" example:"user@example.com"`
+	IsActive  bool   `json:"is_active" example:"true"`
+	CreatedAt string `json:"created_at" example:"2024-01-01T00:00:00Z"`
+}
+
+// ErrorResponse はエラー時のレスポンス（Swagger 用）
+type ErrorResponse struct {
+	Error string `json:"error" example:"エラーメッセージ"`
+}
+
+// Login godoc
+// @Summary      ログイン
+// @Description  メールアドレスとパスワードでログインし、セッション Cookie を発行する
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        input  body      LoginInput  true  "ログイン情報"
+// @Success      200    {object}  LoginResponse
+// @Failure      400    {object}  ErrorResponse
+// @Failure      401    {object}  ErrorResponse
+// @Failure      500    {object}  ErrorResponse
+// @Router       /login [post]
 func (ctrl *AuthController) Login(c *gin.Context) {
 	var input LoginInput
 

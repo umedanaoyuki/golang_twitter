@@ -1,0 +1,126 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Twitter クローン API",
+        "title": "Golang Twitter API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/login": {
+            "post": {
+                "description": "メールアドレスとパスワードでログインし、セッション Cookie を発行する",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "ログイン",
+                "parameters": [
+                    {
+                        "description": "ログイン情報",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.LoginInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "controllers.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "エラーメッセージ"
+                }
+            }
+        },
+        "controllers.LoginInput": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "Password1!"
+                }
+            }
+        },
+        "controllers.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "ログインに成功しました"
+                },
+                "user": {
+                    "$ref": "#/definitions/controllers.LoginUser"
+                }
+            }
+        },
+        "controllers.LoginUser": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        }
+    }
+}

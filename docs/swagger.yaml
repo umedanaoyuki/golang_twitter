@@ -1,0 +1,85 @@
+basePath: /
+definitions:
+  controllers.ErrorResponse:
+    properties:
+      error:
+        example: エラーメッセージ
+        type: string
+    type: object
+  controllers.LoginInput:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: Password1!
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  controllers.LoginResponse:
+    properties:
+      message:
+        example: ログインに成功しました
+        type: string
+      user:
+        $ref: '#/definitions/controllers.LoginUser'
+    type: object
+  controllers.LoginUser:
+    properties:
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      is_active:
+        example: true
+        type: boolean
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Twitter クローン API
+  title: Golang Twitter API
+  version: "1.0"
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: メールアドレスとパスワードでログインし、セッション Cookie を発行する
+      parameters:
+      - description: ログイン情報
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      summary: ログイン
+      tags:
+      - auth
+swagger: "2.0"
