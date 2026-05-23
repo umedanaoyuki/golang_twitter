@@ -20,6 +20,18 @@ func NewLikeController(LikeService services.LikeService) *LikeController {
 	return &LikeController{LikeService: LikeService}
 }
 
+// CreateLike godoc
+// @Summary      いいね
+// @Description  指定ツイートにいいねする
+// @Tags         likes
+// @Produce      json
+// @Security     SessionAuth
+// @Param        id   path      int  true  "ツイートID"
+// @Success      200  {object}  StatusOKResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /tweets/{id}/like [post]
 func (ctrl *LikeController) CreateLike(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
@@ -40,6 +52,18 @@ func (ctrl *LikeController) CreateLike(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
+// DeleteLike godoc
+// @Summary      いいね解除
+// @Description  指定ツイートのいいねを解除する
+// @Tags         likes
+// @Produce      json
+// @Security     SessionAuth
+// @Param        id   path      int  true  "ツイートID"
+// @Success      200  {object}  StatusOKResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /tweets/{id}/like [delete]
 func (ctrl *LikeController) DeleteLike(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"golang_twitter/controllers"
 	db "golang_twitter/db/sqlc"
+	_ "golang_twitter/docs"
 	"golang_twitter/infrastructure/email/mailcatcher"
 	"golang_twitter/mailer"
 	"golang_twitter/middleware"
@@ -15,8 +16,19 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
+	"github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "github.com/lib/pq"
 )
+
+// @title           Golang Twitter API
+// @version         1.0
+// @description     Twitter クローン API
+// @host            localhost:8080
+// @BasePath        /
+// @securityDefinitions.apikey  SessionAuth
+// @in                          cookie
+// @name                        golang_twitter_session
 
 func main() {
 	// 環境変数からDATABASE_URLを取得
@@ -94,11 +106,9 @@ func main() {
 	}
 	router.Use(sessions.Sessions("golang_twitter_session", store))
 
-	router.GET("/health_check", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status": "ok",
-		})
-	})
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	router.GET("/health_check", controllers.HealthCheck)
 
 	// 認証不要のエンドポイント
 	// ユーザー登録

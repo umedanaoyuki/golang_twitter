@@ -20,6 +20,18 @@ func NewBookmarkController(BookmarkService services.BookmarkService) *BookmarkCo
 	return &BookmarkController{BookmarkService: BookmarkService}
 }
 
+// CreateBookmark godoc
+// @Summary      ブックマーク追加
+// @Description  指定ツイートをブックマークする
+// @Tags         bookmarks
+// @Produce      json
+// @Security     SessionAuth
+// @Param        id   path      int  true  "ツイートID"
+// @Success      200  {object}  StatusOKResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /tweets/{id}/bookmark [post]
 func (ctrl *BookmarkController) CreateBookmark(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
@@ -40,6 +52,18 @@ func (ctrl *BookmarkController) CreateBookmark(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
+// DeleteBookmark godoc
+// @Summary      ブックマーク解除
+// @Description  指定ツイートのブックマークを解除する
+// @Tags         bookmarks
+// @Produce      json
+// @Security     SessionAuth
+// @Param        id   path      int  true  "ツイートID"
+// @Success      200  {object}  StatusOKResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /tweets/{id}/bookmark [delete]
 func (ctrl *BookmarkController) DeleteBookmark(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
@@ -60,6 +84,16 @@ func (ctrl *BookmarkController) DeleteBookmark(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
+// GetBookmarksByUserId godoc
+// @Summary      ブックマーク一覧取得
+// @Description  ログイン中のユーザーのブックマーク一覧を取得する
+// @Tags         bookmarks
+// @Produce      json
+// @Security     SessionAuth
+// @Success      200  {array}   SwaggerBookmark
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /tweets/bookmarks [get]
 func (ctrl *BookmarkController) GetBookmarksByUserId(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {

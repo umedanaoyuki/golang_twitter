@@ -20,6 +20,18 @@ func NewFollowController(followService services.FollowService) *FollowController
 	return &FollowController{followService: followService}
 }
 
+// CreateFollow godoc
+// @Summary      フォロー
+// @Description  指定ユーザーをフォローする
+// @Tags         follows
+// @Produce      json
+// @Security     SessionAuth
+// @Param        user_id  path      int  true  "フォロー対象のユーザーID"
+// @Success      200      {object}  StatusOKResponse
+// @Failure      400      {object}  ErrorResponse
+// @Failure      401      {object}  ErrorResponse
+// @Failure      500      {object}  ErrorResponse
+// @Router       /users/{user_id}/follow [post]
 func (ctrl *FollowController) CreateFollow(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
@@ -44,6 +56,18 @@ func (ctrl *FollowController) CreateFollow(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
+// DeleteFollow godoc
+// @Summary      フォロー解除
+// @Description  指定ユーザーのフォローを解除する
+// @Tags         follows
+// @Produce      json
+// @Security     SessionAuth
+// @Param        user_id  path      int  true  "フォロー解除対象のユーザーID"
+// @Success      200      {object}  StatusOKResponse
+// @Failure      400      {object}  ErrorResponse
+// @Failure      401      {object}  ErrorResponse
+// @Failure      500      {object}  ErrorResponse
+// @Router       /users/{user_id}/follow [delete]
 func (ctrl *FollowController) DeleteFollow(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
@@ -64,6 +88,20 @@ func (ctrl *FollowController) DeleteFollow(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
+// GetFollowersByUserId godoc
+// @Summary      フォロワー一覧取得
+// @Description  指定ユーザーのフォロワーをカーソルページネーションで取得する
+// @Tags         follows
+// @Produce      json
+// @Security     SessionAuth
+// @Param        user_id  path      int   true   "ユーザーID"
+// @Param        cursor   query     int   false  "ページネーションカーソル"
+// @Param        limit    query     int   false  "取得件数（1〜100、デフォルト20）"  default(20)
+// @Success      200      {object}  GetFollowersResponse
+// @Failure      400      {object}  ErrorResponse
+// @Failure      401      {object}  ErrorResponse
+// @Failure      500      {object}  ErrorResponse
+// @Router       /users/{user_id}/followers [get]
 func (ctrl *FollowController) GetFollowersByUserId(c *gin.Context) {
 	if _, err := middleware.GetUserID(c); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "ログインが必要です"})
@@ -111,6 +149,20 @@ func (ctrl *FollowController) GetFollowersByUserId(c *gin.Context) {
 	})
 }
 
+// GetFollowingByUserId godoc
+// @Summary      フォロー中一覧取得
+// @Description  指定ユーザーがフォローしているユーザーをカーソルページネーションで取得する
+// @Tags         follows
+// @Produce      json
+// @Security     SessionAuth
+// @Param        user_id  path      int   true   "ユーザーID"
+// @Param        cursor   query     int   false  "ページネーションカーソル"
+// @Param        limit    query     int   false  "取得件数（1〜100、デフォルト20）"  default(20)
+// @Success      200      {object}  GetFollowingResponse
+// @Failure      400      {object}  ErrorResponse
+// @Failure      401      {object}  ErrorResponse
+// @Failure      500      {object}  ErrorResponse
+// @Router       /users/{user_id}/following [get]
 func (ctrl *FollowController) GetFollowingByUserId(c *gin.Context) {
 	if _, err := middleware.GetUserID(c); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "ログインが必要です"})

@@ -17,14 +17,28 @@ func NewMessageController(MessageService services.MessageService) *MessageContro
 }
 
 type CreateMessageInput struct {
-	Content string `json:"content" binding:"required"`
+	Content string `json:"content" binding:"required" example:"メッセージ本文"`
 }
 
 type CreateMessageURI struct {
 	GroupID int32 `uri:"group_id" binding:"required,min=1"`
 }
 
-// メッセージ作成
+// CreateMessage godoc
+// @Summary      メッセージ送信
+// @Description  グループ内にメッセージを送信する（グループメンバーのみ）
+// @Tags         messages
+// @Accept       json
+// @Produce      json
+// @Security     SessionAuth
+// @Param        group_id  path      int                 true  "グループID"
+// @Param        input     body      CreateMessageInput  true  "メッセージ内容"
+// @Success      201       {object}  CreateMessageResponse
+// @Failure      400       {object}  ErrorResponse
+// @Failure      401       {object}  ErrorResponse
+// @Failure      403       {object}  ErrorResponse
+// @Failure      500       {object}  ErrorResponse
+// @Router       /groups/{group_id}/messages [post]
 func (ctrl *MessageController) CreateMessage(c *gin.Context) {
 	// ミドルウェアからユーザーIDを取得
 	userID, err := middleware.GetUserID(c)
@@ -65,6 +79,19 @@ func (ctrl *MessageController) CreateMessage(c *gin.Context) {
 	})
 }
 
+// GetMessages godoc
+// @Summary      メッセージ一覧取得
+// @Description  グループ内のメッセージ一覧を取得する（グループメンバーのみ）
+// @Tags         messages
+// @Produce      json
+// @Security     SessionAuth
+// @Param        group_id  path      int  true  "グループID"
+// @Success      200       {object}  GetMessagesResponse
+// @Failure      400       {object}  ErrorResponse
+// @Failure      401       {object}  ErrorResponse
+// @Failure      403       {object}  ErrorResponse
+// @Failure      500       {object}  ErrorResponse
+// @Router       /groups/{group_id}/messages [get]
 func (ctrl *MessageController) GetMessages(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {

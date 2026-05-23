@@ -13,14 +13,28 @@ type GroupController struct {
 }
 
 type CreateGroupBody struct {
-	Name          string  `json:"name" binding:"required"`
-	MemberUserIDs []int32 `json:"member_user_ids"`
+	Name          string  `json:"name" binding:"required" example:"グループ名"`
+	MemberUserIDs []int32 `json:"member_user_ids" example:"2,3"`
 }
 
 func NewGroupController(GroupService services.GroupService) *GroupController {
 	return &GroupController{GroupService: GroupService}
 }
 
+// CreateGroup godoc
+// @Summary      グループ作成
+// @Description  グループを作成し、メンバーを追加する
+// @Tags         groups
+// @Accept       json
+// @Produce      json
+// @Security     SessionAuth
+// @Param        input  body      CreateGroupBody  true  "グループ情報"
+// @Success      201    {object}  CreateGroupResponse
+// @Failure      400    {object}  ErrorResponse
+// @Failure      401    {object}  ErrorResponse
+// @Failure      409    {object}  ErrorResponse
+// @Failure      500    {object}  ErrorResponse
+// @Router       /groups [post]
 func (ctrl *GroupController) CreateGroup(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
@@ -54,6 +68,16 @@ func (ctrl *GroupController) CreateGroup(c *gin.Context) {
 	})
 }
 
+// GetGroups godoc
+// @Summary      グループ一覧取得
+// @Description  ログイン中のユーザーが所属するグループ一覧を取得する
+// @Tags         groups
+// @Produce      json
+// @Security     SessionAuth
+// @Success      200  {array}   SwaggerGroup
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /groups [get]
 func (ctrl *GroupController) GetGroups(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {

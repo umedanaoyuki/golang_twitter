@@ -13,6 +13,21 @@ docker-compose up -d
 docker-compose ps
 ```
 
+### Swagger（API ドキュメント）
+
+サーバー起動後、以下で Swagger UI を開けます。
+
+```
+http://localhost:8080/swagger/index.html
+```
+
+コメントを変更したら、プロジェクトルートでドキュメントを再生成してください。
+
+```
+go install github.com/swaggo/swag/cmd/swag@latest
+swag init
+```
+
 ### 動作確認
 
 以下にアクセスできるか確認

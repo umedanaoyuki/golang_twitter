@@ -18,11 +18,20 @@ func NewAuthController(authService services.AuthService) *AuthController {
 }
 
 type RegisterInput struct {
-	Email string `json:"email" binding:"required,email"`
-	Password    string `json:"password" binding:"required,min=8,max=15"`
+	Email    string `json:"email" binding:"required,email" example:"user@example.com"`
+	Password string `json:"password" binding:"required,min=8,max=15" example:"Password1!"`
 }
 
-// ユーザー登録
+// Register godoc
+// @Summary      ユーザー登録
+// @Description  メールアドレスとパスワードで新規ユーザーを登録する
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        input  body      RegisterInput  true  "登録情報"
+// @Success      201    {object}  RegisterResponse
+// @Failure      400    {object}  ErrorResponse
+// @Router       /register [post]
 func (ctrl *AuthController) Register(c *gin.Context) {
 	var input RegisterInput
 
@@ -50,7 +59,15 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 	})
 }
 
-// ユーザーアクティベーション
+// ActivateUser godoc
+// @Summary      アカウント有効化
+// @Description  メールで送付されたトークンでアカウントを有効化する
+// @Tags         auth
+// @Produce      json
+// @Param        token  query     string  true  "アクティベーショントークン"
+// @Success      200    {object}  MessageResponse
+// @Failure      400    {object}  ErrorResponse
+// @Router       /activate [get]
 func (ctrl *AuthController) ActivateUser(c *gin.Context) {
 	// 1. クエリパラメータからトークンを取得
 	token := c.Query("token")
@@ -72,11 +89,22 @@ func (ctrl *AuthController) ActivateUser(c *gin.Context) {
 }
 
 type LoginInput struct {
-	Email string `json:"email" binding:"required,email"`
-	Password    string `json:"password" binding:"required"`
+	Email    string `json:"email" binding:"required,email" example:"user@example.com"`
+	Password string `json:"password" binding:"required" example:"Password1!"`
 }
 
-// ログイン
+// Login godoc
+// @Summary      ログイン
+// @Description  メールアドレスとパスワードでログインし、セッション Cookie を発行する
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        input  body      LoginInput  true  "ログイン情報"
+// @Success      200    {object}  LoginResponse
+// @Failure      400    {object}  ErrorResponse
+// @Failure      401    {object}  ErrorResponse
+// @Failure      500    {object}  ErrorResponse
+// @Router       /login [post]
 func (ctrl *AuthController) Login(c *gin.Context) {
 	var input LoginInput
 
