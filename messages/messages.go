@@ -11,7 +11,7 @@ const (
 	ErrPasswordHashFailed     = "パスワードのハッシュ化に失敗しました"
 	ErrEmailAlreadyExists     = "このメールアドレスは既に登録されています"
 	
-	MsgUserRegistered         = "ユーザー登録が完了しました"
+	MsgUserRegistered         = "メールを送信しました。\nアカウントを有効化してください。"
 	MsgUserActivated          = "アカウントが有効化されました"
 	MsgLoginSuccess           = "ログインに成功しました"
 
