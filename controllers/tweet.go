@@ -50,7 +50,6 @@ type GetUserTweetsQuery struct {
 // @Failure      500    {object}  ErrorResponse
 // @Router       /tweets [post]
 func (ctrl *TweetController) CreateTweet(c *gin.Context) {
-	// ミドルウェアからユーザーIDを取得
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
@@ -63,7 +62,6 @@ func (ctrl *TweetController) CreateTweet(c *gin.Context) {
 		return
 	}
 
-	// Tweetの作成
 	tweet, err := ctrl.tweetService.CreateTweet(c.Request.Context(), userID, input.Content)
 	if err != nil {
 		if _, ok := err.(*services.ValidationError); ok {
@@ -75,11 +73,79 @@ func (ctrl *TweetController) CreateTweet(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"tweet": gin.H{
-			"user_id":    tweet.UserID,
-			"content":    tweet.Content,
-		},
+		"tweet": tweetResponseFromTweet(tweet),
 	})
+}
+
+// CreateTweetWithImage godoc
+// @Summary      画像付きツイート投稿
+// @Description  認証済みユーザーとして画像付きツイートを投稿する（本文は任意）
+// @Tags         tweets
+// @Accept       multipart/form-data
+// @Produce      json
+// @Security     SessionAuth
+// @Param        content  formData  string  false  "ツイート本文（任意・140文字以内）"
+// @Param        image    formData  file    true   "画像ファイル（JPEG/PNG/GIF/WebP・5MB以下）"
+// @Success      201      {object}  CreateTweetResponse
+// @Failure      400      {object}  ErrorResponse
+// @Failure      401      {object}  ErrorResponse
+// @Failure      500      {object}  ErrorResponse
+// @Router       /tweets/with-image [post]
+func (ctrl *TweetController) CreateTweetWithImage(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
+		return
+	}
+
+	content := c.PostForm("content")
+
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "画像ファイルを指定してください"})
+		return
+	}
+
+	opened, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "画像ファイルを読み込めませんでした"})
+		return
+	}
+	defer opened.Close()
+
+	tweet, err := ctrl.tweetService.CreateTweetWithImage(
+		c.Request.Context(),
+		userID,
+		content,
+		file.Filename,
+		file.Header.Get("Content-Type"),
+		opened,
+		file.Size,
+	)
+	if err != nil {
+		if _, ok := err.(*services.ValidationError); ok {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"tweet": tweetResponseFromTweet(tweet),
+	})
+}
+
+func tweetResponseFromTweet(tweet *services.Tweet) gin.H {
+	resp := gin.H{
+		"id":       tweet.ID,
+		"user_id":  tweet.UserID,
+		"content":  tweet.Content,
+	}
+	if tweet.ImageURL != nil {
+		resp["image_url"] = *tweet.ImageURL
+	}
+	return resp
 }
 
 // GetUserTweets godoc
@@ -95,31 +161,27 @@ func (ctrl *TweetController) CreateTweet(c *gin.Context) {
 // @Failure      500      {object}  ErrorResponse
 // @Router       /users/{user_id}/tweets [get]
 func (ctrl *TweetController) GetUserTweets(c *gin.Context) {
-	// パスパラメータのバリデーション
 	var uriParams GetUserTweetsUri
 	if err := c.ShouldBindUri(&uriParams); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "無効なパスパラメータです"})
 		return
 	}
 
-	// クエリパラメータのバリデーション（デフォルト値を設定）
 	var queryParams GetUserTweetsQuery
 	if err := c.ShouldBindQuery(&queryParams); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "無効なクエリパラメータです"})
 		return
 	}
 
-	// limitのデフォルト値を設定
 	limit := queryParams.Limit
 	if limit == 0 {
 		limit = 20
 	}
 
-	// ツイート一覧を取得
 	tweets, err := ctrl.tweetService.GetUserTweetsWithCursor(
-		c.Request.Context(), 
-		uriParams.UserID, 
-		queryParams.Cursor, 
+		c.Request.Context(),
+		uriParams.UserID,
+		queryParams.Cursor,
 		limit,
 	)
 	if err != nil {
@@ -127,7 +189,6 @@ func (ctrl *TweetController) GetUserTweets(c *gin.Context) {
 		return
 	}
 
-	// 次のカーソルを計算
 	var nextCursor *int32
 	if len(tweets) > 0 {
 		lastTweetID := tweets[len(tweets)-1].ID

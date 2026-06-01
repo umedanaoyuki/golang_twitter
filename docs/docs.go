@@ -486,6 +486,67 @@ const docTemplate = `{
                 }
             }
         },
+        "/tweets/with-image": {
+            "post": {
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "description": "認証済みユーザーとして画像付きツイートを投稿する（本文は任意）",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tweets"
+                ],
+                "summary": "画像付きツイート投稿",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ツイート本文（任意・140文字以内）",
+                        "name": "content",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "画像ファイル（JPEG/PNG/GIF/WebP・5MB以下）",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.CreateTweetResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/tweets/{id}": {
             "get": {
                 "description": "指定IDのツイートを取得する",
@@ -1351,6 +1412,14 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Hello, world!"
                 },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "http://localhost:8080/uploads/1_abc.jpg"
+                },
                 "user_id": {
                     "type": "integer",
                     "example": 1
@@ -1712,6 +1781,10 @@ const docTemplate = `{
                 "id": {
                     "type": "integer",
                     "example": 1
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "http://localhost:8080/uploads/1_abc.jpg"
                 },
                 "like_count": {
                     "type": "integer",

@@ -5,6 +5,7 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -58,11 +59,12 @@ type Retweet struct {
 }
 
 type Tweet struct {
-	ID        int32     `json:"id"`
-	UserID    int32     `json:"user_id"`
-	Content   string    `json:"content"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        int32          `json:"id"`
+	UserID    int32          `json:"user_id"`
+	Content   string         `json:"content"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	ImageUrl  sql.NullString `json:"image_url"`
 }
 
 type User struct {

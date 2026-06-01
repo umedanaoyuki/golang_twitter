@@ -4,50 +4,53 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"io"
+	"path/filepath"
+	"strings"
+
 	db "golang_twitter/db/sqlc"
+	"golang_twitter/infrastructure/storage"
 )
 
-type TweetDetail struct {
-	db.Tweet
-	// いいね数
-	LikeCount int64 `json:"like_count"`
-	// リツイート数
-	RetweetCount int64 `json:"retweet_count"`
-}
-
 type TweetService interface {
-	CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error)
+	CreateTweet(ctx context.Context, userID int32, content string) (*Tweet, error)
+	CreateTweetWithImage(ctx context.Context, userID int32, content string, filename string, contentType string, r io.Reader, size int64) (*Tweet, error)
 	GetTweetByID(ctx context.Context, id int32) (*TweetDetail, error)
 	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]TweetDetail, error)
-	// GetTweetDetailsByIDs は指定 ID のツイートを一括取得し、いいね数・リツイート数を付与する
 	GetTweetDetailsByIDs(ctx context.Context, ids []int32) (map[int32]TweetDetail, error)
 }
 
 type tweetService struct {
-	db      *sql.DB
-	queries *db.Queries
+	db           *sql.DB
+	queries      *db.Queries
+	imageStorage storage.ImageStorage
 }
 
-func NewTweetService(database *sql.DB, queries *db.Queries) TweetService {
+func NewTweetService(database *sql.DB, queries *db.Queries, imageStorage storage.ImageStorage) TweetService {
 	return &tweetService{
-		db:      database,
-		queries: queries,
+		db:           database,
+		queries:      queries,
+		imageStorage: imageStorage,
 	}
 }
 
-// CreateTweet はツイートを作成
-func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error) {
-	// コンテンツの検証
-	if content == "" {
-		return nil, &ValidationError{Message: "ツイート内容を入力してください"}
+func (s *tweetService) validateContent(content string, allowEmpty bool) error {
+	if !allowEmpty && content == "" {
+		return &ValidationError{Message: "ツイート内容を入力してください"}
 	}
-	
 	if len([]rune(content)) > 140 {
-		return nil, &ValidationError{Message: "ツイートは140文字以内で入力してください"}
+		return &ValidationError{Message: "ツイートは140文字以内で入力してください"}
+	}
+	return nil
+}
+
+// CreateTweet はテキストのみのツイートを作成
+func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content string) (*Tweet, error) {
+	if err := s.validateContent(content, false); err != nil {
+		return nil, err
 	}
 
-	// ツイートを作成
-	tweet, err := s.queries.CreateTweet(ctx, db.CreateTweetParams{
+	row, err := s.queries.CreateTweet(ctx, db.CreateTweetParams{
 		UserID:  userID,
 		Content: content,
 	})
@@ -55,18 +58,80 @@ func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content st
 		return nil, &ServiceError{Message: "ツイートの投稿に失敗しました"}
 	}
 
+	tweet := tweetFromCreateRow(row)
 	return &tweet, nil
 }
 
-// userIDのツイート一覧を取得
+// CreateTweetWithImage は画像付きツイートを作成（本文は任意）
+func (s *tweetService) CreateTweetWithImage(
+	ctx context.Context,
+	userID int32,
+	content string,
+	filename string,
+	contentType string,
+	r io.Reader,
+	size int64,
+) (*Tweet, error) {
+	if err := s.validateContent(content, true); err != nil {
+		return nil, err
+	}
+
+	resolvedType, err := resolveImageContentType(contentType, filename)
+	if err != nil {
+		return nil, err
+	}
+
+	imageURL, err := s.imageStorage.Save(userID, resolvedType, r, size)
+	if err != nil {
+		if _, ok := err.(*ValidationError); ok {
+			return nil, err
+		}
+		return nil, &ValidationError{Message: err.Error()}
+	}
+
+	row, err := s.queries.CreateTweetWithImage(ctx, db.CreateTweetWithImageParams{
+		UserID:  userID,
+		Content: content,
+		ImageUrl: sql.NullString{
+			String: imageURL,
+			Valid:  true,
+		},
+	})
+	if err != nil {
+		return nil, &ServiceError{Message: "ツイートの投稿に失敗しました"}
+	}
+
+	tweet := tweetFromCreateWithImageRow(row)
+	return &tweet, nil
+}
+
+func resolveImageContentType(contentType, filename string) (string, error) {
+	if contentType != "" {
+		if _, ok := storage.AllowedImageMIME(contentType); ok {
+			return contentType, nil
+		}
+	}
+
+	switch strings.ToLower(filepath.Ext(filename)) {
+	case ".jpg", ".jpeg":
+		return "image/jpeg", nil
+	case ".png":
+		return "image/png", nil
+	case ".gif":
+		return "image/gif", nil
+	case ".webp":
+		return "image/webp", nil
+	}
+
+	return "", &ValidationError{Message: "対応していない画像形式です（JPEG, PNG, GIF, WebP のみ）"}
+}
+
 func (s *tweetService) GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]TweetDetail, error) {
-	// cursorが指定されていない場合は0を使用（SQLで全件取得）
 	cursorValue := int32(0)
 	if cursor != nil {
 		cursorValue = *cursor
 	}
 
-	// カーソルベースでツイートを取得
 	tweets, err := s.queries.GetTweetsByUserIDWithCursor(ctx, db.GetTweetsByUserIDWithCursorParams{
 		UserID:  userID,
 		Column2: cursorValue,
@@ -90,7 +155,8 @@ func (s *tweetService) GetUserTweetsWithCursor(ctx context.Context, userID int32
 		if err != nil {
 			return nil, &ServiceError{Message: "リツイート数の取得に失敗しました"}
 		}
-		details = append(details, TweetDetail{Tweet: t, LikeCount: n, RetweetCount: rt})
+		base := tweetFromCursorRow(t)
+		details = append(details, TweetDetail{Tweet: base, LikeCount: n, RetweetCount: rt})
 	}
 	return details, nil
 }
@@ -99,7 +165,7 @@ func (s *tweetService) GetTweetByID(ctx context.Context, id int32) (*TweetDetail
 	tweet, err := s.queries.GetTweetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("Tweetが見つかりませんでした");
+			return nil, errors.New("Tweetが見つかりませんでした")
 		}
 		return nil, &ServiceError{Message: "Tweetの取得に失敗しました"}
 	}
@@ -113,7 +179,9 @@ func (s *tweetService) GetTweetByID(ctx context.Context, id int32) (*TweetDetail
 	if err != nil {
 		return nil, &ServiceError{Message: "リツイート数の取得に失敗しました"}
 	}
-	return &TweetDetail{Tweet: tweet, LikeCount: likeCount, RetweetCount: retweetCount}, nil
+
+	base := tweetFromGetByIDRow(tweet)
+	return &TweetDetail{Tweet: base, LikeCount: likeCount, RetweetCount: retweetCount}, nil
 }
 
 func (s *tweetService) GetTweetDetailsByIDs(ctx context.Context, ids []int32) (map[int32]TweetDetail, error) {
@@ -155,8 +223,9 @@ func (s *tweetService) GetTweetDetailsByIDs(ctx context.Context, ids []int32) (m
 
 	out := make(map[int32]TweetDetail, len(tweets))
 	for _, tweet := range tweets {
+		base := tweetFromIDsRow(tweet)
 		out[tweet.ID] = TweetDetail{
-			Tweet:        tweet,
+			Tweet:        base,
 			LikeCount:    likeByTweetID[tweet.ID],
 			RetweetCount: retweetByTweetID[tweet.ID],
 		}
