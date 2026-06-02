@@ -24,6 +24,10 @@ type CreateTweetInput struct {
 	Content string `json:"content" binding:"required" example:"Hello, world!"`
 }
 
+type CreateImageTweetInput struct {
+	ImageURL string `json:"image_url" binding:"required" example:"https://example.com/image.jpg"`
+}
+
 type GetTweetByIdInput struct {
 	Id int32 `uri:"id" binding:"required,min=1"`
 }
@@ -90,14 +94,14 @@ func (ctrl *TweetController) CreateImageTweet(c *gin.Context) {
 		return
 	}
 
-	var input CreateTweetInput
+	var input CreateImageTweetInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Tweetの作成
-	tweet, err := ctrl.tweetService.CreateImageTweet(c.Request.Context(), userID, input.Content)
+	tweet, err := ctrl.tweetService.CreateImageTweet(c.Request.Context(), userID, input.ImageURL)
 	if err != nil {
 		if _, ok := err.(*services.ValidationError); ok {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -110,7 +114,7 @@ func (ctrl *TweetController) CreateImageTweet(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"tweet": gin.H{
 			"user_id":    tweet.UserID,
-			"image_url":    tweet.ImageURL,
+			"image_url":    tweet.ImageUrl,
 		},
 	})
 }
