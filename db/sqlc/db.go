@@ -51,6 +51,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createGroupMemberStmt, err = db.PrepareContext(ctx, createGroupMember); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateGroupMember: %w", err)
 	}
+	if q.createImageTweetStmt, err = db.PrepareContext(ctx, createImageTweet); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateImageTweet: %w", err)
+	}
 	if q.createLikeStmt, err = db.PrepareContext(ctx, createLike); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateLike: %w", err)
 	}
@@ -74,6 +77,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.deleteFollowStmt, err = db.PrepareContext(ctx, deleteFollow); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteFollow: %w", err)
+	}
+	if q.deleteImageTweetStmt, err = db.PrepareContext(ctx, deleteImageTweet); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteImageTweet: %w", err)
 	}
 	if q.deleteLikeStmt, err = db.PrepareContext(ctx, deleteLike); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteLike: %w", err)
@@ -102,6 +108,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.existsRetweetStmt, err = db.PrepareContext(ctx, existsRetweet); err != nil {
 		return nil, fmt.Errorf("error preparing query ExistsRetweet: %w", err)
 	}
+	if q.getAllImageTweetsStmt, err = db.PrepareContext(ctx, getAllImageTweets); err != nil {
+		return nil, fmt.Errorf("error preparing query GetAllImageTweets: %w", err)
+	}
 	if q.getAllTweetsStmt, err = db.PrepareContext(ctx, getAllTweets); err != nil {
 		return nil, fmt.Errorf("error preparing query GetAllTweets: %w", err)
 	}
@@ -122,6 +131,18 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.getGroupsByUserIDStmt, err = db.PrepareContext(ctx, getGroupsByUserID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetGroupsByUserID: %w", err)
+	}
+	if q.getImageTweetByIDStmt, err = db.PrepareContext(ctx, getImageTweetByID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetImageTweetByID: %w", err)
+	}
+	if q.getImageTweetsByIDsStmt, err = db.PrepareContext(ctx, getImageTweetsByIDs); err != nil {
+		return nil, fmt.Errorf("error preparing query GetImageTweetsByIDs: %w", err)
+	}
+	if q.getImageTweetsByUserIDStmt, err = db.PrepareContext(ctx, getImageTweetsByUserID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetImageTweetsByUserID: %w", err)
+	}
+	if q.getImageTweetsByUserIDWithCursorStmt, err = db.PrepareContext(ctx, getImageTweetsByUserIDWithCursor); err != nil {
+		return nil, fmt.Errorf("error preparing query GetImageTweetsByUserIDWithCursor: %w", err)
 	}
 	if q.getMessagesByGroupIDStmt, err = db.PrepareContext(ctx, getMessagesByGroupID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetMessagesByGroupID: %w", err)
@@ -203,6 +224,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing createGroupMemberStmt: %w", cerr)
 		}
 	}
+	if q.createImageTweetStmt != nil {
+		if cerr := q.createImageTweetStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createImageTweetStmt: %w", cerr)
+		}
+	}
 	if q.createLikeStmt != nil {
 		if cerr := q.createLikeStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createLikeStmt: %w", cerr)
@@ -241,6 +267,11 @@ func (q *Queries) Close() error {
 	if q.deleteFollowStmt != nil {
 		if cerr := q.deleteFollowStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteFollowStmt: %w", cerr)
+		}
+	}
+	if q.deleteImageTweetStmt != nil {
+		if cerr := q.deleteImageTweetStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteImageTweetStmt: %w", cerr)
 		}
 	}
 	if q.deleteLikeStmt != nil {
@@ -288,6 +319,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing existsRetweetStmt: %w", cerr)
 		}
 	}
+	if q.getAllImageTweetsStmt != nil {
+		if cerr := q.getAllImageTweetsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getAllImageTweetsStmt: %w", cerr)
+		}
+	}
 	if q.getAllTweetsStmt != nil {
 		if cerr := q.getAllTweetsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getAllTweetsStmt: %w", cerr)
@@ -321,6 +357,26 @@ func (q *Queries) Close() error {
 	if q.getGroupsByUserIDStmt != nil {
 		if cerr := q.getGroupsByUserIDStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getGroupsByUserIDStmt: %w", cerr)
+		}
+	}
+	if q.getImageTweetByIDStmt != nil {
+		if cerr := q.getImageTweetByIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getImageTweetByIDStmt: %w", cerr)
+		}
+	}
+	if q.getImageTweetsByIDsStmt != nil {
+		if cerr := q.getImageTweetsByIDsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getImageTweetsByIDsStmt: %w", cerr)
+		}
+	}
+	if q.getImageTweetsByUserIDStmt != nil {
+		if cerr := q.getImageTweetsByUserIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getImageTweetsByUserIDStmt: %w", cerr)
+		}
+	}
+	if q.getImageTweetsByUserIDWithCursorStmt != nil {
+		if cerr := q.getImageTweetsByUserIDWithCursorStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getImageTweetsByUserIDWithCursorStmt: %w", cerr)
 		}
 	}
 	if q.getMessagesByGroupIDStmt != nil {
@@ -410,99 +466,113 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                                 DBTX
-	tx                                 *sql.Tx
-	countBookmarksByTweetIDStmt        *sql.Stmt
-	countLikesByTweetIDStmt            *sql.Stmt
-	countLikesByTweetIDsStmt           *sql.Stmt
-	countRetweetsByTweetIDStmt         *sql.Stmt
-	countRetweetsByTweetIDsStmt        *sql.Stmt
-	createBookmarkStmt                 *sql.Stmt
-	createFollowStmt                   *sql.Stmt
-	createGroupStmt                    *sql.Stmt
-	createGroupMemberStmt              *sql.Stmt
-	createLikeStmt                     *sql.Stmt
-	createMessageStmt                  *sql.Stmt
-	createRetweetStmt                  *sql.Stmt
-	createTweetStmt                    *sql.Stmt
-	createUserStmt                     *sql.Stmt
-	createUserActivationStmt           *sql.Stmt
-	deleteBookmarkStmt                 *sql.Stmt
-	deleteFollowStmt                   *sql.Stmt
-	deleteLikeStmt                     *sql.Stmt
-	deleteRetweetStmt                  *sql.Stmt
-	deleteTweetStmt                    *sql.Stmt
-	deleteUserStmt                     *sql.Stmt
-	deleteUserActivationStmt           *sql.Stmt
-	existsBookmarkStmt                 *sql.Stmt
-	existsGroupMemberStmt              *sql.Stmt
-	existsLikeStmt                     *sql.Stmt
-	existsRetweetStmt                  *sql.Stmt
-	getAllTweetsStmt                   *sql.Stmt
-	getBookmarksByUserIdStmt           *sql.Stmt
-	getFollowersByUserIdWithCursorStmt *sql.Stmt
-	getFollowingByUserIdWithCursorStmt *sql.Stmt
-	getGroupByIDStmt                   *sql.Stmt
-	getGroupsByMemberUserIDStmt        *sql.Stmt
-	getGroupsByUserIDStmt              *sql.Stmt
-	getMessagesByGroupIDStmt           *sql.Stmt
-	getTweetByIDStmt                   *sql.Stmt
-	getTweetsByIDsStmt                 *sql.Stmt
-	getTweetsByUserIDStmt              *sql.Stmt
-	getTweetsByUserIDWithCursorStmt    *sql.Stmt
-	getUserActivationByTokenStmt       *sql.Stmt
-	getUserByEmailStmt                 *sql.Stmt
-	getUserDetailByUserIDStmt          *sql.Stmt
-	getUserRetweetsWithCursorStmt      *sql.Stmt
-	updateUserIsActiveStmt             *sql.Stmt
+	db                                   DBTX
+	tx                                   *sql.Tx
+	countBookmarksByTweetIDStmt          *sql.Stmt
+	countLikesByTweetIDStmt              *sql.Stmt
+	countLikesByTweetIDsStmt             *sql.Stmt
+	countRetweetsByTweetIDStmt           *sql.Stmt
+	countRetweetsByTweetIDsStmt          *sql.Stmt
+	createBookmarkStmt                   *sql.Stmt
+	createFollowStmt                     *sql.Stmt
+	createGroupStmt                      *sql.Stmt
+	createGroupMemberStmt                *sql.Stmt
+	createImageTweetStmt                 *sql.Stmt
+	createLikeStmt                       *sql.Stmt
+	createMessageStmt                    *sql.Stmt
+	createRetweetStmt                    *sql.Stmt
+	createTweetStmt                      *sql.Stmt
+	createUserStmt                       *sql.Stmt
+	createUserActivationStmt             *sql.Stmt
+	deleteBookmarkStmt                   *sql.Stmt
+	deleteFollowStmt                     *sql.Stmt
+	deleteImageTweetStmt                 *sql.Stmt
+	deleteLikeStmt                       *sql.Stmt
+	deleteRetweetStmt                    *sql.Stmt
+	deleteTweetStmt                      *sql.Stmt
+	deleteUserStmt                       *sql.Stmt
+	deleteUserActivationStmt             *sql.Stmt
+	existsBookmarkStmt                   *sql.Stmt
+	existsGroupMemberStmt                *sql.Stmt
+	existsLikeStmt                       *sql.Stmt
+	existsRetweetStmt                    *sql.Stmt
+	getAllImageTweetsStmt                *sql.Stmt
+	getAllTweetsStmt                     *sql.Stmt
+	getBookmarksByUserIdStmt             *sql.Stmt
+	getFollowersByUserIdWithCursorStmt   *sql.Stmt
+	getFollowingByUserIdWithCursorStmt   *sql.Stmt
+	getGroupByIDStmt                     *sql.Stmt
+	getGroupsByMemberUserIDStmt          *sql.Stmt
+	getGroupsByUserIDStmt                *sql.Stmt
+	getImageTweetByIDStmt                *sql.Stmt
+	getImageTweetsByIDsStmt              *sql.Stmt
+	getImageTweetsByUserIDStmt           *sql.Stmt
+	getImageTweetsByUserIDWithCursorStmt *sql.Stmt
+	getMessagesByGroupIDStmt             *sql.Stmt
+	getTweetByIDStmt                     *sql.Stmt
+	getTweetsByIDsStmt                   *sql.Stmt
+	getTweetsByUserIDStmt                *sql.Stmt
+	getTweetsByUserIDWithCursorStmt      *sql.Stmt
+	getUserActivationByTokenStmt         *sql.Stmt
+	getUserByEmailStmt                   *sql.Stmt
+	getUserDetailByUserIDStmt            *sql.Stmt
+	getUserRetweetsWithCursorStmt        *sql.Stmt
+	updateUserIsActiveStmt               *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                                 tx,
-		tx:                                 tx,
-		countBookmarksByTweetIDStmt:        q.countBookmarksByTweetIDStmt,
-		countLikesByTweetIDStmt:            q.countLikesByTweetIDStmt,
-		countLikesByTweetIDsStmt:           q.countLikesByTweetIDsStmt,
-		countRetweetsByTweetIDStmt:         q.countRetweetsByTweetIDStmt,
-		countRetweetsByTweetIDsStmt:        q.countRetweetsByTweetIDsStmt,
-		createBookmarkStmt:                 q.createBookmarkStmt,
-		createFollowStmt:                   q.createFollowStmt,
-		createGroupStmt:                    q.createGroupStmt,
-		createGroupMemberStmt:              q.createGroupMemberStmt,
-		createLikeStmt:                     q.createLikeStmt,
-		createMessageStmt:                  q.createMessageStmt,
-		createRetweetStmt:                  q.createRetweetStmt,
-		createTweetStmt:                    q.createTweetStmt,
-		createUserStmt:                     q.createUserStmt,
-		createUserActivationStmt:           q.createUserActivationStmt,
-		deleteBookmarkStmt:                 q.deleteBookmarkStmt,
-		deleteFollowStmt:                   q.deleteFollowStmt,
-		deleteLikeStmt:                     q.deleteLikeStmt,
-		deleteRetweetStmt:                  q.deleteRetweetStmt,
-		deleteTweetStmt:                    q.deleteTweetStmt,
-		deleteUserStmt:                     q.deleteUserStmt,
-		deleteUserActivationStmt:           q.deleteUserActivationStmt,
-		existsBookmarkStmt:                 q.existsBookmarkStmt,
-		existsGroupMemberStmt:              q.existsGroupMemberStmt,
-		existsLikeStmt:                     q.existsLikeStmt,
-		existsRetweetStmt:                  q.existsRetweetStmt,
-		getAllTweetsStmt:                   q.getAllTweetsStmt,
-		getBookmarksByUserIdStmt:           q.getBookmarksByUserIdStmt,
-		getFollowersByUserIdWithCursorStmt: q.getFollowersByUserIdWithCursorStmt,
-		getFollowingByUserIdWithCursorStmt: q.getFollowingByUserIdWithCursorStmt,
-		getGroupByIDStmt:                   q.getGroupByIDStmt,
-		getGroupsByMemberUserIDStmt:        q.getGroupsByMemberUserIDStmt,
-		getGroupsByUserIDStmt:              q.getGroupsByUserIDStmt,
-		getMessagesByGroupIDStmt:           q.getMessagesByGroupIDStmt,
-		getTweetByIDStmt:                   q.getTweetByIDStmt,
-		getTweetsByIDsStmt:                 q.getTweetsByIDsStmt,
-		getTweetsByUserIDStmt:              q.getTweetsByUserIDStmt,
-		getTweetsByUserIDWithCursorStmt:    q.getTweetsByUserIDWithCursorStmt,
-		getUserActivationByTokenStmt:       q.getUserActivationByTokenStmt,
-		getUserByEmailStmt:                 q.getUserByEmailStmt,
-		getUserDetailByUserIDStmt:          q.getUserDetailByUserIDStmt,
-		getUserRetweetsWithCursorStmt:      q.getUserRetweetsWithCursorStmt,
-		updateUserIsActiveStmt:             q.updateUserIsActiveStmt,
+		db:                                   tx,
+		tx:                                   tx,
+		countBookmarksByTweetIDStmt:          q.countBookmarksByTweetIDStmt,
+		countLikesByTweetIDStmt:              q.countLikesByTweetIDStmt,
+		countLikesByTweetIDsStmt:             q.countLikesByTweetIDsStmt,
+		countRetweetsByTweetIDStmt:           q.countRetweetsByTweetIDStmt,
+		countRetweetsByTweetIDsStmt:          q.countRetweetsByTweetIDsStmt,
+		createBookmarkStmt:                   q.createBookmarkStmt,
+		createFollowStmt:                     q.createFollowStmt,
+		createGroupStmt:                      q.createGroupStmt,
+		createGroupMemberStmt:                q.createGroupMemberStmt,
+		createImageTweetStmt:                 q.createImageTweetStmt,
+		createLikeStmt:                       q.createLikeStmt,
+		createMessageStmt:                    q.createMessageStmt,
+		createRetweetStmt:                    q.createRetweetStmt,
+		createTweetStmt:                      q.createTweetStmt,
+		createUserStmt:                       q.createUserStmt,
+		createUserActivationStmt:             q.createUserActivationStmt,
+		deleteBookmarkStmt:                   q.deleteBookmarkStmt,
+		deleteFollowStmt:                     q.deleteFollowStmt,
+		deleteImageTweetStmt:                 q.deleteImageTweetStmt,
+		deleteLikeStmt:                       q.deleteLikeStmt,
+		deleteRetweetStmt:                    q.deleteRetweetStmt,
+		deleteTweetStmt:                      q.deleteTweetStmt,
+		deleteUserStmt:                       q.deleteUserStmt,
+		deleteUserActivationStmt:             q.deleteUserActivationStmt,
+		existsBookmarkStmt:                   q.existsBookmarkStmt,
+		existsGroupMemberStmt:                q.existsGroupMemberStmt,
+		existsLikeStmt:                       q.existsLikeStmt,
+		existsRetweetStmt:                    q.existsRetweetStmt,
+		getAllImageTweetsStmt:                q.getAllImageTweetsStmt,
+		getAllTweetsStmt:                     q.getAllTweetsStmt,
+		getBookmarksByUserIdStmt:             q.getBookmarksByUserIdStmt,
+		getFollowersByUserIdWithCursorStmt:   q.getFollowersByUserIdWithCursorStmt,
+		getFollowingByUserIdWithCursorStmt:   q.getFollowingByUserIdWithCursorStmt,
+		getGroupByIDStmt:                     q.getGroupByIDStmt,
+		getGroupsByMemberUserIDStmt:          q.getGroupsByMemberUserIDStmt,
+		getGroupsByUserIDStmt:                q.getGroupsByUserIDStmt,
+		getImageTweetByIDStmt:                q.getImageTweetByIDStmt,
+		getImageTweetsByIDsStmt:              q.getImageTweetsByIDsStmt,
+		getImageTweetsByUserIDStmt:           q.getImageTweetsByUserIDStmt,
+		getImageTweetsByUserIDWithCursorStmt: q.getImageTweetsByUserIDWithCursorStmt,
+		getMessagesByGroupIDStmt:             q.getMessagesByGroupIDStmt,
+		getTweetByIDStmt:                     q.getTweetByIDStmt,
+		getTweetsByIDsStmt:                   q.getTweetsByIDsStmt,
+		getTweetsByUserIDStmt:                q.getTweetsByUserIDStmt,
+		getTweetsByUserIDWithCursorStmt:      q.getTweetsByUserIDWithCursorStmt,
+		getUserActivationByTokenStmt:         q.getUserActivationByTokenStmt,
+		getUserByEmailStmt:                   q.getUserByEmailStmt,
+		getUserDetailByUserIDStmt:            q.getUserDetailByUserIDStmt,
+		getUserRetweetsWithCursorStmt:        q.getUserRetweetsWithCursorStmt,
+		updateUserIsActiveStmt:               q.updateUserIsActiveStmt,
 	}
 }

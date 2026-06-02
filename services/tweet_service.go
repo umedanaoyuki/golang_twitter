@@ -17,6 +17,7 @@ type TweetDetail struct {
 
 type TweetService interface {
 	CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error)
+	CreateImageTweet(ctx context.Context, userID int32, imageURL string) (*db.Tweet, error)
 	GetTweetByID(ctx context.Context, id int32) (*TweetDetail, error)
 	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]TweetDetail, error)
 	// GetTweetDetailsByIDs は指定 ID のツイートを一括取得し、いいね数・リツイート数を付与する
@@ -53,6 +54,25 @@ func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content st
 	})
 	if err != nil {
 		return nil, &ServiceError{Message: "ツイートの投稿に失敗しました"}
+	}
+
+	return &tweet, nil
+}
+
+
+func (s *tweetService) CreateImageTweet(ctx context.Context, userID int32, imageURL string) (*db.Tweet, error) {
+	// 画像の検証
+	if imageURL == "" {
+		return nil, &ValidationError{Message: "画像URLを入力してください"}
+	}
+
+	// ツイートを作成
+	tweet, err := s.queries.CreateImageTweet(ctx, db.CreateImageTweetParams{
+		UserID:  userID,
+		ImageURL: imageURL,
+	})
+	if err != nil {
+		return nil, &ServiceError{Message: "画像の投稿に失敗しました"}
 	}
 
 	return &tweet, nil

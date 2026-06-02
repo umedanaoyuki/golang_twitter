@@ -82,6 +82,39 @@ func (ctrl *TweetController) CreateTweet(c *gin.Context) {
 	})
 }
 
+func (ctrl *TweetController) CreateImageTweet(c *gin.Context) {
+	// ミドルウェアからユーザーIDを取得
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
+		return
+	}
+
+	var input CreateTweetInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Tweetの作成
+	tweet, err := ctrl.tweetService.CreateImageTweet(c.Request.Context(), userID, input.Content)
+	if err != nil {
+		if _, ok := err.(*services.ValidationError); ok {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"tweet": gin.H{
+			"user_id":    tweet.UserID,
+			"image_url":    tweet.ImageURL,
+		},
+	})
+}
+
 // GetUserTweets godoc
 // @Summary      ユーザーのツイート一覧取得
 // @Description  指定ユーザーのツイートをカーソルページネーションで取得する
