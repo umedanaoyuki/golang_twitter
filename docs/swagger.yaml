@@ -623,6 +623,42 @@ paths:
       tags:
       - tweets
   /tweets/{id}:
+    delete:
+      description: 認証済みユーザーが自分のツイートを削除する（他人のツイートは削除できない）
+      parameters:
+      - description: ツイートID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.StatusOKResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: ツイート削除
+      tags:
+      - tweets
     get:
       description: 指定IDのツイートを取得する
       parameters:

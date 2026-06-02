@@ -87,6 +87,19 @@ func (ctrl *TweetController) CreateTweet(c *gin.Context) {
 }
 
 
+// DeleteTweet godoc
+// @Summary      ツイート削除
+// @Description  認証済みユーザーが自分のツイートを削除する（他人のツイートは削除できない）
+// @Tags         tweets
+// @Produce      json
+// @Security     SessionAuth
+// @Param        id   path      int  true  "ツイートID"
+// @Success      200  {object}  StatusOKResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /tweets/{id} [delete]
 func (ctrl *TweetController) DeleteTweet(c *gin.Context) {
 	// ミドルウェアからユーザーIDを取得
 	userID, err := middleware.GetUserID(c)
