@@ -6,6 +6,7 @@ import (
 	"errors"
 	db "golang_twitter/db/sqlc"
 	"golang_twitter/infrastructure/storage"
+	"io"
 )
 
 type TweetDetail struct {
@@ -18,7 +19,7 @@ type TweetDetail struct {
 
 type TweetService interface {
 	CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error)
-	CreateImageTweet(ctx context.Context, userID int32, imageURL string) (*db.ImageTweet, error)
+	CreateImageTweet(ctx context.Context, userID int32, contentType string, r io.Reader, size int64) (*db.ImageTweet, error)
 	GetTweetByID(ctx context.Context, id int32) (*TweetDetail, error)
 	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]TweetDetail, error)
 	// GetTweetDetailsByIDs は指定 ID のツイートを一括取得し、いいね数・リツイート数を付与する
@@ -35,6 +36,7 @@ func NewTweetService(database *sql.DB, queries *db.Queries, imageStorage storage
 	return &tweetService{
 		db:      database,
 		queries: queries,
+		imageStorage: imageStorage,
 	}
 }
 
@@ -62,22 +64,28 @@ func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content st
 }
 
 
-func (s *tweetService) CreateImageTweet(ctx context.Context, userID int32, imageURL string) (*db.ImageTweet, error) {
-	// 画像の検証
-	if imageURL == "" {
-		return nil, &ValidationError{Message: "画像URLを入力してください"}
+func (s *tweetService) CreateImageTweet(ctx context.Context, userID int32, contentType string, r io.Reader, size int64) (*db.ImageTweet, error) {
+	if s.imageStorage == nil {
+		return nil, &ServiceError{Message: "画像ストレージが設定されていません"}
 	}
 
-	// ツイートを作成
-	ImageUrl, err := s.queries.CreateImageTweet(ctx, db.CreateImageTweetParams{
-		UserID:  userID,
+	// 画像を保存し、公開URLを取得
+	imageURL, err := s.imageStorage.Save(userID, contentType, r, size)
+	if err != nil {
+		// Save 側でサイズ・形式なども検証している
+		return nil, &ValidationError{Message: err.Error()}
+	}
+
+	// DBに保存
+	imageTweet, err := s.queries.CreateImageTweet(ctx, db.CreateImageTweetParams{
+		UserID:   userID,
 		ImageUrl: imageURL,
 	})
 	if err != nil {
 		return nil, &ServiceError{Message: "画像の投稿に失敗しました"}
 	}
 
-	return &ImageUrl, nil
+	return &imageTweet, nil
 }
 
 // userIDのツイート一覧を取得

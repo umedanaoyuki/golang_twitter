@@ -20,14 +20,6 @@ definitions:
       group:
         $ref: '#/definitions/controllers.SwaggerGroup'
     type: object
-  controllers.CreateImageTweetInput:
-    properties:
-      image_url:
-        example: https://example.com/image.jpg
-        type: string
-    required:
-    - image_url
-    type: object
   controllers.CreateImageTweetItem:
     properties:
       image_url:
@@ -647,15 +639,14 @@ paths:
   /tweets-image:
     post:
       consumes:
-      - application/json
-      description: 認証済みユーザーとして画像URLを投稿する
+      - multipart/form-data
+      description: 認証済みユーザーとして画像ファイルを投稿する
       parameters:
-      - description: 画像URL
-        in: body
-        name: input
+      - description: 画像ファイル（JPEG/PNG・5MB以下）
+        in: formData
+        name: image
         required: true
-        schema:
-          $ref: '#/definitions/controllers.CreateImageTweetInput'
+        type: file
       produces:
       - application/json
       responses:

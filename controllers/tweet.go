@@ -88,12 +88,12 @@ func (ctrl *TweetController) CreateTweet(c *gin.Context) {
 
 // CreateImageTweet godoc
 // @Summary      画像投稿
-// @Description  認証済みユーザーとして画像URLを投稿する
+// @Description  認証済みユーザーとして画像ファイルを投稿する
 // @Tags         tweets
-// @Accept       json
+// @Accept       multipart/form-data
 // @Produce      json
 // @Security     SessionAuth
-// @Param        input  body      CreateImageTweetInput  true  "画像URL"
+// @Param        image  formData  file  true  "画像ファイル（JPEG/PNG・5MB以下）"
 // @Success      201    {object}  CreateImageTweetResponse
 // @Failure      400    {object}  ErrorResponse
 // @Failure      401    {object}  ErrorResponse
@@ -107,16 +107,30 @@ func (ctrl *TweetController) CreateImageTweet(c *gin.Context) {
 		return
 	}
 
-	var input CreateImageTweetInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "画像ファイルを送信してください"})
 		return
 	}
 
+	opened, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "画像ファイルを読み込めませんでした"})
+		return
+	}
+	defer opened.Close()
+
 	// Tweetの作成
-	tweet, err := ctrl.tweetService.CreateImageTweet(c.Request.Context(), userID, input.ImageURL)
+	tweet, err := ctrl.tweetService.CreateImageTweet(
+		c.Request.Context(),
+		userID,
+		file.Header.Get("Content-Type"),
+		opened,
+		file.Size,
+	)
 	if err != nil {
 		if _, ok := err.(*services.ValidationError); ok {
+			// サービス層でバリデーション済みの日本語メッセージを返す
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -127,7 +141,7 @@ func (ctrl *TweetController) CreateImageTweet(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"tweet": gin.H{
 			"user_id":    tweet.UserID,
-			"image_url":    tweet.ImageUrl,
+			"image_url":  tweet.ImageUrl,
 		},
 	})
 }

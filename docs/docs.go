@@ -453,9 +453,9 @@ const docTemplate = `{
                         "SessionAuth": []
                     }
                 ],
-                "description": "認証済みユーザーとして画像URLを投稿する",
+                "description": "認証済みユーザーとして画像ファイルを投稿する",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -466,13 +466,11 @@ const docTemplate = `{
                 "summary": "画像投稿",
                 "parameters": [
                     {
-                        "description": "画像URL",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controllers.CreateImageTweetInput"
-                        }
+                        "type": "file",
+                        "description": "画像ファイル（JPEG/PNG・5MB以下）",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1349,18 +1347,6 @@ const docTemplate = `{
             "properties": {
                 "group": {
                     "$ref": "#/definitions/controllers.SwaggerGroup"
-                }
-            }
-        },
-        "controllers.CreateImageTweetInput": {
-            "type": "object",
-            "required": [
-                "image_url"
-            ],
-            "properties": {
-                "image_url": {
-                    "type": "string",
-                    "example": "https://example.com/image.jpg"
                 }
             }
         },
