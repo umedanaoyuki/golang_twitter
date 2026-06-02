@@ -86,6 +86,19 @@ func (ctrl *TweetController) CreateTweet(c *gin.Context) {
 	})
 }
 
+// CreateImageTweet godoc
+// @Summary      画像投稿
+// @Description  認証済みユーザーとして画像URLを投稿する
+// @Tags         tweets
+// @Accept       json
+// @Produce      json
+// @Security     SessionAuth
+// @Param        input  body      CreateImageTweetInput  true  "画像URL"
+// @Success      201    {object}  CreateImageTweetResponse
+// @Failure      400    {object}  ErrorResponse
+// @Failure      401    {object}  ErrorResponse
+// @Failure      500    {object}  ErrorResponse
+// @Router       /tweets-image [post]
 func (ctrl *TweetController) CreateImageTweet(c *gin.Context) {
 	// ミドルウェアからユーザーIDを取得
 	userID, err := middleware.GetUserID(c)

@@ -446,6 +446,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/tweets-image": {
+            "post": {
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "description": "認証済みユーザーとして画像URLを投稿する",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tweets"
+                ],
+                "summary": "画像投稿",
+                "parameters": [
+                    {
+                        "description": "画像URL",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.CreateImageTweetInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.CreateImageTweetResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/tweets/bookmarks": {
             "get": {
                 "security": [
@@ -1292,6 +1349,39 @@ const docTemplate = `{
             "properties": {
                 "group": {
                     "$ref": "#/definitions/controllers.SwaggerGroup"
+                }
+            }
+        },
+        "controllers.CreateImageTweetInput": {
+            "type": "object",
+            "required": [
+                "image_url"
+            ],
+            "properties": {
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/image.jpg"
+                }
+            }
+        },
+        "controllers.CreateImageTweetItem": {
+            "type": "object",
+            "properties": {
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/image.jpg"
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "controllers.CreateImageTweetResponse": {
+            "type": "object",
+            "properties": {
+                "tweet": {
+                    "$ref": "#/definitions/controllers.CreateImageTweetItem"
                 }
             }
         },
