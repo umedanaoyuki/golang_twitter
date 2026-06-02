@@ -7,8 +7,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
-	"time"
 
 	"github.com/lib/pq"
 )
@@ -19,7 +17,7 @@ INSERT INTO tweets (
   content
 ) VALUES (
   $1, $2
-) RETURNING id, user_id, content, image_url, created_at, updated_at
+) RETURNING id, user_id, content, created_at, updated_at
 `
 
 type CreateTweetParams struct {
@@ -27,62 +25,13 @@ type CreateTweetParams struct {
 	Content string `json:"content"`
 }
 
-type CreateTweetRow struct {
-	ID        int32          `json:"id"`
-	UserID    int32          `json:"user_id"`
-	Content   string         `json:"content"`
-	ImageUrl  sql.NullString `json:"image_url"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-}
-
-func (q *Queries) CreateTweet(ctx context.Context, arg CreateTweetParams) (CreateTweetRow, error) {
+func (q *Queries) CreateTweet(ctx context.Context, arg CreateTweetParams) (Tweet, error) {
 	row := q.queryRow(ctx, q.createTweetStmt, createTweet, arg.UserID, arg.Content)
-	var i CreateTweetRow
+	var i Tweet
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.Content,
-		&i.ImageUrl,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const createTweetWithImage = `-- name: CreateTweetWithImage :one
-INSERT INTO tweets (
-  user_id,
-  content,
-  image_url
-) VALUES (
-  $1, $2, $3
-) RETURNING id, user_id, content, image_url, created_at, updated_at
-`
-
-type CreateTweetWithImageParams struct {
-	UserID   int32          `json:"user_id"`
-	Content  string         `json:"content"`
-	ImageUrl sql.NullString `json:"image_url"`
-}
-
-type CreateTweetWithImageRow struct {
-	ID        int32          `json:"id"`
-	UserID    int32          `json:"user_id"`
-	Content   string         `json:"content"`
-	ImageUrl  sql.NullString `json:"image_url"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-}
-
-func (q *Queries) CreateTweetWithImage(ctx context.Context, arg CreateTweetWithImageParams) (CreateTweetWithImageRow, error) {
-	row := q.queryRow(ctx, q.createTweetWithImageStmt, createTweetWithImage, arg.UserID, arg.Content, arg.ImageUrl)
-	var i CreateTweetWithImageRow
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.Content,
-		&i.ImageUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -105,35 +54,25 @@ func (q *Queries) DeleteTweet(ctx context.Context, arg DeleteTweetParams) error 
 }
 
 const getAllTweets = `-- name: GetAllTweets :many
-SELECT id, user_id, content, image_url, created_at, updated_at
+SELECT id, user_id, content, created_at, updated_at
 FROM tweets
 ORDER BY created_at DESC
 LIMIT $1
 `
 
-type GetAllTweetsRow struct {
-	ID        int32          `json:"id"`
-	UserID    int32          `json:"user_id"`
-	Content   string         `json:"content"`
-	ImageUrl  sql.NullString `json:"image_url"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-}
-
-func (q *Queries) GetAllTweets(ctx context.Context, limit int32) ([]GetAllTweetsRow, error) {
+func (q *Queries) GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error) {
 	rows, err := q.query(ctx, q.getAllTweetsStmt, getAllTweets, limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetAllTweetsRow{}
+	items := []Tweet{}
 	for rows.Next() {
-		var i GetAllTweetsRow
+		var i Tweet
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
 			&i.Content,
-			&i.ImageUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -151,28 +90,18 @@ func (q *Queries) GetAllTweets(ctx context.Context, limit int32) ([]GetAllTweets
 }
 
 const getTweetByID = `-- name: GetTweetByID :one
-SELECT id, user_id, content, image_url, created_at, updated_at
+SELECT id, user_id, content, created_at, updated_at
 FROM tweets
 WHERE id = $1
 `
 
-type GetTweetByIDRow struct {
-	ID        int32          `json:"id"`
-	UserID    int32          `json:"user_id"`
-	Content   string         `json:"content"`
-	ImageUrl  sql.NullString `json:"image_url"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-}
-
-func (q *Queries) GetTweetByID(ctx context.Context, id int32) (GetTweetByIDRow, error) {
+func (q *Queries) GetTweetByID(ctx context.Context, id int32) (Tweet, error) {
 	row := q.queryRow(ctx, q.getTweetByIDStmt, getTweetByID, id)
-	var i GetTweetByIDRow
+	var i Tweet
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.Content,
-		&i.ImageUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -180,34 +109,24 @@ func (q *Queries) GetTweetByID(ctx context.Context, id int32) (GetTweetByIDRow, 
 }
 
 const getTweetsByIDs = `-- name: GetTweetsByIDs :many
-SELECT id, user_id, content, image_url, created_at, updated_at
+SELECT id, user_id, content, created_at, updated_at
 FROM tweets
 WHERE id = ANY($1::int[])
 `
 
-type GetTweetsByIDsRow struct {
-	ID        int32          `json:"id"`
-	UserID    int32          `json:"user_id"`
-	Content   string         `json:"content"`
-	ImageUrl  sql.NullString `json:"image_url"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-}
-
-func (q *Queries) GetTweetsByIDs(ctx context.Context, dollar_1 []int32) ([]GetTweetsByIDsRow, error) {
+func (q *Queries) GetTweetsByIDs(ctx context.Context, dollar_1 []int32) ([]Tweet, error) {
 	rows, err := q.query(ctx, q.getTweetsByIDsStmt, getTweetsByIDs, pq.Array(dollar_1))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetTweetsByIDsRow{}
+	items := []Tweet{}
 	for rows.Next() {
-		var i GetTweetsByIDsRow
+		var i Tweet
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
 			&i.Content,
-			&i.ImageUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -225,35 +144,25 @@ func (q *Queries) GetTweetsByIDs(ctx context.Context, dollar_1 []int32) ([]GetTw
 }
 
 const getTweetsByUserID = `-- name: GetTweetsByUserID :many
-SELECT id, user_id, content, image_url, created_at, updated_at
+SELECT id, user_id, content, created_at, updated_at
 FROM tweets
 WHERE user_id = $1
 ORDER BY created_at DESC
 `
 
-type GetTweetsByUserIDRow struct {
-	ID        int32          `json:"id"`
-	UserID    int32          `json:"user_id"`
-	Content   string         `json:"content"`
-	ImageUrl  sql.NullString `json:"image_url"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-}
-
-func (q *Queries) GetTweetsByUserID(ctx context.Context, userID int32) ([]GetTweetsByUserIDRow, error) {
+func (q *Queries) GetTweetsByUserID(ctx context.Context, userID int32) ([]Tweet, error) {
 	rows, err := q.query(ctx, q.getTweetsByUserIDStmt, getTweetsByUserID, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetTweetsByUserIDRow{}
+	items := []Tweet{}
 	for rows.Next() {
-		var i GetTweetsByUserIDRow
+		var i Tweet
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
 			&i.Content,
-			&i.ImageUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -271,7 +180,7 @@ func (q *Queries) GetTweetsByUserID(ctx context.Context, userID int32) ([]GetTwe
 }
 
 const getTweetsByUserIDWithCursor = `-- name: GetTweetsByUserIDWithCursor :many
-SELECT id, user_id, content, image_url, created_at, updated_at
+SELECT id, user_id, content, created_at, updated_at
 FROM tweets
 WHERE user_id = $1
   AND (CASE WHEN $2 = 0 THEN true ELSE id < $2 END)
@@ -285,29 +194,19 @@ type GetTweetsByUserIDWithCursorParams struct {
 	Limit   int32       `json:"limit"`
 }
 
-type GetTweetsByUserIDWithCursorRow struct {
-	ID        int32          `json:"id"`
-	UserID    int32          `json:"user_id"`
-	Content   string         `json:"content"`
-	ImageUrl  sql.NullString `json:"image_url"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-}
-
-func (q *Queries) GetTweetsByUserIDWithCursor(ctx context.Context, arg GetTweetsByUserIDWithCursorParams) ([]GetTweetsByUserIDWithCursorRow, error) {
+func (q *Queries) GetTweetsByUserIDWithCursor(ctx context.Context, arg GetTweetsByUserIDWithCursorParams) ([]Tweet, error) {
 	rows, err := q.query(ctx, q.getTweetsByUserIDWithCursorStmt, getTweetsByUserIDWithCursor, arg.UserID, arg.Column2, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetTweetsByUserIDWithCursorRow{}
+	items := []Tweet{}
 	for rows.Next() {
-		var i GetTweetsByUserIDWithCursorRow
+		var i Tweet
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
 			&i.Content,
-			&i.ImageUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

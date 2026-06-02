@@ -58,12 +58,6 @@ definitions:
       content:
         example: Hello, world!
         type: string
-      id:
-        example: 1
-        type: integer
-      image_url:
-        example: http://localhost:8080/uploads/1_abc.jpg
-        type: string
       user_id:
         example: 1
         type: integer
@@ -313,9 +307,6 @@ definitions:
       id:
         example: 1
         type: integer
-      image_url:
-        example: http://localhost:8080/uploads/1_abc.jpg
-        type: string
       like_count:
         example: 0
         type: integer
@@ -882,45 +873,6 @@ paths:
       summary: ブックマーク一覧取得
       tags:
       - bookmarks
-  /tweets/with-image:
-    post:
-      consumes:
-      - multipart/form-data
-      description: 認証済みユーザーとして画像付きツイートを投稿する（本文は任意）
-      parameters:
-      - description: ツイート本文（任意・140文字以内）
-        in: formData
-        name: content
-        type: string
-      - description: 画像ファイル（JPEG/PNG/GIF/WebP・5MB以下）
-        in: formData
-        name: image
-        required: true
-        type: file
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/controllers.CreateTweetResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/controllers.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/controllers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/controllers.ErrorResponse'
-      security:
-      - SessionAuth: []
-      summary: 画像付きツイート投稿
-      tags:
-      - tweets
   /user:
     delete:
       description: ログイン中のユーザーアカウントを削除する

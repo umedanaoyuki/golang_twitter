@@ -7,7 +7,6 @@ import (
 	db "golang_twitter/db/sqlc"
 	_ "golang_twitter/docs"
 	"golang_twitter/infrastructure/email/mailcatcher"
-	"golang_twitter/infrastructure/storage"
 	"golang_twitter/mailer"
 	"golang_twitter/middleware"
 	"golang_twitter/services"
@@ -68,22 +67,9 @@ func main() {
 		// emailMailer = smtp.NewEmailSender()
 	}
 
-	uploadDir := os.Getenv("UPLOAD_DIR")
-	if uploadDir == "" {
-		uploadDir = "./uploads"
-	}
-	uploadBaseURL := os.Getenv("UPLOAD_BASE_URL")
-	if uploadBaseURL == "" {
-		uploadBaseURL = "http://localhost:8080"
-	}
-	imageStorage, err := storage.NewLocalImageStorage(uploadDir, uploadBaseURL)
-	if err != nil {
-		log.Fatal("画像ストレージの初期化エラー:", err)
-	}
-
 	// サービスの初期化
 	authService := services.NewAuthService(conn, queries, emailMailer)
-	tweetService := services.NewTweetService(conn, queries, imageStorage)
+	tweetService := services.NewTweetService(conn, queries)
 	likeService := services.NewLikeService(conn, queries)
 	userService := services.NewUserService(queries)
 	bookmarkService := services.NewBookmarkService(conn, queries)
@@ -122,7 +108,6 @@ func main() {
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	router.Static("/uploads", uploadDir)
 	router.GET("/health_check", controllers.HealthCheck)
 
 	// 認証不要のエンドポイント
@@ -148,8 +133,6 @@ func main() {
 	{
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
-		// 画像付きツイート投稿
-		authorized.POST("/tweets/with-image", tweetController.CreateTweetWithImage)
 
 		// リツイート機能
 		authorized.POST("/tweets/:id/retweet", retweetController.CreateRetweet)

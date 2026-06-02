@@ -42,14 +42,13 @@ type LoginUser struct {
 }
 
 type SwaggerTweet struct {
-	ID           int32   `json:"id" example:"1"`
-	UserID       int32   `json:"user_id" example:"1"`
-	Content      string  `json:"content" example:"Hello, world!"`
-	ImageURL     *string `json:"image_url,omitempty" example:"http://localhost:8080/uploads/1_abc.jpg"`
-	CreatedAt    string  `json:"created_at" example:"2024-01-01T00:00:00Z"`
-	UpdatedAt    string  `json:"updated_at" example:"2024-01-01T00:00:00Z"`
-	LikeCount    int64   `json:"like_count" example:"0"`
-	RetweetCount int64   `json:"retweet_count" example:"0"`
+	ID           int32  `json:"id" example:"1"`
+	UserID       int32  `json:"user_id" example:"1"`
+	Content      string `json:"content" example:"Hello, world!"`
+	CreatedAt    string `json:"created_at" example:"2024-01-01T00:00:00Z"`
+	UpdatedAt    string `json:"updated_at" example:"2024-01-01T00:00:00Z"`
+	LikeCount    int64  `json:"like_count" example:"0"`
+	RetweetCount int64  `json:"retweet_count" example:"0"`
 }
 
 type CreateTweetResponse struct {
@@ -57,10 +56,8 @@ type CreateTweetResponse struct {
 }
 
 type CreateTweetItem struct {
-	ID       int32   `json:"id" example:"1"`
-	UserID   int32   `json:"user_id" example:"1"`
-	Content  string  `json:"content" example:"Hello, world!"`
-	ImageURL *string `json:"image_url,omitempty" example:"http://localhost:8080/uploads/1_abc.jpg"`
+	UserID  int32  `json:"user_id" example:"1"`
+	Content string `json:"content" example:"Hello, world!"`
 }
 
 type GetTweetResponse struct {

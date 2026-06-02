@@ -63,9 +63,6 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createTweetStmt, err = db.PrepareContext(ctx, createTweet); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateTweet: %w", err)
 	}
-	if q.createTweetWithImageStmt, err = db.PrepareContext(ctx, createTweetWithImage); err != nil {
-		return nil, fmt.Errorf("error preparing query CreateTweetWithImage: %w", err)
-	}
 	if q.createUserStmt, err = db.PrepareContext(ctx, createUser); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUser: %w", err)
 	}
@@ -224,11 +221,6 @@ func (q *Queries) Close() error {
 	if q.createTweetStmt != nil {
 		if cerr := q.createTweetStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createTweetStmt: %w", cerr)
-		}
-	}
-	if q.createTweetWithImageStmt != nil {
-		if cerr := q.createTweetWithImageStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing createTweetWithImageStmt: %w", cerr)
 		}
 	}
 	if q.createUserStmt != nil {
@@ -433,7 +425,6 @@ type Queries struct {
 	createMessageStmt                  *sql.Stmt
 	createRetweetStmt                  *sql.Stmt
 	createTweetStmt                    *sql.Stmt
-	createTweetWithImageStmt           *sql.Stmt
 	createUserStmt                     *sql.Stmt
 	createUserActivationStmt           *sql.Stmt
 	deleteBookmarkStmt                 *sql.Stmt
@@ -483,7 +474,6 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		createMessageStmt:                  q.createMessageStmt,
 		createRetweetStmt:                  q.createRetweetStmt,
 		createTweetStmt:                    q.createTweetStmt,
-		createTweetWithImageStmt:           q.createTweetWithImageStmt,
 		createUserStmt:                     q.createUserStmt,
 		createUserActivationStmt:           q.createUserActivationStmt,
 		deleteBookmarkStmt:                 q.deleteBookmarkStmt,
