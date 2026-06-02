@@ -27,6 +27,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.countBookmarksByTweetIDStmt, err = db.PrepareContext(ctx, countBookmarksByTweetID); err != nil {
 		return nil, fmt.Errorf("error preparing query CountBookmarksByTweetID: %w", err)
 	}
+	if q.countCommentsByTweetIDStmt, err = db.PrepareContext(ctx, countCommentsByTweetID); err != nil {
+		return nil, fmt.Errorf("error preparing query CountCommentsByTweetID: %w", err)
+	}
+	if q.countCommentsByTweetIDsStmt, err = db.PrepareContext(ctx, countCommentsByTweetIDs); err != nil {
+		return nil, fmt.Errorf("error preparing query CountCommentsByTweetIDs: %w", err)
+	}
 	if q.countLikesByTweetIDStmt, err = db.PrepareContext(ctx, countLikesByTweetID); err != nil {
 		return nil, fmt.Errorf("error preparing query CountLikesByTweetID: %w", err)
 	}
@@ -41,6 +47,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.createBookmarkStmt, err = db.PrepareContext(ctx, createBookmark); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateBookmark: %w", err)
+	}
+	if q.createCommentStmt, err = db.PrepareContext(ctx, createComment); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateComment: %w", err)
 	}
 	if q.createFollowStmt, err = db.PrepareContext(ctx, createFollow); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateFollow: %w", err)
@@ -72,6 +81,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.deleteBookmarkStmt, err = db.PrepareContext(ctx, deleteBookmark); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteBookmark: %w", err)
 	}
+	if q.deleteCommentStmt, err = db.PrepareContext(ctx, deleteComment); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteComment: %w", err)
+	}
 	if q.deleteFollowStmt, err = db.PrepareContext(ctx, deleteFollow); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteFollow: %w", err)
 	}
@@ -92,6 +104,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.existsBookmarkStmt, err = db.PrepareContext(ctx, existsBookmark); err != nil {
 		return nil, fmt.Errorf("error preparing query ExistsBookmark: %w", err)
+	}
+	if q.existsCommentStmt, err = db.PrepareContext(ctx, existsComment); err != nil {
+		return nil, fmt.Errorf("error preparing query ExistsComment: %w", err)
 	}
 	if q.existsGroupMemberStmt, err = db.PrepareContext(ctx, existsGroupMember); err != nil {
 		return nil, fmt.Errorf("error preparing query ExistsGroupMember: %w", err)
@@ -163,6 +178,16 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing countBookmarksByTweetIDStmt: %w", cerr)
 		}
 	}
+	if q.countCommentsByTweetIDStmt != nil {
+		if cerr := q.countCommentsByTweetIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countCommentsByTweetIDStmt: %w", cerr)
+		}
+	}
+	if q.countCommentsByTweetIDsStmt != nil {
+		if cerr := q.countCommentsByTweetIDsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countCommentsByTweetIDsStmt: %w", cerr)
+		}
+	}
 	if q.countLikesByTweetIDStmt != nil {
 		if cerr := q.countLikesByTweetIDStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing countLikesByTweetIDStmt: %w", cerr)
@@ -186,6 +211,11 @@ func (q *Queries) Close() error {
 	if q.createBookmarkStmt != nil {
 		if cerr := q.createBookmarkStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createBookmarkStmt: %w", cerr)
+		}
+	}
+	if q.createCommentStmt != nil {
+		if cerr := q.createCommentStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createCommentStmt: %w", cerr)
 		}
 	}
 	if q.createFollowStmt != nil {
@@ -238,6 +268,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing deleteBookmarkStmt: %w", cerr)
 		}
 	}
+	if q.deleteCommentStmt != nil {
+		if cerr := q.deleteCommentStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteCommentStmt: %w", cerr)
+		}
+	}
 	if q.deleteFollowStmt != nil {
 		if cerr := q.deleteFollowStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteFollowStmt: %w", cerr)
@@ -271,6 +306,11 @@ func (q *Queries) Close() error {
 	if q.existsBookmarkStmt != nil {
 		if cerr := q.existsBookmarkStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing existsBookmarkStmt: %w", cerr)
+		}
+	}
+	if q.existsCommentStmt != nil {
+		if cerr := q.existsCommentStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing existsCommentStmt: %w", cerr)
 		}
 	}
 	if q.existsGroupMemberStmt != nil {
@@ -413,11 +453,14 @@ type Queries struct {
 	db                                 DBTX
 	tx                                 *sql.Tx
 	countBookmarksByTweetIDStmt        *sql.Stmt
+	countCommentsByTweetIDStmt         *sql.Stmt
+	countCommentsByTweetIDsStmt        *sql.Stmt
 	countLikesByTweetIDStmt            *sql.Stmt
 	countLikesByTweetIDsStmt           *sql.Stmt
 	countRetweetsByTweetIDStmt         *sql.Stmt
 	countRetweetsByTweetIDsStmt        *sql.Stmt
 	createBookmarkStmt                 *sql.Stmt
+	createCommentStmt                  *sql.Stmt
 	createFollowStmt                   *sql.Stmt
 	createGroupStmt                    *sql.Stmt
 	createGroupMemberStmt              *sql.Stmt
@@ -428,6 +471,7 @@ type Queries struct {
 	createUserStmt                     *sql.Stmt
 	createUserActivationStmt           *sql.Stmt
 	deleteBookmarkStmt                 *sql.Stmt
+	deleteCommentStmt                  *sql.Stmt
 	deleteFollowStmt                   *sql.Stmt
 	deleteLikeStmt                     *sql.Stmt
 	deleteRetweetStmt                  *sql.Stmt
@@ -435,6 +479,7 @@ type Queries struct {
 	deleteUserStmt                     *sql.Stmt
 	deleteUserActivationStmt           *sql.Stmt
 	existsBookmarkStmt                 *sql.Stmt
+	existsCommentStmt                  *sql.Stmt
 	existsGroupMemberStmt              *sql.Stmt
 	existsLikeStmt                     *sql.Stmt
 	existsRetweetStmt                  *sql.Stmt
@@ -462,11 +507,14 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		db:                                 tx,
 		tx:                                 tx,
 		countBookmarksByTweetIDStmt:        q.countBookmarksByTweetIDStmt,
+		countCommentsByTweetIDStmt:         q.countCommentsByTweetIDStmt,
+		countCommentsByTweetIDsStmt:        q.countCommentsByTweetIDsStmt,
 		countLikesByTweetIDStmt:            q.countLikesByTweetIDStmt,
 		countLikesByTweetIDsStmt:           q.countLikesByTweetIDsStmt,
 		countRetweetsByTweetIDStmt:         q.countRetweetsByTweetIDStmt,
 		countRetweetsByTweetIDsStmt:        q.countRetweetsByTweetIDsStmt,
 		createBookmarkStmt:                 q.createBookmarkStmt,
+		createCommentStmt:                  q.createCommentStmt,
 		createFollowStmt:                   q.createFollowStmt,
 		createGroupStmt:                    q.createGroupStmt,
 		createGroupMemberStmt:              q.createGroupMemberStmt,
@@ -477,6 +525,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		createUserStmt:                     q.createUserStmt,
 		createUserActivationStmt:           q.createUserActivationStmt,
 		deleteBookmarkStmt:                 q.deleteBookmarkStmt,
+		deleteCommentStmt:                  q.deleteCommentStmt,
 		deleteFollowStmt:                   q.deleteFollowStmt,
 		deleteLikeStmt:                     q.deleteLikeStmt,
 		deleteRetweetStmt:                  q.deleteRetweetStmt,
@@ -484,6 +533,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		deleteUserStmt:                     q.deleteUserStmt,
 		deleteUserActivationStmt:           q.deleteUserActivationStmt,
 		existsBookmarkStmt:                 q.existsBookmarkStmt,
+		existsCommentStmt:                  q.existsCommentStmt,
 		existsGroupMemberStmt:              q.existsGroupMemberStmt,
 		existsLikeStmt:                     q.existsLikeStmt,
 		existsRetweetStmt:                  q.existsRetweetStmt,

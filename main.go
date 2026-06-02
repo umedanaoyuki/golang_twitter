@@ -16,9 +16,9 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "github.com/lib/pq"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // @title           Golang Twitter API
@@ -71,6 +71,7 @@ func main() {
 	authService := services.NewAuthService(conn, queries, emailMailer)
 	tweetService := services.NewTweetService(conn, queries)
 	likeService := services.NewLikeService(conn, queries)
+	commentService := services.NewCommentService(conn, queries)
 	userService := services.NewUserService(queries)
 	bookmarkService := services.NewBookmarkService(conn, queries)
 	groupService := services.NewGroupService(conn, queries)
@@ -82,7 +83,7 @@ func main() {
 	authController := controllers.NewAuthController(authService)
 	tweetController := controllers.NewTweetController(tweetService)
 	likeController := controllers.NewLikeController(likeService)
-	
+	commentController := controllers.NewCommentController(commentService)
 	userController := controllers.NewUserController(userService)
 	bookmarkController := controllers.NewBookmarkController(bookmarkService)
 	groupController := controllers.NewGroupController(groupService)
@@ -146,6 +147,9 @@ func main() {
 		// いいね機能
 		authorized.POST("/tweets/:id/like", likeController.CreateLike)
 		authorized.DELETE("/tweets/:id/like", likeController.DeleteLike)
+
+		// コメント機能
+		authorized.POST("/tweets/:id/comments", commentController.CreateComment)
 
 		/* グループ内でのメッセージ機能 */
 		// グループ作成

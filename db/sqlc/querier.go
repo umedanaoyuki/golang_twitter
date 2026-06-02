@@ -10,11 +10,14 @@ import (
 
 type Querier interface {
 	CountBookmarksByTweetID(ctx context.Context, tweetID int32) (int64, error)
+	CountCommentsByTweetID(ctx context.Context, tweetID int32) (int64, error)
+	CountCommentsByTweetIDs(ctx context.Context, dollar_1 []int32) ([]CountCommentsByTweetIDsRow, error)
 	CountLikesByTweetID(ctx context.Context, tweetID int32) (int64, error)
 	CountLikesByTweetIDs(ctx context.Context, dollar_1 []int32) ([]CountLikesByTweetIDsRow, error)
 	CountRetweetsByTweetID(ctx context.Context, tweetID int32) (int64, error)
 	CountRetweetsByTweetIDs(ctx context.Context, dollar_1 []int32) ([]CountRetweetsByTweetIDsRow, error)
 	CreateBookmark(ctx context.Context, arg CreateBookmarkParams) (Bookmark, error)
+	CreateComment(ctx context.Context, arg CreateCommentParams) (Comment, error)
 	CreateFollow(ctx context.Context, arg CreateFollowParams) (Follow, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateGroupMember(ctx context.Context, arg CreateGroupMemberParams) (CreateGroupMemberRow, error)
@@ -25,6 +28,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserActivation(ctx context.Context, arg CreateUserActivationParams) (UserActivation, error)
 	DeleteBookmark(ctx context.Context, arg DeleteBookmarkParams) error
+	DeleteComment(ctx context.Context, arg DeleteCommentParams) error
 	DeleteFollow(ctx context.Context, arg DeleteFollowParams) error
 	DeleteLike(ctx context.Context, arg DeleteLikeParams) error
 	DeleteRetweet(ctx context.Context, arg DeleteRetweetParams) error
@@ -32,6 +36,7 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id int32) error
 	DeleteUserActivation(ctx context.Context, token string) error
 	ExistsBookmark(ctx context.Context, arg ExistsBookmarkParams) (bool, error)
+	ExistsComment(ctx context.Context, arg ExistsCommentParams) (bool, error)
 	ExistsGroupMember(ctx context.Context, arg ExistsGroupMemberParams) (bool, error)
 	ExistsLike(ctx context.Context, arg ExistsLikeParams) (bool, error)
 	ExistsRetweet(ctx context.Context, arg ExistsRetweetParams) (bool, error)
