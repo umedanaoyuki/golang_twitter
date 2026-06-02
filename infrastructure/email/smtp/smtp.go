@@ -31,11 +31,12 @@ type EmailSender struct {
 	config *SMTPConfig
 }
 
-func (m *EmailSender) SendWelcomeEmail(to string) error {
+func (m *EmailSender) SendWelcomeEmail(to string, token string) error {
 	templatePath := filepath.Join(mailer.GetTemplateDir(), "welcome.html")
 
 	data := map[string]interface{}{
 		"Email":   to,
+		"Token":   token,
 		"AppName": "Twitter Clone",
 	}
 
