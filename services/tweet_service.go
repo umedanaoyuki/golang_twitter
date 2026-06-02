@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	db "golang_twitter/db/sqlc"
+	"golang_twitter/infrastructure/storage"
 )
 
 type TweetDetail struct {
@@ -27,9 +28,10 @@ type TweetService interface {
 type tweetService struct {
 	db      *sql.DB
 	queries *db.Queries
+	imageStorage storage.ImageStorage
 }
 
-func NewTweetService(database *sql.DB, queries *db.Queries) TweetService {
+func NewTweetService(database *sql.DB, queries *db.Queries, imageStorage storage.ImageStorage) TweetService {
 	return &tweetService{
 		db:      database,
 		queries: queries,
