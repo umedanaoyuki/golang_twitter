@@ -17,8 +17,6 @@ const (
 var allowedImageMIMEs = map[string]string{
 	"image/jpeg": ".jpg",
 	"image/png":  ".png",
-	"image/gif":  ".gif",
-	"image/webp": ".webp",
 }
 
 // AllowedImageMIME は対応する Content-Type かどうかを返す
