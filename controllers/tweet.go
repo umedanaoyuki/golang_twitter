@@ -24,6 +24,10 @@ type CreateTweetInput struct {
 	Content string `json:"content" binding:"required" example:"Hello, world!"`
 }
 
+type DeleteTweetInput struct {
+	ID int32 `uri:"id" binding:"required,min=1"`
+}
+
 type GetTweetByIdInput struct {
 	Id int32 `uri:"id" binding:"required,min=1"`
 }
@@ -80,6 +84,33 @@ func (ctrl *TweetController) CreateTweet(c *gin.Context) {
 			"content":    tweet.Content,
 		},
 	})
+}
+
+
+func (ctrl *TweetController) DeleteTweet(c *gin.Context) {
+	// ミドルウェアからユーザーIDを取得
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
+		return
+	}
+
+	var input DeleteTweetInput
+	if err := c.ShouldBindUri(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := ctrl.tweetService.DeleteTweet(c.Request.Context(), userID, input.ID); err != nil {
+		if errors.Is(err, services.ErrTweetNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
 // GetUserTweets godoc
@@ -161,7 +192,7 @@ func (ctrl *TweetController) GetTweetByID(c *gin.Context) {
 
 	tweet, err := ctrl.tweetService.GetTweetByID(c.Request.Context(), input.Id)
 	if err != nil {
-		if errors.Is(err, errors.New("Tweetが見つかりませんでした")) {
+		if errors.Is(err, services.ErrTweetNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}

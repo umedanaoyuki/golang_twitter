@@ -16,9 +16,9 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "github.com/lib/pq"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // @title           Golang Twitter API
@@ -133,6 +133,7 @@ func main() {
 	{
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
+		authorized.DELETE("/tweets/:id", tweetController.DeleteTweet)
 
 		// リツイート機能
 		authorized.POST("/tweets/:id/retweet", retweetController.CreateRetweet)

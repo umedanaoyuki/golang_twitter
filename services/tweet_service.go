@@ -7,6 +7,8 @@ import (
 	db "golang_twitter/db/sqlc"
 )
 
+var ErrTweetNotFound = errors.New("Tweetが見つかりませんでした")
+
 type TweetDetail struct {
 	db.Tweet
 	// いいね数
@@ -17,6 +19,7 @@ type TweetDetail struct {
 
 type TweetService interface {
 	CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error)
+	DeleteTweet(ctx context.Context, userID int32, id int32) error
 	GetTweetByID(ctx context.Context, id int32) (*TweetDetail, error)
 	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]TweetDetail, error)
 	// GetTweetDetailsByIDs は指定 ID のツイートを一括取得し、いいね数・リツイート数を付与する
@@ -56,6 +59,18 @@ func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content st
 	}
 
 	return &tweet, nil
+}
+
+func (s *tweetService) DeleteTweet(ctx context.Context, userID int32, id int32) error {
+	err := s.queries.DeleteTweet(ctx, db.DeleteTweetParams{
+		ID: id,
+		UserID: userID,
+	})
+	if err != nil {
+		return &ServiceError{Message: "ツイートの削除に失敗しました"}
+	}
+
+	return nil
 }
 
 // userIDのツイート一覧を取得
@@ -99,7 +114,7 @@ func (s *tweetService) GetTweetByID(ctx context.Context, id int32) (*TweetDetail
 	tweet, err := s.queries.GetTweetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("Tweetが見つかりませんでした");
+			return nil, ErrTweetNotFound
 		}
 		return nil, &ServiceError{Message: "Tweetの取得に失敗しました"}
 	}
