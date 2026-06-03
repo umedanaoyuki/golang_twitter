@@ -68,18 +68,11 @@ func main() {
 		// emailMailer = smtp.NewEmailSender()
 	}
 
-	uploadDir := os.Getenv("UPLOAD_DIR")
-	if uploadDir == "" {
-		uploadDir = "./uploads"
-	}
-	uploadBaseURL := os.Getenv("UPLOAD_BASE_URL")
-	if uploadBaseURL == "" {
-		uploadBaseURL = "http://localhost:8080"
-	}
-	imageStorage, err := storage.NewLocalImageStorage(uploadDir, uploadBaseURL)
+	imageStorage, err := storage.NewImageStorageFromEnv()
 	if err != nil {
 		log.Fatal("画像ストレージの初期化エラー:", err)
 	}
+	log.Println("画像ストレージ: S3")
 
 	// サービスの初期化
 	authService := services.NewAuthService(conn, queries, emailMailer)
@@ -122,7 +115,6 @@ func main() {
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	router.Static("/uploads", uploadDir)
 	router.GET("/health_check", controllers.HealthCheck)
 
 	// 認証不要のエンドポイント

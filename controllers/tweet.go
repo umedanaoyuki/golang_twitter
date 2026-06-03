@@ -107,6 +107,7 @@ func (ctrl *TweetController) CreateImageTweet(c *gin.Context) {
 		return
 	}
 
+	// key名をimageとして送る
 	file, err := c.FormFile("image")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "画像ファイルを送信してください"})
