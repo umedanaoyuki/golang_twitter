@@ -19,7 +19,7 @@ type TweetDetail struct {
 
 type TweetService interface {
 	CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error)
-	CreateImageTweet(ctx context.Context, userID int32, contentType string, r io.Reader, size int64) (*db.ImageTweet, error)
+	CreateImageTweet(ctx context.Context, userID int32, contentType string, r io.Reader, size int64) (*db.Tweet, error)
 	GetTweetByID(ctx context.Context, id int32) (*TweetDetail, error)
 	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]TweetDetail, error)
 	// GetTweetDetailsByIDs は指定 ID のツイートを一括取得し、いいね数・リツイート数を付与する
@@ -53,8 +53,9 @@ func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content st
 
 	// ツイートを作成
 	tweet, err := s.queries.CreateTweet(ctx, db.CreateTweetParams{
-		UserID:  userID,
-		Content: content,
+		UserID:   userID,
+		Content:  content,
+		ImageUrl: "",
 	})
 	if err != nil {
 		return nil, &ServiceError{Message: "ツイートの投稿に失敗しました"}
@@ -64,7 +65,7 @@ func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content st
 }
 
 
-func (s *tweetService) CreateImageTweet(ctx context.Context, userID int32, contentType string, r io.Reader, size int64) (*db.ImageTweet, error) {
+func (s *tweetService) CreateImageTweet(ctx context.Context, userID int32, contentType string, r io.Reader, size int64) (*db.Tweet, error) {
 	if s.imageStorage == nil {
 		return nil, &ServiceError{Message: "画像ストレージが設定されていません"}
 	}
@@ -76,16 +77,17 @@ func (s *tweetService) CreateImageTweet(ctx context.Context, userID int32, conte
 		return nil, &ValidationError{Message: err.Error()}
 	}
 
-	// DBに保存
-	imageTweet, err := s.queries.CreateImageTweet(ctx, db.CreateImageTweetParams{
+	// DBに保存（テキストなしの画像ツイート）
+	tweet, err := s.queries.CreateTweet(ctx, db.CreateTweetParams{
 		UserID:   userID,
+		Content:  "",
 		ImageUrl: imageURL,
 	})
 	if err != nil {
 		return nil, &ServiceError{Message: "画像の投稿に失敗しました"}
 	}
 
-	return &imageTweet, nil
+	return &tweet, nil
 }
 
 // userIDのツイート一覧を取得
