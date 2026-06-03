@@ -18,7 +18,6 @@ type Querier interface {
 	CreateFollow(ctx context.Context, arg CreateFollowParams) (Follow, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error)
 	CreateGroupMember(ctx context.Context, arg CreateGroupMemberParams) (CreateGroupMemberRow, error)
-	CreateImageTweet(ctx context.Context, arg CreateImageTweetParams) (ImageTweet, error)
 	CreateLike(ctx context.Context, arg CreateLikeParams) (Like, error)
 	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
 	CreateRetweet(ctx context.Context, arg CreateRetweetParams) (Retweet, error)
@@ -27,7 +26,6 @@ type Querier interface {
 	CreateUserActivation(ctx context.Context, arg CreateUserActivationParams) (UserActivation, error)
 	DeleteBookmark(ctx context.Context, arg DeleteBookmarkParams) error
 	DeleteFollow(ctx context.Context, arg DeleteFollowParams) error
-	DeleteImageTweet(ctx context.Context, arg DeleteImageTweetParams) error
 	DeleteLike(ctx context.Context, arg DeleteLikeParams) error
 	DeleteRetweet(ctx context.Context, arg DeleteRetweetParams) error
 	DeleteTweet(ctx context.Context, arg DeleteTweetParams) error
@@ -37,7 +35,6 @@ type Querier interface {
 	ExistsGroupMember(ctx context.Context, arg ExistsGroupMemberParams) (bool, error)
 	ExistsLike(ctx context.Context, arg ExistsLikeParams) (bool, error)
 	ExistsRetweet(ctx context.Context, arg ExistsRetweetParams) (bool, error)
-	GetAllImageTweets(ctx context.Context, limit int32) ([]ImageTweet, error)
 	GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error)
 	GetBookmarksByUserId(ctx context.Context, userID int32) ([]GetBookmarksByUserIdRow, error)
 	GetFollowersByUserIdWithCursor(ctx context.Context, arg GetFollowersByUserIdWithCursorParams) ([]Follow, error)
@@ -45,10 +42,6 @@ type Querier interface {
 	GetGroupByID(ctx context.Context, id int32) (Group, error)
 	GetGroupsByMemberUserID(ctx context.Context, userID int32) ([]Group, error)
 	GetGroupsByUserID(ctx context.Context, userID int32) ([]Group, error)
-	GetImageTweetByID(ctx context.Context, id int32) (ImageTweet, error)
-	GetImageTweetsByIDs(ctx context.Context, dollar_1 []int32) ([]ImageTweet, error)
-	GetImageTweetsByUserID(ctx context.Context, userID int32) ([]ImageTweet, error)
-	GetImageTweetsByUserIDWithCursor(ctx context.Context, arg GetImageTweetsByUserIDWithCursorParams) ([]ImageTweet, error)
 	GetMessagesByGroupID(ctx context.Context, groupID int32) ([]Message, error)
 	GetTweetByID(ctx context.Context, id int32) (Tweet, error)
 	GetTweetsByIDs(ctx context.Context, dollar_1 []int32) ([]Tweet, error)
