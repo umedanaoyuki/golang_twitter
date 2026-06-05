@@ -7,6 +7,7 @@ import (
 	db "golang_twitter/db/sqlc"
 	_ "golang_twitter/docs"
 	"golang_twitter/infrastructure/email/mailcatcher"
+	"golang_twitter/infrastructure/storage"
 	"golang_twitter/mailer"
 	"golang_twitter/middleware"
 	"golang_twitter/services"
@@ -16,9 +17,9 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "github.com/lib/pq"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // @title           Golang Twitter API
@@ -67,9 +68,15 @@ func main() {
 		// emailMailer = smtp.NewEmailSender()
 	}
 
+	imageStorage, err := storage.NewImageStorageFromEnv()
+	if err != nil {
+		log.Fatal("画像ストレージの初期化エラー:", err)
+	}
+	log.Println("画像ストレージ: S3")
+
 	// サービスの初期化
 	authService := services.NewAuthService(conn, queries, emailMailer)
-	tweetService := services.NewTweetService(conn, queries)
+	tweetService := services.NewTweetService(conn, queries, imageStorage)
 	likeService := services.NewLikeService(conn, queries)
 	userService := services.NewUserService(queries)
 	bookmarkService := services.NewBookmarkService(conn, queries)
@@ -133,6 +140,8 @@ func main() {
 	{
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
+		// 画像投稿
+		authorized.POST("/tweets-image", tweetController.CreateImageTweet)
 
 		// リツイート機能
 		authorized.POST("/tweets/:id/retweet", retweetController.CreateRetweet)

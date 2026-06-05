@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	db "golang_twitter/db/sqlc"
+	"golang_twitter/infrastructure/storage"
+	"io"
 )
 
 type TweetDetail struct {
@@ -17,6 +19,7 @@ type TweetDetail struct {
 
 type TweetService interface {
 	CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error)
+	CreateImageTweet(ctx context.Context, userID int32, contentType string, r io.Reader, size int64) (*db.Tweet, error)
 	GetTweetByID(ctx context.Context, id int32) (*TweetDetail, error)
 	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]TweetDetail, error)
 	// GetTweetDetailsByIDs は指定 ID のツイートを一括取得し、いいね数・リツイート数を付与する
@@ -26,12 +29,14 @@ type TweetService interface {
 type tweetService struct {
 	db      *sql.DB
 	queries *db.Queries
+	imageStorage storage.ImageStorage
 }
 
-func NewTweetService(database *sql.DB, queries *db.Queries) TweetService {
+func NewTweetService(database *sql.DB, queries *db.Queries, imageStorage storage.ImageStorage) TweetService {
 	return &tweetService{
 		db:      database,
 		queries: queries,
+		imageStorage: imageStorage,
 	}
 }
 
@@ -48,11 +53,38 @@ func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content st
 
 	// ツイートを作成
 	tweet, err := s.queries.CreateTweet(ctx, db.CreateTweetParams{
-		UserID:  userID,
-		Content: content,
+		UserID:   userID,
+		Content:  content,
+		ImageUrl: "",
 	})
 	if err != nil {
 		return nil, &ServiceError{Message: "ツイートの投稿に失敗しました"}
+	}
+
+	return &tweet, nil
+}
+
+
+func (s *tweetService) CreateImageTweet(ctx context.Context, userID int32, contentType string, r io.Reader, size int64) (*db.Tweet, error) {
+	if s.imageStorage == nil {
+		return nil, &ServiceError{Message: "画像ストレージが設定されていません"}
+	}
+
+	// 画像を保存し、公開URLを取得
+	imageURL, err := s.imageStorage.Save(userID, contentType, r, size)
+	if err != nil {
+		// Save 側でサイズ・形式なども検証している
+		return nil, &ValidationError{Message: err.Error()}
+	}
+
+	// DBに保存（テキストなしの画像ツイート）
+	tweet, err := s.queries.CreateTweet(ctx, db.CreateTweetParams{
+		UserID:   userID,
+		Content:  "",
+		ImageUrl: imageURL,
+	})
+	if err != nil {
+		return nil, &ServiceError{Message: "画像の投稿に失敗しました"}
 	}
 
 	return &tweet, nil
