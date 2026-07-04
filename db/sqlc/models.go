@@ -19,6 +19,7 @@ type Comment struct {
 	ID        int32     `json:"id"`
 	UserID    int32     `json:"user_id"`
 	TweetID   int32     `json:"tweet_id"`
+	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
 }
 

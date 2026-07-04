@@ -62,44 +62,50 @@ func (q *Queries) CountCommentsByTweetIDs(ctx context.Context, dollar_1 []int32)
 const createComment = `-- name: CreateComment :one
 INSERT INTO comments (
   user_id,
-  tweet_id
+  tweet_id,
+  content
 ) VALUES (
-  $1, $2
+  $1, $2, $3
 )
-ON CONFLICT (user_id, tweet_id) DO NOTHING
-RETURNING id, user_id, tweet_id, created_at
+RETURNING id, user_id, tweet_id, content, created_at
 `
 
 type CreateCommentParams struct {
-	UserID  int32 `json:"user_id"`
-	TweetID int32 `json:"tweet_id"`
+	UserID  int32  `json:"user_id"`
+	TweetID int32  `json:"tweet_id"`
+	Content string `json:"content"`
 }
 
 func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (Comment, error) {
-	row := q.queryRow(ctx, q.createCommentStmt, createComment, arg.UserID, arg.TweetID)
+	row := q.queryRow(ctx, q.createCommentStmt, createComment, arg.UserID, arg.TweetID, arg.Content)
 	var i Comment
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.TweetID,
+		&i.Content,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
-const deleteComment = `-- name: DeleteComment :exec
+const deleteComment = `-- name: DeleteComment :one
 DELETE FROM comments
-WHERE user_id = $1 AND tweet_id = $2
+WHERE id = $1 AND user_id = $2 AND tweet_id = $3
+RETURNING id
 `
 
 type DeleteCommentParams struct {
+	ID      int32 `json:"id"`
 	UserID  int32 `json:"user_id"`
 	TweetID int32 `json:"tweet_id"`
 }
 
-func (q *Queries) DeleteComment(ctx context.Context, arg DeleteCommentParams) error {
-	_, err := q.exec(ctx, q.deleteCommentStmt, deleteComment, arg.UserID, arg.TweetID)
-	return err
+func (q *Queries) DeleteComment(ctx context.Context, arg DeleteCommentParams) (int32, error) {
+	row := q.queryRow(ctx, q.deleteCommentStmt, deleteComment, arg.ID, arg.UserID, arg.TweetID)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
 }
 
 const existsComment = `-- name: ExistsComment :one
@@ -123,7 +129,7 @@ func (q *Queries) ExistsComment(ctx context.Context, arg ExistsCommentParams) (b
 }
 
 const getCommentsByTweetIDWithCursor = `-- name: GetCommentsByTweetIDWithCursor :many
-SELECT id, user_id, tweet_id, created_at
+SELECT id, user_id, tweet_id, content, created_at
 FROM comments
 WHERE tweet_id = $1
   AND (CASE WHEN $2 = 0 THEN true ELSE id < $2 END)
@@ -150,6 +156,7 @@ func (q *Queries) GetCommentsByTweetIDWithCursor(ctx context.Context, arg GetCom
 			&i.ID,
 			&i.UserID,
 			&i.TweetID,
+			&i.Content,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err

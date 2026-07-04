@@ -16,6 +16,15 @@ type CommentTweetId struct {
 	TweetID int32 `uri:"id" binding:"required,min=1"`
 }
 
+type DeleteCommentURI struct {
+	TweetID   int32 `uri:"id" binding:"required,min=1"`
+	CommentID int32 `uri:"comment_id" binding:"required,min=1"`
+}
+
+type CreateCommentBody struct {
+	Content string `json:"content" binding:"required" example:"いいツイートですね！"`
+}
+
 type GetCommentsQuery struct {
 	Cursor *int32 `form:"cursor" binding:"omitempty,min=1"`
 	Limit  int32  `form:"limit" binding:"omitempty,min=1,max=100"`
@@ -25,7 +34,20 @@ func NewCommentController(CommentService services.CommentService) *CommentContro
 	return &CommentController{CommentService: CommentService}
 }
 
-
+// CreateComment godoc
+// @Summary      コメント作成
+// @Description  指定ツイートにコメントする
+// @Tags         comments
+// @Accept       json
+// @Produce      json
+// @Security     SessionAuth
+// @Param        id     path      int                 true  "ツイートID"
+// @Param        input  body      CreateCommentBody   true  "コメント内容"
+// @Success      201    {object}  CreateCommentResponse
+// @Failure      400    {object}  ErrorResponse
+// @Failure      401    {object}  ErrorResponse
+// @Failure      500    {object}  ErrorResponse
+// @Router       /tweets/{id}/comments [post]
 func (ctrl *CommentController) CreateComment(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
@@ -39,14 +61,39 @@ func (ctrl *CommentController) CreateComment(c *gin.Context) {
 		return
 	}
 
-	if err := ctrl.CommentService.CreateComment(c.Request.Context(), userID, uri.TweetID); err != nil {
+	var body CreateCommentBody
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	comment, err := ctrl.CommentService.CreateComment(c.Request.Context(), userID, uri.TweetID, body.Content)
+	if err != nil {
+		if _, ok := err.(*services.ValidationError); ok {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+
+	c.JSON(http.StatusCreated, gin.H{"comment": comment})
 }
 
-
+// DeleteComment godoc
+// @Summary      コメント削除
+// @Description  指定ツイートの自分のコメントを削除する
+// @Tags         comments
+// @Produce      json
+// @Security     SessionAuth
+// @Param        id          path      int  true  "ツイートID"
+// @Param        comment_id  path      int  true  "コメントID"
+// @Success      200         {object}  StatusOKResponse
+// @Failure      400         {object}  ErrorResponse
+// @Failure      401         {object}  ErrorResponse
+// @Failure      404         {object}  ErrorResponse
+// @Failure      500         {object}  ErrorResponse
+// @Router       /tweets/{id}/comments/{comment_id} [delete]
 func (ctrl *CommentController) DeleteComment(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
@@ -54,13 +101,17 @@ func (ctrl *CommentController) DeleteComment(c *gin.Context) {
 		return
 	}
 
-	var uri CommentTweetId
+	var uri DeleteCommentURI
 	if err := c.ShouldBindUri(&uri); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := ctrl.CommentService.DeleteComment(c.Request.Context(), userID, uri.TweetID); err != nil {
+	if err := ctrl.CommentService.DeleteComment(c.Request.Context(), userID, uri.TweetID, uri.CommentID); err != nil {
+		if _, ok := err.(*services.ValidationError); ok {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

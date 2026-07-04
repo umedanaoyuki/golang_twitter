@@ -161,7 +161,7 @@ func main() {
 
 		// コメント機能
 		authorized.POST("/tweets/:id/comments", commentController.CreateComment)
-		authorized.DELETE("/tweets/:id/comments", commentController.DeleteComment)
+		authorized.DELETE("/tweets/:id/comments/:comment_id", commentController.DeleteComment)
 
 		/* グループ内でのメッセージ機能 */
 		// グループ作成

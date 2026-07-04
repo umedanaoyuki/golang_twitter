@@ -3,12 +3,13 @@ package services
 import (
 	"context"
 	"database/sql"
+	"errors"
 	db "golang_twitter/db/sqlc"
 )
 
 type CommentService interface {
-	CreateComment(ctx context.Context, userID int32, tweetID int32) error
-	DeleteComment(ctx context.Context, userID int32, tweetID int32) error
+	CreateComment(ctx context.Context, userID int32, tweetID int32, content string) (*db.Comment, error)
+	DeleteComment(ctx context.Context, userID int32, tweetID int32, commentID int32) error
 	GetCommentsByTweetIDWithCursor(ctx context.Context, tweetID int32, cursor *int32, limit int32) ([]db.Comment, error)
 }
 
@@ -24,25 +25,38 @@ func NewCommentService(db *sql.DB, queries *db.Queries) CommentService {
 	}
 }
 
-func (s *commentService) CreateComment(ctx context.Context, userID int32, tweetID int32) error {
-	_, err := s.queries.CreateComment(ctx, db.CreateCommentParams{
+func (s *commentService) CreateComment(ctx context.Context, userID int32, tweetID int32, content string) (*db.Comment, error) {
+	if content == "" {
+		return nil, &ValidationError{Message: "コメント内容を入力してください"}
+	}
+	if len([]rune(content)) > 140 {
+		return nil, &ValidationError{Message: "コメントは140文字以内で入力してください"}
+	}
+
+	comment, err := s.queries.CreateComment(ctx, db.CreateCommentParams{
+		UserID:  userID,
+		TweetID: tweetID,
+		Content: content,
+	})
+	if err != nil {
+		return nil, &ServiceError{Message: "コメントの作成に失敗しました"}
+	}
+	return &comment, nil
+}
+
+func (s *commentService) DeleteComment(ctx context.Context, userID int32, tweetID int32, commentID int32) error {
+	_, err := s.queries.DeleteComment(ctx, db.DeleteCommentParams{
+		ID:      commentID,
 		UserID:  userID,
 		TweetID: tweetID,
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil
+		if errors.Is(err, sql.ErrNoRows) {
+			return &ValidationError{Message: "コメントが見つかりません"}
 		}
-		return err
+		return &ServiceError{Message: "コメントの削除に失敗しました"}
 	}
 	return nil
-}
-
-func (s *commentService) DeleteComment(ctx context.Context, userID int32, tweetID int32) error {
-	return s.queries.DeleteComment(ctx, db.DeleteCommentParams{
-		UserID:  userID,
-		TweetID: tweetID,
-	})
 }
 
 func (s *commentService) GetCommentsByTweetIDWithCursor(ctx context.Context, tweetID int32, cursor *int32, limit int32) ([]db.Comment, error) {

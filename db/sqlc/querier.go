@@ -28,7 +28,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserActivation(ctx context.Context, arg CreateUserActivationParams) (UserActivation, error)
 	DeleteBookmark(ctx context.Context, arg DeleteBookmarkParams) error
-	DeleteComment(ctx context.Context, arg DeleteCommentParams) error
+	DeleteComment(ctx context.Context, arg DeleteCommentParams) (int32, error)
 	DeleteFollow(ctx context.Context, arg DeleteFollowParams) error
 	DeleteLike(ctx context.Context, arg DeleteLikeParams) error
 	DeleteRetweet(ctx context.Context, arg DeleteRetweetParams) error

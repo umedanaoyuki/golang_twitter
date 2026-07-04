@@ -1,19 +1,20 @@
 -- name: CreateComment :one
 INSERT INTO comments (
   user_id,
-  tweet_id
+  tweet_id,
+  content
 ) VALUES (
-  $1, $2
+  $1, $2, $3
 )
-ON CONFLICT (user_id, tweet_id) DO NOTHING
-RETURNING id, user_id, tweet_id, created_at;
+RETURNING id, user_id, tweet_id, content, created_at;
 
--- name: DeleteComment :exec
+-- name: DeleteComment :one
 DELETE FROM comments
-WHERE user_id = $1 AND tweet_id = $2;
+WHERE id = $1 AND user_id = $2 AND tweet_id = $3
+RETURNING id;
 
 -- name: GetCommentsByTweetIDWithCursor :many
-SELECT id, user_id, tweet_id, created_at
+SELECT id, user_id, tweet_id, content, created_at
 FROM comments
 WHERE tweet_id = $1
   AND (CASE WHEN $2 = 0 THEN true ELSE id < $2 END)
