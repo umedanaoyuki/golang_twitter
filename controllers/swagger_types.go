@@ -60,6 +60,15 @@ type CreateTweetItem struct {
 	Content string `json:"content" example:"Hello, world!"`
 }
 
+type CreateImageTweetResponse struct {
+	Tweet CreateImageTweetItem `json:"tweet"`
+}
+
+type CreateImageTweetItem struct {
+	UserID   int32  `json:"user_id" example:"1"`
+	ImageURL string `json:"image_url" example:"https://example.com/image.jpg"`
+}
+
 type GetTweetResponse struct {
 	Tweet SwaggerTweet `json:"tweet"`
 }

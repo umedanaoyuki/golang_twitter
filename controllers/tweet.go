@@ -27,6 +27,9 @@ type CreateTweetInput struct {
 type DeleteTweetInput struct {
 	ID int32 `uri:"id" binding:"required,min=1"`
 }
+type CreateImageTweetInput struct {
+	ImageURL string `json:"image_url" binding:"required" example:"https://example.com/image.jpg"`
+}
 
 type GetTweetByIdInput struct {
 	Id int32 `uri:"id" binding:"required,min=1"`
@@ -101,16 +104,15 @@ func (ctrl *TweetController) CreateTweet(c *gin.Context) {
 // @Failure      500  {object}  ErrorResponse
 // @Router       /tweets/{id} [delete]
 func (ctrl *TweetController) DeleteTweet(c *gin.Context) {
-	// ミドルウェアからユーザーIDを取得
-	userID, err := middleware.GetUserID(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
-		return
-	}
-
 	var input DeleteTweetInput
 	if err := c.ShouldBindUri(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
 		return
 	}
 
@@ -124,6 +126,67 @@ func (ctrl *TweetController) DeleteTweet(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+// CreateImageTweet godoc
+// @Summary      画像投稿
+// @Description  認証済みユーザーとして画像ファイルを投稿する
+// @Tags         tweets
+// @Accept       multipart/form-data
+// @Produce      json
+// @Security     SessionAuth
+// @Param        image  formData  file  true  "画像ファイル（JPEG/PNG・5MB以下）"
+// @Success      201    {object}  CreateImageTweetResponse
+// @Failure      400    {object}  ErrorResponse
+// @Failure      401    {object}  ErrorResponse
+// @Failure      500    {object}  ErrorResponse
+// @Router       /tweets-image [post]
+func (ctrl *TweetController) CreateImageTweet(c *gin.Context) {
+	// ミドルウェアからユーザーIDを取得
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
+		return
+	}
+
+	// key名をimageとして送る
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "画像ファイルを送信してください"})
+		return
+	}
+
+	opened, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "画像ファイルを読み込めませんでした"})
+		return
+	}
+	defer opened.Close()
+
+	// Tweetの作成
+	tweet, err := ctrl.tweetService.CreateImageTweet(
+		c.Request.Context(),
+		userID,
+		file.Header.Get("Content-Type"),
+		opened,
+		file.Size,
+	)
+	if err != nil {
+		if _, ok := err.(*services.ValidationError); ok {
+			// サービス層でバリデーション済みの日本語メッセージを返す
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"tweet": gin.H{
+			"user_id":    tweet.UserID,
+			"image_url":  tweet.ImageUrl,
+		},
+	})
 }
 
 // GetUserTweets godoc

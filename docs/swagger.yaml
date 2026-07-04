@@ -20,6 +20,20 @@ definitions:
       group:
         $ref: '#/definitions/controllers.SwaggerGroup'
     type: object
+  controllers.CreateImageTweetItem:
+    properties:
+      image_url:
+        example: https://example.com/image.jpg
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  controllers.CreateImageTweetResponse:
+    properties:
+      tweet:
+        $ref: '#/definitions/controllers.CreateImageTweetItem'
+    type: object
   controllers.CreateMessageInput:
     properties:
       content:
@@ -620,6 +634,41 @@ paths:
       security:
       - SessionAuth: []
       summary: ツイート投稿
+      tags:
+      - tweets
+  /tweets-image:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 認証済みユーザーとして画像ファイルを投稿する
+      parameters:
+      - description: 画像ファイル（JPEG/PNG・5MB以下）
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.CreateImageTweetResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: 画像投稿
       tags:
       - tweets
   /tweets/{id}:
