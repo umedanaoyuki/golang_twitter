@@ -1,5 +1,18 @@
 basePath: /
 definitions:
+  controllers.CreateCommentBody:
+    properties:
+      content:
+        example: いいツイートですね！
+        type: string
+    required:
+    - content
+    type: object
+  controllers.CreateCommentResponse:
+    properties:
+      comment:
+        $ref: '#/definitions/controllers.SwaggerComment'
+    type: object
   controllers.CreateGroupBody:
     properties:
       member_user_ids:
@@ -271,6 +284,9 @@ definitions:
     type: object
   controllers.SwaggerComment:
     properties:
+      content:
+        example: いいツイートですね！
+        type: string
       created_at:
         example: "2024-01-01T00:00:00Z"
         type: string
@@ -828,6 +844,88 @@ paths:
           schema:
             $ref: '#/definitions/controllers.ErrorResponse'
       summary: コメント一覧取得
+      tags:
+      - comments
+    post:
+      consumes:
+      - application/json
+      description: 指定ツイートにコメントする
+      parameters:
+      - description: ツイートID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: コメント内容
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.CreateCommentBody'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.CreateCommentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: コメント作成
+      tags:
+      - comments
+  /tweets/{id}/comments/{comment_id}:
+    delete:
+      description: 指定ツイートの自分のコメントを削除する
+      parameters:
+      - description: ツイートID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: コメントID
+        in: path
+        name: comment_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.StatusOKResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: コメント削除
       tags:
       - comments
   /tweets/{id}/like:
