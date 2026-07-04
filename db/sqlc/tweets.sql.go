@@ -14,24 +14,27 @@ import (
 const createTweet = `-- name: CreateTweet :one
 INSERT INTO tweets (
   user_id,
-  content
+  content,
+  image_url
 ) VALUES (
-  $1, $2
-) RETURNING id, user_id, content, created_at, updated_at
+  $1, $2, $3
+) RETURNING id, user_id, content, image_url, created_at, updated_at
 `
 
 type CreateTweetParams struct {
-	UserID  int32  `json:"user_id"`
-	Content string `json:"content"`
+	UserID   int32  `json:"user_id"`
+	Content  string `json:"content"`
+	ImageUrl string `json:"image_url"`
 }
 
 func (q *Queries) CreateTweet(ctx context.Context, arg CreateTweetParams) (Tweet, error) {
-	row := q.queryRow(ctx, q.createTweetStmt, createTweet, arg.UserID, arg.Content)
+	row := q.queryRow(ctx, q.createTweetStmt, createTweet, arg.UserID, arg.Content, arg.ImageUrl)
 	var i Tweet
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.Content,
+		&i.ImageUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -54,7 +57,7 @@ func (q *Queries) DeleteTweet(ctx context.Context, arg DeleteTweetParams) error 
 }
 
 const getAllTweets = `-- name: GetAllTweets :many
-SELECT id, user_id, content, created_at, updated_at
+SELECT id, user_id, content, image_url, created_at, updated_at
 FROM tweets
 ORDER BY created_at DESC
 LIMIT $1
@@ -73,6 +76,7 @@ func (q *Queries) GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error
 			&i.ID,
 			&i.UserID,
 			&i.Content,
+			&i.ImageUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -90,7 +94,7 @@ func (q *Queries) GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error
 }
 
 const getTweetByID = `-- name: GetTweetByID :one
-SELECT id, user_id, content, created_at, updated_at
+SELECT id, user_id, content, image_url, created_at, updated_at
 FROM tweets
 WHERE id = $1
 `
@@ -102,6 +106,7 @@ func (q *Queries) GetTweetByID(ctx context.Context, id int32) (Tweet, error) {
 		&i.ID,
 		&i.UserID,
 		&i.Content,
+		&i.ImageUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -109,7 +114,7 @@ func (q *Queries) GetTweetByID(ctx context.Context, id int32) (Tweet, error) {
 }
 
 const getTweetsByIDs = `-- name: GetTweetsByIDs :many
-SELECT id, user_id, content, created_at, updated_at
+SELECT id, user_id, content, image_url, created_at, updated_at
 FROM tweets
 WHERE id = ANY($1::int[])
 `
@@ -127,6 +132,7 @@ func (q *Queries) GetTweetsByIDs(ctx context.Context, dollar_1 []int32) ([]Tweet
 			&i.ID,
 			&i.UserID,
 			&i.Content,
+			&i.ImageUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -144,7 +150,7 @@ func (q *Queries) GetTweetsByIDs(ctx context.Context, dollar_1 []int32) ([]Tweet
 }
 
 const getTweetsByUserID = `-- name: GetTweetsByUserID :many
-SELECT id, user_id, content, created_at, updated_at
+SELECT id, user_id, content, image_url, created_at, updated_at
 FROM tweets
 WHERE user_id = $1
 ORDER BY created_at DESC
@@ -163,6 +169,7 @@ func (q *Queries) GetTweetsByUserID(ctx context.Context, userID int32) ([]Tweet,
 			&i.ID,
 			&i.UserID,
 			&i.Content,
+			&i.ImageUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -180,7 +187,7 @@ func (q *Queries) GetTweetsByUserID(ctx context.Context, userID int32) ([]Tweet,
 }
 
 const getTweetsByUserIDWithCursor = `-- name: GetTweetsByUserIDWithCursor :many
-SELECT id, user_id, content, created_at, updated_at
+SELECT id, user_id, content, image_url, created_at, updated_at
 FROM tweets
 WHERE user_id = $1
   AND (CASE WHEN $2 = 0 THEN true ELSE id < $2 END)
@@ -207,6 +214,7 @@ func (q *Queries) GetTweetsByUserIDWithCursor(ctx context.Context, arg GetTweets
 			&i.ID,
 			&i.UserID,
 			&i.Content,
+			&i.ImageUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
