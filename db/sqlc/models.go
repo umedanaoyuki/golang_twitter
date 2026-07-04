@@ -82,3 +82,13 @@ type UserActivation struct {
 	ExpiredAt time.Time `json:"expired_at"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type UserProfile struct {
+	ID        int32     `json:"id"`
+	UserID    int32     `json:"user_id"`
+	Name      string    `json:"name"`
+	Bio       string    `json:"bio"`
+	Location  string    `json:"location"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
