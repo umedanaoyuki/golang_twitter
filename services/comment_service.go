@@ -9,6 +9,7 @@ import (
 type CommentService interface {
 	CreateComment(ctx context.Context, userID int32, tweetID int32) error
 	DeleteComment(ctx context.Context, userID int32, tweetID int32) error
+	GetCommentsByTweetIDWithCursor(ctx context.Context, tweetID int32, cursor *int32, limit int32) ([]db.Comment, error)
 }
 
 type commentService struct {
@@ -42,4 +43,22 @@ func (s *commentService) DeleteComment(ctx context.Context, userID int32, tweetI
 		UserID:  userID,
 		TweetID: tweetID,
 	})
+}
+
+func (s *commentService) GetCommentsByTweetIDWithCursor(ctx context.Context, tweetID int32, cursor *int32, limit int32) ([]db.Comment, error) {
+	cursorValue := int32(0)
+	if cursor != nil {
+		cursorValue = *cursor
+	}
+
+	comments, err := s.queries.GetCommentsByTweetIDWithCursor(ctx, db.GetCommentsByTweetIDWithCursorParams{
+		TweetID: tweetID,
+		Column2: cursorValue,
+		Limit:   limit,
+	})
+	if err != nil {
+		return nil, &ServiceError{Message: "コメントの取得に失敗しました"}
+	}
+
+	return comments, nil
 }

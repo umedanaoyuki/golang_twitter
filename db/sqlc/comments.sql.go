@@ -121,3 +121,46 @@ func (q *Queries) ExistsComment(ctx context.Context, arg ExistsCommentParams) (b
 	err := row.Scan(&exists)
 	return exists, err
 }
+
+const getCommentsByTweetIDWithCursor = `-- name: GetCommentsByTweetIDWithCursor :many
+SELECT id, user_id, tweet_id, created_at
+FROM comments
+WHERE tweet_id = $1
+  AND (CASE WHEN $2 = 0 THEN true ELSE id < $2 END)
+ORDER BY id DESC
+LIMIT $3
+`
+
+type GetCommentsByTweetIDWithCursorParams struct {
+	TweetID int32       `json:"tweet_id"`
+	Column2 interface{} `json:"column_2"`
+	Limit   int32       `json:"limit"`
+}
+
+func (q *Queries) GetCommentsByTweetIDWithCursor(ctx context.Context, arg GetCommentsByTweetIDWithCursorParams) ([]Comment, error) {
+	rows, err := q.query(ctx, q.getCommentsByTweetIDWithCursorStmt, getCommentsByTweetIDWithCursor, arg.TweetID, arg.Column2, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Comment{}
+	for rows.Next() {
+		var i Comment
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.TweetID,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

@@ -134,6 +134,8 @@ func main() {
 
 	// 1つのTweet取得
 	router.GET("/tweets/:id", tweetController.GetTweetByID)
+	// ツイートのコメント一覧取得
+	router.GET("/tweets/:id/comments", commentController.GetComments)
 
 	// 認証が必要なエンドポイント
 	authorized := router.Group("/")

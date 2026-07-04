@@ -12,6 +12,14 @@ RETURNING id, user_id, tweet_id, created_at;
 DELETE FROM comments
 WHERE user_id = $1 AND tweet_id = $2;
 
+-- name: GetCommentsByTweetIDWithCursor :many
+SELECT id, user_id, tweet_id, created_at
+FROM comments
+WHERE tweet_id = $1
+  AND (CASE WHEN $2 = 0 THEN true ELSE id < $2 END)
+ORDER BY id DESC
+LIMIT $3;
+
 -- name: CountCommentsByTweetID :one
 SELECT COUNT(*)::bigint AS comment_count
 FROM comments

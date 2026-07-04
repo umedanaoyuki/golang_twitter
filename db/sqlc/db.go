@@ -123,6 +123,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getBookmarksByUserIdStmt, err = db.PrepareContext(ctx, getBookmarksByUserId); err != nil {
 		return nil, fmt.Errorf("error preparing query GetBookmarksByUserId: %w", err)
 	}
+	if q.getCommentsByTweetIDWithCursorStmt, err = db.PrepareContext(ctx, getCommentsByTweetIDWithCursor); err != nil {
+		return nil, fmt.Errorf("error preparing query GetCommentsByTweetIDWithCursor: %w", err)
+	}
 	if q.getFollowersByUserIdWithCursorStmt, err = db.PrepareContext(ctx, getFollowersByUserIdWithCursor); err != nil {
 		return nil, fmt.Errorf("error preparing query GetFollowersByUserIdWithCursor: %w", err)
 	}
@@ -338,6 +341,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getBookmarksByUserIdStmt: %w", cerr)
 		}
 	}
+	if q.getCommentsByTweetIDWithCursorStmt != nil {
+		if cerr := q.getCommentsByTweetIDWithCursorStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getCommentsByTweetIDWithCursorStmt: %w", cerr)
+		}
+	}
 	if q.getFollowersByUserIdWithCursorStmt != nil {
 		if cerr := q.getFollowersByUserIdWithCursorStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getFollowersByUserIdWithCursorStmt: %w", cerr)
@@ -485,6 +493,7 @@ type Queries struct {
 	existsRetweetStmt                  *sql.Stmt
 	getAllTweetsStmt                   *sql.Stmt
 	getBookmarksByUserIdStmt           *sql.Stmt
+	getCommentsByTweetIDWithCursorStmt *sql.Stmt
 	getFollowersByUserIdWithCursorStmt *sql.Stmt
 	getFollowingByUserIdWithCursorStmt *sql.Stmt
 	getGroupByIDStmt                   *sql.Stmt
@@ -539,6 +548,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		existsRetweetStmt:                  q.existsRetweetStmt,
 		getAllTweetsStmt:                   q.getAllTweetsStmt,
 		getBookmarksByUserIdStmt:           q.getBookmarksByUserIdStmt,
+		getCommentsByTweetIDWithCursorStmt: q.getCommentsByTweetIDWithCursorStmt,
 		getFollowersByUserIdWithCursorStmt: q.getFollowersByUserIdWithCursorStmt,
 		getFollowingByUserIdWithCursorStmt: q.getFollowingByUserIdWithCursorStmt,
 		getGroupByIDStmt:                   q.getGroupByIDStmt,

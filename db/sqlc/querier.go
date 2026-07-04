@@ -42,6 +42,7 @@ type Querier interface {
 	ExistsRetweet(ctx context.Context, arg ExistsRetweetParams) (bool, error)
 	GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error)
 	GetBookmarksByUserId(ctx context.Context, userID int32) ([]GetBookmarksByUserIdRow, error)
+	GetCommentsByTweetIDWithCursor(ctx context.Context, arg GetCommentsByTweetIDWithCursorParams) ([]Comment, error)
 	GetFollowersByUserIdWithCursor(ctx context.Context, arg GetFollowersByUserIdWithCursorParams) ([]Follow, error)
 	GetFollowingByUserIdWithCursor(ctx context.Context, arg GetFollowingByUserIdWithCursorParams) ([]Follow, error)
 	GetGroupByID(ctx context.Context, id int32) (Group, error)
