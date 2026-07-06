@@ -161,6 +161,23 @@ type GetFollowingResponse struct {
 	HasMore    bool            `json:"has_more" example:"false"`
 }
 
+type SwaggerComment struct {
+	ID        int32  `json:"id" example:"1"`
+	UserID    int32  `json:"user_id" example:"1"`
+	TweetID   int32  `json:"tweet_id" example:"1"`
+	Content   string `json:"content" example:"いいツイートですね！"`
+	CreatedAt string `json:"created_at" example:"2024-01-01T00:00:00Z"`
+}
+
+type CreateCommentResponse struct {
+	Comment SwaggerComment `json:"comment"`
+}
+
+type GetCommentsResponse struct {
+	Comments   []SwaggerComment `json:"comments"`
+	NextCursor *int32           `json:"next_cursor"`
+	HasMore    bool             `json:"has_more" example:"false"`
+}
 type SwaggerUserProfile struct {
 	ID        int32  `json:"id" example:"1"`
 	UserID    int32  `json:"user_id" example:"1"`

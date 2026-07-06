@@ -870,6 +870,187 @@ const docTemplate = `{
                 }
             }
         },
+        "/tweets/{id}/comments": {
+            "get": {
+                "description": "指定ツイートのコメントをカーソルページネーションで取得する",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "コメント一覧取得",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ツイートID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ページネーションカーソル（最後に取得したコメントID）",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "取得件数（1〜100、デフォルト20）",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.GetCommentsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "description": "指定ツイートにコメントする",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "コメント作成",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ツイートID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "コメント内容",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.CreateCommentBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.CreateCommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tweets/{id}/comments/{comment_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "description": "指定ツイートの自分のコメントを削除する",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "comments"
+                ],
+                "summary": "コメント削除",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ツイートID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "コメントID",
+                        "name": "comment_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.StatusOKResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/tweets/{id}/like": {
             "post": {
                 "security": [
@@ -1547,6 +1728,26 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "controllers.CreateCommentBody": {
+            "type": "object",
+            "required": [
+                "content"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "いいツイートですね！"
+                }
+            }
+        },
+        "controllers.CreateCommentResponse": {
+            "type": "object",
+            "properties": {
+                "comment": {
+                    "$ref": "#/definitions/controllers.SwaggerComment"
+                }
+            }
+        },
         "controllers.CreateGroupBody": {
             "type": "object",
             "required": [
@@ -1698,6 +1899,24 @@ const docTemplate = `{
                 "error": {
                     "type": "string",
                     "example": "エラーメッセージ"
+                }
+            }
+        },
+        "controllers.GetCommentsResponse": {
+            "type": "object",
+            "properties": {
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controllers.SwaggerComment"
+                    }
+                },
+                "has_more": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "next_cursor": {
+                    "type": "integer"
                 }
             }
         },
@@ -1931,6 +2150,31 @@ const docTemplate = `{
                 "content": {
                     "type": "string",
                     "example": "ツイート本文"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "tweet_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "controllers.SwaggerComment": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "いいツイートですね！"
                 },
                 "created_at": {
                     "type": "string",

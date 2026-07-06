@@ -78,6 +78,7 @@ func main() {
 	authService := services.NewAuthService(conn, queries, emailMailer)
 	tweetService := services.NewTweetService(conn, queries, imageStorage)
 	likeService := services.NewLikeService(conn, queries)
+	commentService := services.NewCommentService(conn, queries)
 	userService := services.NewUserService(queries)
 	bookmarkService := services.NewBookmarkService(conn, queries)
 	groupService := services.NewGroupService(conn, queries)
@@ -90,7 +91,7 @@ func main() {
 	authController := controllers.NewAuthController(authService)
 	tweetController := controllers.NewTweetController(tweetService)
 	likeController := controllers.NewLikeController(likeService)
-	
+	commentController := controllers.NewCommentController(commentService)
 	userController := controllers.NewUserController(userService)
 	bookmarkController := controllers.NewBookmarkController(bookmarkService)
 	groupController := controllers.NewGroupController(groupService)
@@ -137,6 +138,8 @@ func main() {
 
 	// 1つのTweet取得
 	router.GET("/tweets/:id", tweetController.GetTweetByID)
+	// ツイートのコメント一覧取得
+	router.GET("/tweets/:id/comments", commentController.GetComments)
 
 	// 認証が必要なエンドポイント
 	authorized := router.Group("/")
@@ -160,6 +163,10 @@ func main() {
 		// いいね機能
 		authorized.POST("/tweets/:id/like", likeController.CreateLike)
 		authorized.DELETE("/tweets/:id/like", likeController.DeleteLike)
+
+		// コメント機能
+		authorized.POST("/tweets/:id/comments", commentController.CreateComment)
+		authorized.DELETE("/tweets/:id/comments/:comment_id", commentController.DeleteComment)
 
 		/* グループ内でのメッセージ機能 */
 		// グループ作成
