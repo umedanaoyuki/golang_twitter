@@ -144,6 +144,7 @@ func main() {
 	{
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
+		authorized.DELETE("/tweets/:id", tweetController.DeleteTweet)
 		// 画像投稿
 		authorized.POST("/tweets-image", tweetController.CreateImageTweet)
 
