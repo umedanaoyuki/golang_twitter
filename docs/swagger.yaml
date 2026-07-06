@@ -81,6 +81,24 @@ definitions:
       tweet:
         $ref: '#/definitions/controllers.CreateTweetItem'
     type: object
+  controllers.CreateUserProfileBody:
+    properties:
+      bio:
+        example: 自己紹介文です
+        maxLength: 160
+        type: string
+      image_url:
+        example: https://example.com/avatar.png
+        type: string
+      location:
+        example: Tokyo
+        maxLength: 10
+        type: string
+      name:
+        example: たろう
+        maxLength: 20
+        type: string
+    type: object
   controllers.ErrorResponse:
     properties:
       error:
@@ -352,6 +370,56 @@ definitions:
         example: "2024-01-01T00:00:00Z"
         type: string
     type: object
+  controllers.SwaggerUserProfile:
+    properties:
+      bio:
+        example: 自己紹介文のサンプル文です
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      id:
+        example: 1
+        type: integer
+      image_url:
+        example: https://example.com/avatar.png
+        type: string
+      location:
+        example: 東京
+        type: string
+      name:
+        example: Taro007
+        type: string
+      updated_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  controllers.UpdateUserProfileBody:
+    properties:
+      bio:
+        example: 自己紹介文です
+        maxLength: 160
+        type: string
+      image_url:
+        example: https://example.com/avatar.png
+        type: string
+      location:
+        example: Tokyo
+        maxLength: 10
+        type: string
+      name:
+        example: たろう
+        maxLength: 20
+        type: string
+    type: object
+  controllers.UserProfileResponse:
+    properties:
+      profile:
+        $ref: '#/definitions/controllers.SwaggerUserProfile'
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -574,6 +642,85 @@ paths:
       summary: ログイン
       tags:
       - auth
+  /profile:
+    post:
+      consumes:
+      - application/json
+      description: ログイン中のユーザーのプロフィールを作成する
+      parameters:
+      - description: プロフィール情報
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.CreateUserProfileBody'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controllers.UserProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: プロフィール作成
+      tags:
+      - profiles
+    put:
+      consumes:
+      - application/json
+      description: ログイン中のユーザーのプロフィールを更新する
+      parameters:
+      - description: プロフィール情報
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.UpdateUserProfileBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.UserProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: プロフィール更新
+      tags:
+      - profiles
   /register:
     post:
       consumes:
@@ -1125,6 +1272,37 @@ paths:
       summary: フォロー中一覧取得
       tags:
       - follows
+  /users/{user_id}/profile:
+    get:
+      description: 指定ユーザーのプロフィールを取得する
+      parameters:
+      - description: ユーザーID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.UserProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      summary: プロフィール取得
+      tags:
+      - profiles
   /users/{user_id}/retweets:
     get:
       description: 指定ユーザーのリツイートをカーソルページネーションで取得する

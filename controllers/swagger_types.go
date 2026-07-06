@@ -160,3 +160,18 @@ type GetFollowingResponse struct {
 	NextCursor *int32          `json:"next_cursor"`
 	HasMore    bool            `json:"has_more" example:"false"`
 }
+
+type SwaggerUserProfile struct {
+	ID        int32  `json:"id" example:"1"`
+	UserID    int32  `json:"user_id" example:"1"`
+	Name      string `json:"name" example:"Taro007"`
+	Bio       string `json:"bio" example:"自己紹介文のサンプル文です"`
+	ImageURL  string `json:"image_url" example:"https://example.com/avatar.png"`
+	Location  string `json:"location" example:"東京"`
+	CreatedAt string `json:"created_at" example:"2024-01-01T00:00:00Z"`
+	UpdatedAt string `json:"updated_at" example:"2024-01-01T00:00:00Z"`
+}
+
+type UserProfileResponse struct {
+	Profile SwaggerUserProfile `json:"profile"`
+}
