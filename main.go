@@ -85,6 +85,7 @@ func main() {
 	messageService := services.NewMessageService(conn, queries)
 	retweetService := services.NewRetweetService(conn, queries, tweetService)
 	followService := services.NewFollowService(conn, queries)
+	userProfileService := services.NewUserProfileService(queries)
 
 	// コントローラーの初期化
 	authController := controllers.NewAuthController(authService)
@@ -97,6 +98,7 @@ func main() {
 	messageController := controllers.NewMessageController(messageService)
 	retweetController := controllers.NewRetweetController(retweetService)
 	followController := controllers.NewFollowController(followService)
+	userProfileController := controllers.NewUserProfileController(userProfileService)
 	// Ginルーター設定
 	router := gin.Default()
 
@@ -131,6 +133,8 @@ func main() {
 	router.GET("/users/:user_id/retweets", retweetController.GetUserRetweets)
 	// ユーザー情報取得
 	router.GET("/users/:user_id", userController.GetUserByID)
+	// ユーザープロフィール取得
+	router.GET("/users/:user_id/profile", userProfileController.GetUserProfileByUserID)
 
 	// 1つのTweet取得
 	router.GET("/tweets/:id", tweetController.GetTweetByID)
@@ -143,6 +147,7 @@ func main() {
 	{
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
+		authorized.DELETE("/tweets/:id", tweetController.DeleteTweet)
 		// 画像投稿
 		authorized.POST("/tweets-image", tweetController.CreateImageTweet)
 
@@ -180,6 +185,11 @@ func main() {
 		authorized.GET("/users/:user_id/followers", followController.GetFollowersByUserId)
 		// ユーザーフォロー中一覧取得
 		authorized.GET("/users/:user_id/following", followController.GetFollowingByUserId)
+
+		// プロフィール作成
+		authorized.POST("/profile", userProfileController.CreateUserProfile)
+		// プロフィール更新
+		authorized.PUT("/profile", userProfileController.UpdateUserProfile)
 	}
 
 	log.Println("サーバー起動: http://localhost:8080")

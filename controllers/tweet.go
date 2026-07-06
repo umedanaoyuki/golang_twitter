@@ -24,6 +24,9 @@ type CreateTweetInput struct {
 	Content string `json:"content" binding:"required" example:"Hello, world!"`
 }
 
+type DeleteTweetInput struct {
+	ID int32 `uri:"id" binding:"required,min=1"`
+}
 type CreateImageTweetInput struct {
 	ImageURL string `json:"image_url" binding:"required" example:"https://example.com/image.jpg"`
 }
@@ -84,6 +87,45 @@ func (ctrl *TweetController) CreateTweet(c *gin.Context) {
 			"content":    tweet.Content,
 		},
 	})
+}
+
+
+// DeleteTweet godoc
+// @Summary      ツイート削除
+// @Description  認証済みユーザーが自分のツイートを削除する（他人のツイートは削除できない）
+// @Tags         tweets
+// @Produce      json
+// @Security     SessionAuth
+// @Param        id   path      int  true  "ツイートID"
+// @Success      200  {object}  StatusOKResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /tweets/{id} [delete]
+func (ctrl *TweetController) DeleteTweet(c *gin.Context) {
+	var input DeleteTweetInput
+	if err := c.ShouldBindUri(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
+		return
+	}
+
+	if err := ctrl.tweetService.DeleteTweet(c.Request.Context(), userID, input.ID); err != nil {
+		if errors.Is(err, services.ErrTweetNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
 // CreateImageTweet godoc
@@ -226,7 +268,7 @@ func (ctrl *TweetController) GetTweetByID(c *gin.Context) {
 
 	tweet, err := ctrl.tweetService.GetTweetByID(c.Request.Context(), input.Id)
 	if err != nil {
-		if errors.Is(err, errors.New("Tweetが見つかりませんでした")) {
+		if errors.Is(err, services.ErrTweetNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}

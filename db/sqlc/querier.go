@@ -27,6 +27,7 @@ type Querier interface {
 	CreateTweet(ctx context.Context, arg CreateTweetParams) (Tweet, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserActivation(ctx context.Context, arg CreateUserActivationParams) (UserActivation, error)
+	CreateUserProfile(ctx context.Context, arg CreateUserProfileParams) (UserProfile, error)
 	DeleteBookmark(ctx context.Context, arg DeleteBookmarkParams) error
 	DeleteComment(ctx context.Context, arg DeleteCommentParams) (int32, error)
 	DeleteFollow(ctx context.Context, arg DeleteFollowParams) error
@@ -56,8 +57,10 @@ type Querier interface {
 	GetUserActivationByToken(ctx context.Context, token string) (UserActivation, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserDetailByUserID(ctx context.Context, id int32) (GetUserDetailByUserIDRow, error)
+	GetUserProfileByUserID(ctx context.Context, userID int32) (UserProfile, error)
 	GetUserRetweetsWithCursor(ctx context.Context, arg GetUserRetweetsWithCursorParams) ([]Retweet, error)
 	UpdateUserIsActive(ctx context.Context, arg UpdateUserIsActiveParams) error
+	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (UserProfile, error)
 }
 
 var _ Querier = (*Queries)(nil)

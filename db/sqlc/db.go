@@ -78,6 +78,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createUserActivationStmt, err = db.PrepareContext(ctx, createUserActivation); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUserActivation: %w", err)
 	}
+	if q.createUserProfileStmt, err = db.PrepareContext(ctx, createUserProfile); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateUserProfile: %w", err)
+	}
 	if q.deleteBookmarkStmt, err = db.PrepareContext(ctx, deleteBookmark); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteBookmark: %w", err)
 	}
@@ -165,11 +168,17 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getUserDetailByUserIDStmt, err = db.PrepareContext(ctx, getUserDetailByUserID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUserDetailByUserID: %w", err)
 	}
+	if q.getUserProfileByUserIDStmt, err = db.PrepareContext(ctx, getUserProfileByUserID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetUserProfileByUserID: %w", err)
+	}
 	if q.getUserRetweetsWithCursorStmt, err = db.PrepareContext(ctx, getUserRetweetsWithCursor); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUserRetweetsWithCursor: %w", err)
 	}
 	if q.updateUserIsActiveStmt, err = db.PrepareContext(ctx, updateUserIsActive); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateUserIsActive: %w", err)
+	}
+	if q.updateUserProfileStmt, err = db.PrepareContext(ctx, updateUserProfile); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateUserProfile: %w", err)
 	}
 	return &q, nil
 }
@@ -264,6 +273,11 @@ func (q *Queries) Close() error {
 	if q.createUserActivationStmt != nil {
 		if cerr := q.createUserActivationStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createUserActivationStmt: %w", cerr)
+		}
+	}
+	if q.createUserProfileStmt != nil {
+		if cerr := q.createUserProfileStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createUserProfileStmt: %w", cerr)
 		}
 	}
 	if q.deleteBookmarkStmt != nil {
@@ -411,6 +425,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getUserDetailByUserIDStmt: %w", cerr)
 		}
 	}
+	if q.getUserProfileByUserIDStmt != nil {
+		if cerr := q.getUserProfileByUserIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getUserProfileByUserIDStmt: %w", cerr)
+		}
+	}
 	if q.getUserRetweetsWithCursorStmt != nil {
 		if cerr := q.getUserRetweetsWithCursorStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getUserRetweetsWithCursorStmt: %w", cerr)
@@ -419,6 +438,11 @@ func (q *Queries) Close() error {
 	if q.updateUserIsActiveStmt != nil {
 		if cerr := q.updateUserIsActiveStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updateUserIsActiveStmt: %w", cerr)
+		}
+	}
+	if q.updateUserProfileStmt != nil {
+		if cerr := q.updateUserProfileStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateUserProfileStmt: %w", cerr)
 		}
 	}
 	return err
@@ -478,6 +502,7 @@ type Queries struct {
 	createTweetStmt                    *sql.Stmt
 	createUserStmt                     *sql.Stmt
 	createUserActivationStmt           *sql.Stmt
+	createUserProfileStmt              *sql.Stmt
 	deleteBookmarkStmt                 *sql.Stmt
 	deleteCommentStmt                  *sql.Stmt
 	deleteFollowStmt                   *sql.Stmt
@@ -507,8 +532,10 @@ type Queries struct {
 	getUserActivationByTokenStmt       *sql.Stmt
 	getUserByEmailStmt                 *sql.Stmt
 	getUserDetailByUserIDStmt          *sql.Stmt
+	getUserProfileByUserIDStmt         *sql.Stmt
 	getUserRetweetsWithCursorStmt      *sql.Stmt
 	updateUserIsActiveStmt             *sql.Stmt
+	updateUserProfileStmt              *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
@@ -533,6 +560,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		createTweetStmt:                    q.createTweetStmt,
 		createUserStmt:                     q.createUserStmt,
 		createUserActivationStmt:           q.createUserActivationStmt,
+		createUserProfileStmt:              q.createUserProfileStmt,
 		deleteBookmarkStmt:                 q.deleteBookmarkStmt,
 		deleteCommentStmt:                  q.deleteCommentStmt,
 		deleteFollowStmt:                   q.deleteFollowStmt,
@@ -562,7 +590,9 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getUserActivationByTokenStmt:       q.getUserActivationByTokenStmt,
 		getUserByEmailStmt:                 q.getUserByEmailStmt,
 		getUserDetailByUserIDStmt:          q.getUserDetailByUserIDStmt,
+		getUserProfileByUserIDStmt:         q.getUserProfileByUserIDStmt,
 		getUserRetweetsWithCursorStmt:      q.getUserRetweetsWithCursorStmt,
 		updateUserIsActiveStmt:             q.updateUserIsActiveStmt,
+		updateUserProfileStmt:              q.updateUserProfileStmt,
 	}
 }

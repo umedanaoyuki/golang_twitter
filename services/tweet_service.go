@@ -9,6 +9,8 @@ import (
 	"io"
 )
 
+var ErrTweetNotFound = errors.New("Tweetが見つかりませんでした")
+
 type TweetDetail struct {
 	db.Tweet
 	// いいね数
@@ -19,6 +21,7 @@ type TweetDetail struct {
 
 type TweetService interface {
 	CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error)
+	DeleteTweet(ctx context.Context, userID int32, id int32) error
 	CreateImageTweet(ctx context.Context, userID int32, contentType string, r io.Reader, size int64) (*db.Tweet, error)
 	GetTweetByID(ctx context.Context, id int32) (*TweetDetail, error)
 	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]TweetDetail, error)
@@ -64,6 +67,17 @@ func (s *tweetService) CreateTweet(ctx context.Context, userID int32, content st
 	return &tweet, nil
 }
 
+func (s *tweetService) DeleteTweet(ctx context.Context, userID int32, id int32) error {
+	err := s.queries.DeleteTweet(ctx, db.DeleteTweetParams{
+		ID: id,
+		UserID: userID,
+	})
+	if err != nil {
+		return &ServiceError{Message: "ツイートの削除に失敗しました"}
+	}
+
+	return nil
+}
 
 func (s *tweetService) CreateImageTweet(ctx context.Context, userID int32, contentType string, r io.Reader, size int64) (*db.Tweet, error) {
 	if s.imageStorage == nil {
@@ -131,7 +145,7 @@ func (s *tweetService) GetTweetByID(ctx context.Context, id int32) (*TweetDetail
 	tweet, err := s.queries.GetTweetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("Tweetが見つかりませんでした");
+			return nil, ErrTweetNotFound
 		}
 		return nil, &ServiceError{Message: "Tweetの取得に失敗しました"}
 	}
