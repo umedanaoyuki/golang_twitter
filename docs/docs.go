@@ -1292,6 +1292,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/user/tweets": {
+            "get": {
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "description": "ログイン中のユーザーのツイートをカーソルページネーションで取得する",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tweets"
+                ],
+                "summary": "ログインユーザーのツイート一覧取得",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ページネーションカーソル（最後に取得したツイートID）",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "取得件数（1〜100、デフォルト20）",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.GetCurrentUserTweetsResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{user_id}": {
             "get": {
                 "description": "指定IDのユーザー情報を取得する",
@@ -1917,6 +1969,27 @@ const docTemplate = `{
                 },
                 "next_cursor": {
                     "type": "integer"
+                }
+            }
+        },
+        "controllers.GetCurrentUserTweetsResponse": {
+            "type": "object",
+            "properties": {
+                "has_more": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "next_cursor": {
+                    "type": "integer"
+                },
+                "tweets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controllers.SwaggerTweet"
+                    }
+                },
+                "user": {
+                    "$ref": "#/definitions/controllers.SwaggerUserDetail"
                 }
             }
         },
