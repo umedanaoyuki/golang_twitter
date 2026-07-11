@@ -31,6 +31,15 @@ type CreateImageTweetInput struct {
 	ImageURL string `json:"image_url" binding:"required" example:"https://example.com/image.jpg"`
 }
 
+type PresignImageTweetInput struct {
+	ContentType string `json:"content_type" binding:"required" example:"image/jpeg"`
+	Size        int64  `json:"size" binding:"required,min=1" example:"102400"`
+}
+
+type CompleteImageTweetInput struct {
+	Key string `json:"key" binding:"required" example:"uploads/1_abc123.jpg"`
+}
+
 type GetTweetByIdInput struct {
 	Id int32 `uri:"id" binding:"required,min=1"`
 }
@@ -128,52 +137,83 @@ func (ctrl *TweetController) DeleteTweet(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
-// CreateImageTweet godoc
-// @Summary      画像投稿
-// @Description  認証済みユーザーとして画像ファイルを投稿する
+// PresignImageTweet godoc
+// @Summary      画像アップロード許可
+// @Description  認証済みユーザー向けに S3 への直接アップロード用 URL と key を発行する
 // @Tags         tweets
-// @Accept       multipart/form-data
+// @Accept       json
 // @Produce      json
 // @Security     SessionAuth
-// @Param        image  formData  file  true  "画像ファイル（JPEG/PNG・5MB以下）"
-// @Success      201    {object}  CreateImageTweetResponse
+// @Param        input  body      PresignImageTweetInput  true  "画像メタ情報"
+// @Success      200    {object}  PresignImageTweetResponse
 // @Failure      400    {object}  ErrorResponse
 // @Failure      401    {object}  ErrorResponse
 // @Failure      500    {object}  ErrorResponse
-// @Router       /tweets-image [post]
-func (ctrl *TweetController) CreateImageTweet(c *gin.Context) {
-	// ミドルウェアからユーザーIDを取得
+// @Router       /tweets-image/presign [post]
+func (ctrl *TweetController) PresignImageTweet(c *gin.Context) {
 	userID, err := middleware.GetUserID(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
 		return
 	}
 
-	// key名をimageとして送る
-	file, err := c.FormFile("image")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "画像ファイルを送信してください"})
+	var input PresignImageTweetInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	opened, err := file.Open()
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "画像ファイルを読み込めませんでした"})
-		return
-	}
-	defer opened.Close()
-
-	// Tweetの作成
-	tweet, err := ctrl.tweetService.CreateImageTweet(
+	result, err := ctrl.tweetService.PresignImageUpload(
 		c.Request.Context(),
 		userID,
-		file.Header.Get("Content-Type"),
-		opened,
-		file.Size,
+		input.ContentType,
+		input.Size,
 	)
 	if err != nil {
 		if _, ok := err.(*services.ValidationError); ok {
-			// サービス層でバリデーション済みの日本語メッセージを返す
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"key":        result.Key,
+		"upload_url": result.UploadURL,
+		"public_url": result.PublicURL,
+	})
+}
+
+// CompleteImageTweet godoc
+// @Summary      画像アップロード完了
+// @Description  S3 へのアップロード完了後、key を確認して画像ツイートを作成する
+// @Tags         tweets
+// @Accept       json
+// @Produce      json
+// @Security     SessionAuth
+// @Param        input  body      CompleteImageTweetInput  true  "アップロード済み画像の key"
+// @Success      201    {object}  CreateImageTweetResponse
+// @Failure      400    {object}  ErrorResponse
+// @Failure      401    {object}  ErrorResponse
+// @Failure      500    {object}  ErrorResponse
+// @Router       /tweets-image/complete [post]
+func (ctrl *TweetController) CompleteImageTweet(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
+		return
+	}
+
+	var input CompleteImageTweetInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	tweet, err := ctrl.tweetService.CompleteImageUpload(c.Request.Context(), userID, input.Key)
+	if err != nil {
+		if _, ok := err.(*services.ValidationError); ok {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -183,8 +223,8 @@ func (ctrl *TweetController) CreateImageTweet(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"tweet": gin.H{
-			"user_id":    tweet.UserID,
-			"image_url":  tweet.ImageUrl,
+			"user_id":   tweet.UserID,
+			"image_url": tweet.ImageUrl,
 		},
 	})
 }

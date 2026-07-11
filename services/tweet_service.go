@@ -6,7 +6,6 @@ import (
 	"errors"
 	db "golang_twitter/db/sqlc"
 	"golang_twitter/infrastructure/storage"
-	"io"
 )
 
 var ErrTweetNotFound = errors.New("Tweetが見つかりませんでした")
@@ -22,7 +21,8 @@ type TweetDetail struct {
 type TweetService interface {
 	CreateTweet(ctx context.Context, userID int32, content string) (*db.Tweet, error)
 	DeleteTweet(ctx context.Context, userID int32, id int32) error
-	CreateImageTweet(ctx context.Context, userID int32, contentType string, r io.Reader, size int64) (*db.Tweet, error)
+	PresignImageUpload(ctx context.Context, userID int32, contentType string, size int64) (*storage.PresignUploadResult, error)
+	CompleteImageUpload(ctx context.Context, userID int32, key string) (*db.Tweet, error)
 	GetTweetByID(ctx context.Context, id int32) (*TweetDetail, error)
 	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]TweetDetail, error)
 	// GetTweetDetailsByIDs は指定 ID のツイートを一括取得し、いいね数・リツイート数を付与する
@@ -79,19 +79,33 @@ func (s *tweetService) DeleteTweet(ctx context.Context, userID int32, id int32) 
 	return nil
 }
 
-func (s *tweetService) CreateImageTweet(ctx context.Context, userID int32, contentType string, r io.Reader, size int64) (*db.Tweet, error) {
+func (s *tweetService) PresignImageUpload(ctx context.Context, userID int32, contentType string, size int64) (*storage.PresignUploadResult, error) {
 	if s.imageStorage == nil {
 		return nil, &ServiceError{Message: "画像ストレージが設定されていません"}
 	}
 
-	// 画像を保存し、公開URLを取得
-	imageURL, err := s.imageStorage.Save(userID, contentType, r, size)
+	result, err := s.imageStorage.PresignUpload(userID, contentType, size)
 	if err != nil {
-		// Save 側でサイズ・形式なども検証している
 		return nil, &ValidationError{Message: err.Error()}
 	}
 
-	// DBに保存（テキストなしの画像ツイート）
+	return result, nil
+}
+
+func (s *tweetService) CompleteImageUpload(ctx context.Context, userID int32, key string) (*db.Tweet, error) {
+	if s.imageStorage == nil {
+		return nil, &ServiceError{Message: "画像ストレージが設定されていません"}
+	}
+
+	if err := storage.ValidateKeyForUser(userID, key); err != nil {
+		return nil, &ValidationError{Message: err.Error()}
+	}
+
+	imageURL, err := s.imageStorage.ConfirmUpload(key)
+	if err != nil {
+		return nil, &ValidationError{Message: err.Error()}
+	}
+
 	tweet, err := s.queries.CreateTweet(ctx, db.CreateTweetParams{
 		UserID:   userID,
 		Content:  "",

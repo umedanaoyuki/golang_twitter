@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -127,5 +128,69 @@ func (s *S3ImageStorage) Save(userID int32, contentType string, r io.Reader, siz
 		return "", fmt.Errorf("画像の保存に失敗しました")
 	}
 
-	return fmt.Sprintf("%s/%s/%s", s.publicURL, s.bucket, key), nil
+	return s.buildPublicURL(key), nil
+}
+
+func (s *S3ImageStorage) PresignUpload(userID int32, contentType string, size int64) (*PresignUploadResult, error) {
+	ext, err := validateImage(size, contentType)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := objectKey(userID, ext)
+	if err != nil {
+		return nil, err
+	}
+
+	req, _ := s.client.PutObjectRequest(&s3.PutObjectInput{
+		Bucket:        aws.String(s.bucket),
+		Key:           aws.String(key),
+		ContentType:   aws.String(contentType),
+		ContentLength: aws.Int64(size),
+	})
+
+	uploadURL, err := req.Presign(15 * time.Minute)
+	if err != nil {
+		return nil, fmt.Errorf("アップロードURLの発行に失敗しました")
+	}
+
+	return &PresignUploadResult{
+		Key:       key,
+		UploadURL: uploadURL,
+		PublicURL: s.buildPublicURL(key),
+	}, nil
+}
+
+func (s *S3ImageStorage) ConfirmUpload(key string) (string, error) {
+	head, err := s.client.HeadObject(&s3.HeadObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok && (aerr.Code() == s3.ErrCodeNoSuchKey || aerr.Code() == "NotFound") {
+			return "", fmt.Errorf("画像のアップロードが確認できませんでした")
+		}
+		return "", fmt.Errorf("画像の確認に失敗しました")
+	}
+
+	if head.ContentLength == nil || *head.ContentLength <= 0 {
+		return "", fmt.Errorf("画像ファイルが空です")
+	}
+	if *head.ContentLength > MaxImageSize {
+		return "", fmt.Errorf("画像は5MB以下にしてください")
+	}
+
+	contentType := ""
+	if head.ContentType != nil {
+		contentType = *head.ContentType
+	}
+	if _, ok := allowedImageMIMEs[contentType]; !ok {
+		return "", fmt.Errorf("対応していない画像形式です（JPEG, PNG のみ）")
+	}
+
+	return s.buildPublicURL(key), nil
+}
+
+func (s *S3ImageStorage) buildPublicURL(key string) string {
+	return fmt.Sprintf("%s/%s/%s", s.publicURL, s.bucket, key)
 }

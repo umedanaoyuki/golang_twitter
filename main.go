@@ -148,8 +148,9 @@ func main() {
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
 		authorized.DELETE("/tweets/:id", tweetController.DeleteTweet)
-		// 画像投稿
-		authorized.POST("/tweets-image", tweetController.CreateImageTweet)
+		// 画像投稿（S3 直接アップロード）
+		authorized.POST("/tweets-image/presign", tweetController.PresignImageTweet)
+		authorized.POST("/tweets-image/complete", tweetController.CompleteImageTweet)
 
 		// リツイート機能
 		authorized.POST("/tweets/:id/retweet", retweetController.CreateRetweet)
