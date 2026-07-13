@@ -98,7 +98,7 @@ func (s *S3ImageStorage) ensureBucket() error {
 		Bucket: aws.String(s.bucket),
 	})
 	if err == nil {
-		return nil
+		return s.ensureBucketPublicRead()
 	}
 
 	if aerr, ok := err.(awserr.Error); ok && (aerr.Code() == s3.ErrCodeNoSuchBucket || aerr.Code() == "NotFound") {
@@ -108,10 +108,36 @@ func (s *S3ImageStorage) ensureBucket() error {
 		if err != nil {
 			return fmt.Errorf("S3 バケット作成: %w", err)
 		}
-		return nil
+		return s.ensureBucketPublicRead()
 	}
 
 	return fmt.Errorf("S3 バケット確認: %w", err)
+}
+
+// ensureBucketPublicRead はタイムラインの <img> から画像を直接GETできるよう、
+// バケット内オブジェクトの匿名読み取りを許可するポリシーを設定する
+func (s *S3ImageStorage) ensureBucketPublicRead() error {
+	policy := fmt.Sprintf(`{
+		"Version": "2012-10-17",
+		"Statement": [
+			{
+				"Effect": "Allow",
+				"Principal": "*",
+				"Action": ["s3:GetObject"],
+				"Resource": ["arn:aws:s3:::%s/*"]
+			}
+		]
+	}`, s.bucket)
+
+	_, err := s.client.PutBucketPolicy(&s3.PutBucketPolicyInput{
+		Bucket: aws.String(s.bucket),
+		Policy: aws.String(policy),
+	})
+	if err != nil {
+		return fmt.Errorf("S3 バケットの公開読み取り設定: %w", err)
+	}
+
+	return nil
 }
 
 func (s *S3ImageStorage) Save(userID int32, contentType string, r io.Reader, size int64) (string, error) {
