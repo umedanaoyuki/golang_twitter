@@ -89,7 +89,7 @@ func main() {
 
 	// コントローラーの初期化
 	authController := controllers.NewAuthController(authService)
-	tweetController := controllers.NewTweetController(tweetService)
+	tweetController := controllers.NewTweetController(tweetService, userService)
 	likeController := controllers.NewLikeController(likeService)
 	commentController := controllers.NewCommentController(commentService)
 	userController := controllers.NewUserController(userService)
@@ -114,6 +114,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Redis接続エラー:", err)
 	}
+	// ミドルウェアの追加（セッション用のcookieの名前, セッションの保存先）
 	router.Use(sessions.Sessions("golang_twitter_session", store))
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -143,8 +144,12 @@ func main() {
 
 	// 認証が必要なエンドポイント
 	authorized := router.Group("/")
+
+	// このグループ内のエンドポイントではmiddleware.AuthRequired()がまず実行される
 	authorized.Use(middleware.AuthRequired())
 	{
+		// ログインしているユーザー（自分）のツイート一覧取得
+		authorized.GET("/user/tweets", tweetController.GetCurrentUserTweets)
 		// ツイート投稿
 		authorized.POST("/tweets", tweetController.CreateTweet)
 		authorized.DELETE("/tweets/:id", tweetController.DeleteTweet)

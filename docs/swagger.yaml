@@ -138,6 +138,20 @@ definitions:
       next_cursor:
         type: integer
     type: object
+  controllers.GetCurrentUserTweetsResponse:
+    properties:
+      has_more:
+        example: false
+        type: boolean
+      next_cursor:
+        type: integer
+      tweets:
+        items:
+          $ref: '#/definitions/controllers.SwaggerTweet'
+        type: array
+      user:
+        $ref: '#/definitions/controllers.SwaggerUserDetail'
+    type: object
   controllers.GetFollowersResponse:
     properties:
       followers:
@@ -1359,6 +1373,39 @@ paths:
       summary: 退会
       tags:
       - users
+  /user/tweets:
+    get:
+      description: ログイン中のユーザーのツイートをカーソルページネーションで取得する
+      parameters:
+      - description: ページネーションカーソル（最後に取得したツイートID）
+        in: query
+        name: cursor
+        type: integer
+      - default: 20
+        description: 取得件数（1〜100、デフォルト20）
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.GetCurrentUserTweetsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: ログインユーザーのツイート一覧取得
+      tags:
+      - tweets
   /users/{user_id}:
     get:
       description: 指定IDのユーザー情報を取得する
