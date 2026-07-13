@@ -12,11 +12,13 @@ import (
 
 type TweetController struct {
 	tweetService services.TweetService
+	userService  services.UserService
 }
 
-func NewTweetController(tweetService services.TweetService) *TweetController {
+func NewTweetController(tweetService services.TweetService, userService services.UserService) *TweetController {
 	return &TweetController{
 		tweetService: tweetService,
+		userService:  userService,
 	}
 }
 
@@ -242,6 +244,67 @@ func (ctrl *TweetController) GetUserTweets(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"tweets":      tweets,
+		"next_cursor": nextCursor,
+		"has_more":    len(tweets) == int(limit),
+	})
+}
+
+// GetCurrentUserTweets godoc
+// @Summary      ログインユーザーのツイート一覧取得
+// @Description  ログイン中のユーザーのツイートをカーソルページネーションで取得する
+// @Tags         tweets
+// @Produce      json
+// @Security     SessionAuth
+// @Param        cursor  query     int  false  "ページネーションカーソル（最後に取得したツイートID）"
+// @Param        limit   query     int  false  "取得件数（1〜100、デフォルト20）"  default(20)
+// @Success      200     {object}  GetCurrentUserTweetsResponse
+// @Failure      401     {object}  ErrorResponse
+// @Failure      500     {object}  ErrorResponse
+// @Router       /user/tweets [get]
+func (ctrl *TweetController) GetCurrentUserTweets(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
+		return
+	}
+
+	var queryParams GetUserTweetsQuery
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "無効なクエリパラメータです"})
+		return
+	}
+
+	limit := queryParams.Limit
+	if limit == 0 {
+		limit = 20
+	}
+
+	user, err := ctrl.userService.GetUserDetailByUserID(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	tweets, err := ctrl.tweetService.GetUserTweetsWithCursor(
+		c.Request.Context(),
+		userID,
+		queryParams.Cursor,
+		limit,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var nextCursor *int32
+	if len(tweets) > 0 {
+		lastTweetID := tweets[len(tweets)-1].ID
+		nextCursor = &lastTweetID
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"user":        user,
 		"tweets":      tweets,
 		"next_cursor": nextCursor,
 		"has_more":    len(tweets) == int(limit),

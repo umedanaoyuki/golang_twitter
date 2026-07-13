@@ -12,6 +12,7 @@ import (
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session := sessions.Default(c)
+		// Redisに保存されているユーザーIDを取得
 		userID := session.Get("user_id")
 
 		if userID == nil {
