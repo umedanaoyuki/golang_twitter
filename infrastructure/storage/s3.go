@@ -14,11 +14,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-// S3ImageStorage は S3 互換ストレージ（開発時は S3Mock）に画像を保存する
+// S3ImageStorage は S3 互換ストレージ（開発時は MinIO）に画像を保存する
 type S3ImageStorage struct {
-	client    *s3.S3
-	bucket    string
-	publicURL string
+	client        *s3.S3
+	presignClient *s3.S3 // ブラウザから到達可能なエンドポイントで署名するためのクライアント
+	bucket        string
+	publicURL     string
 }
 
 // S3Config は S3 クライアントの設定
@@ -51,26 +52,23 @@ func NewS3ImageStorage(cfg S3Config) (*S3ImageStorage, error) {
 		cfg.PublicBase = strings.TrimRight(cfg.Endpoint, "/")
 	}
 
-	sess, err := session.NewSession(&aws.Config{
-		Region:           aws.String(cfg.Region),
-		Endpoint:         aws.String(cfg.Endpoint),
-		S3ForcePathStyle: aws.Bool(true),
-		Credentials: credentials.NewStaticCredentials(
-			cfg.AccessKey,
-			cfg.SecretKey,
-			"",
-		),
-		DisableSSL: aws.Bool(strings.HasPrefix(cfg.Endpoint, "http://")),
-	})
+	client, err := newS3Client(cfg.Region, cfg.Endpoint, cfg.AccessKey, cfg.SecretKey)
 	if err != nil {
 		return nil, fmt.Errorf("S3 セッション: %w", err)
 	}
 
-	client := s3.New(sess)
+	// presigned URL はブラウザが直接アクセスするため、コンテナ内部向けの
+	// Endpoint（例: http://minio:9000）ではなく PublicBase で署名し直す
+	presignClient, err := newS3Client(cfg.Region, cfg.PublicBase, cfg.AccessKey, cfg.SecretKey)
+	if err != nil {
+		return nil, fmt.Errorf("S3 presign用セッション: %w", err)
+	}
+
 	storage := &S3ImageStorage{
-		client:    client,
-		bucket:    cfg.Bucket,
-		publicURL: strings.TrimRight(cfg.PublicBase, "/"),
+		client:        client,
+		presignClient: presignClient,
+		bucket:        cfg.Bucket,
+		publicURL:     strings.TrimRight(cfg.PublicBase, "/"),
 	}
 
 	if err := storage.ensureBucket(); err != nil {
@@ -78,6 +76,21 @@ func NewS3ImageStorage(cfg S3Config) (*S3ImageStorage, error) {
 	}
 
 	return storage, nil
+}
+
+func newS3Client(region, endpoint, accessKey, secretKey string) (*s3.S3, error) {
+	sess, err := session.NewSession(&aws.Config{
+		Region:           aws.String(region),
+		Endpoint:         aws.String(endpoint),
+		S3ForcePathStyle: aws.Bool(true),
+		Credentials:      credentials.NewStaticCredentials(accessKey, secretKey, ""),
+		DisableSSL:       aws.Bool(strings.HasPrefix(endpoint, "http://")),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return s3.New(sess), nil
 }
 
 func (s *S3ImageStorage) ensureBucket() error {
@@ -142,7 +155,7 @@ func (s *S3ImageStorage) PresignUpload(userID int32, contentType string, size in
 		return nil, err
 	}
 
-	req, _ := s.client.PutObjectRequest(&s3.PutObjectInput{
+	req, _ := s.presignClient.PutObjectRequest(&s3.PutObjectInput{
 		Bucket:        aws.String(s.bucket),
 		Key:           aws.String(key),
 		ContentType:   aws.String(contentType),
