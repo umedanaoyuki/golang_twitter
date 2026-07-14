@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"strings"
 )
 
 func validateImage(size int64, contentType string) (ext string, err error) {
@@ -47,4 +48,20 @@ func randomFilename(userID int32, ext string) (string, error) {
 		return "", fmt.Errorf("ファイル名の生成に失敗しました")
 	}
 	return fmt.Sprintf("%d_%s%s", userID, hex.EncodeToString(b), ext), nil
+}
+
+func ValidateKeyForUser(userID int32, key string) error {
+	if key == "" {
+		return fmt.Errorf("画像キーが指定されていません")
+	}
+	if strings.Contains(key, "..") || strings.HasPrefix(key, "/") {
+		return fmt.Errorf("無効な画像キーです")
+	}
+
+	expectedPrefix := fmt.Sprintf("uploads/%d_", userID)
+	if !strings.HasPrefix(key, expectedPrefix) {
+		return fmt.Errorf("無効な画像キーです")
+	}
+
+	return nil
 }

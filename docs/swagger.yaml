@@ -1,5 +1,13 @@
 basePath: /
 definitions:
+  controllers.CompleteImageTweetInput:
+    properties:
+      key:
+        example: uploads/1_abc123.jpg
+        type: string
+    required:
+    - key
+    type: object
   controllers.CreateCommentBody:
     properties:
       content:
@@ -254,6 +262,31 @@ definitions:
     properties:
       message:
         example: 処理が完了しました
+        type: string
+    type: object
+  controllers.PresignImageTweetInput:
+    properties:
+      content_type:
+        example: image/jpeg
+        type: string
+      size:
+        example: 102400
+        minimum: 1
+        type: integer
+    required:
+    - content_type
+    - size
+    type: object
+  controllers.PresignImageTweetResponse:
+    properties:
+      key:
+        example: uploads/1_abc123.jpg
+        type: string
+      public_url:
+        example: https://example.com/bucket/uploads/1_abc123.jpg
+        type: string
+      upload_url:
+        example: https://s3.example.com/bucket/uploads/1_abc123.jpg?X-Amz-Signature=...
         type: string
     type: object
   controllers.RegisterInput:
@@ -840,17 +873,18 @@ paths:
       summary: ツイート投稿
       tags:
       - tweets
-  /tweets-image:
+  /tweets-image/complete:
     post:
       consumes:
-      - multipart/form-data
-      description: 認証済みユーザーとして画像ファイルを投稿する
+      - application/json
+      description: S3 へのアップロード完了後、key を確認して画像ツイートを作成する
       parameters:
-      - description: 画像ファイル（JPEG/PNG・5MB以下）
-        in: formData
-        name: image
+      - description: アップロード済み画像の key
+        in: body
+        name: input
         required: true
-        type: file
+        schema:
+          $ref: '#/definitions/controllers.CompleteImageTweetInput'
       produces:
       - application/json
       responses:
@@ -872,7 +906,43 @@ paths:
             $ref: '#/definitions/controllers.ErrorResponse'
       security:
       - SessionAuth: []
-      summary: 画像投稿
+      summary: 画像アップロード完了
+      tags:
+      - tweets
+  /tweets-image/presign:
+    post:
+      consumes:
+      - application/json
+      description: 認証済みユーザー向けに S3 への直接アップロード用 URL と key を発行する
+      parameters:
+      - description: 画像メタ情報
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.PresignImageTweetInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.PresignImageTweetResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: 画像アップロード許可
       tags:
       - tweets
   /tweets/{id}:

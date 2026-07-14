@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -13,11 +14,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-// S3ImageStorage は S3 互換ストレージ（開発時は S3Mock）に画像を保存する
+// S3ImageStorage は S3 互換ストレージ（開発時は MinIO）に画像を保存する
 type S3ImageStorage struct {
-	client    *s3.S3
-	bucket    string
-	publicURL string
+	client        *s3.S3
+	presignClient *s3.S3 // ブラウザから到達可能なエンドポイントで署名するためのクライアント
+	bucket        string
+	publicURL     string
 }
 
 // S3Config は S3 クライアントの設定
@@ -50,26 +52,23 @@ func NewS3ImageStorage(cfg S3Config) (*S3ImageStorage, error) {
 		cfg.PublicBase = strings.TrimRight(cfg.Endpoint, "/")
 	}
 
-	sess, err := session.NewSession(&aws.Config{
-		Region:           aws.String(cfg.Region),
-		Endpoint:         aws.String(cfg.Endpoint),
-		S3ForcePathStyle: aws.Bool(true),
-		Credentials: credentials.NewStaticCredentials(
-			cfg.AccessKey,
-			cfg.SecretKey,
-			"",
-		),
-		DisableSSL: aws.Bool(strings.HasPrefix(cfg.Endpoint, "http://")),
-	})
+	client, err := newS3Client(cfg.Region, cfg.Endpoint, cfg.AccessKey, cfg.SecretKey)
 	if err != nil {
 		return nil, fmt.Errorf("S3 セッション: %w", err)
 	}
 
-	client := s3.New(sess)
+	// presigned URL はブラウザが直接アクセスするため、コンテナ内部向けの
+	// Endpoint（例: http://minio:9000）ではなく PublicBase で署名し直す
+	presignClient, err := newS3Client(cfg.Region, cfg.PublicBase, cfg.AccessKey, cfg.SecretKey)
+	if err != nil {
+		return nil, fmt.Errorf("S3 presign用セッション: %w", err)
+	}
+
 	storage := &S3ImageStorage{
-		client:    client,
-		bucket:    cfg.Bucket,
-		publicURL: strings.TrimRight(cfg.PublicBase, "/"),
+		client:        client,
+		presignClient: presignClient,
+		bucket:        cfg.Bucket,
+		publicURL:     strings.TrimRight(cfg.PublicBase, "/"),
 	}
 
 	if err := storage.ensureBucket(); err != nil {
@@ -79,12 +78,27 @@ func NewS3ImageStorage(cfg S3Config) (*S3ImageStorage, error) {
 	return storage, nil
 }
 
+func newS3Client(region, endpoint, accessKey, secretKey string) (*s3.S3, error) {
+	sess, err := session.NewSession(&aws.Config{
+		Region:           aws.String(region),
+		Endpoint:         aws.String(endpoint),
+		S3ForcePathStyle: aws.Bool(true),
+		Credentials:      credentials.NewStaticCredentials(accessKey, secretKey, ""),
+		DisableSSL:       aws.Bool(strings.HasPrefix(endpoint, "http://")),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return s3.New(sess), nil
+}
+
 func (s *S3ImageStorage) ensureBucket() error {
 	_, err := s.client.HeadBucket(&s3.HeadBucketInput{
 		Bucket: aws.String(s.bucket),
 	})
 	if err == nil {
-		return nil
+		return s.ensureBucketPublicRead()
 	}
 
 	if aerr, ok := err.(awserr.Error); ok && (aerr.Code() == s3.ErrCodeNoSuchBucket || aerr.Code() == "NotFound") {
@@ -94,10 +108,36 @@ func (s *S3ImageStorage) ensureBucket() error {
 		if err != nil {
 			return fmt.Errorf("S3 バケット作成: %w", err)
 		}
-		return nil
+		return s.ensureBucketPublicRead()
 	}
 
 	return fmt.Errorf("S3 バケット確認: %w", err)
+}
+
+// ensureBucketPublicRead はタイムラインの <img> から画像を直接GETできるよう、
+// バケット内オブジェクトの匿名読み取りを許可するポリシーを設定する
+func (s *S3ImageStorage) ensureBucketPublicRead() error {
+	policy := fmt.Sprintf(`{
+		"Version": "2012-10-17",
+		"Statement": [
+			{
+				"Effect": "Allow",
+				"Principal": "*",
+				"Action": ["s3:GetObject"],
+				"Resource": ["arn:aws:s3:::%s/*"]
+			}
+		]
+	}`, s.bucket)
+
+	_, err := s.client.PutBucketPolicy(&s3.PutBucketPolicyInput{
+		Bucket: aws.String(s.bucket),
+		Policy: aws.String(policy),
+	})
+	if err != nil {
+		return fmt.Errorf("S3 バケットの公開読み取り設定: %w", err)
+	}
+
+	return nil
 }
 
 func (s *S3ImageStorage) Save(userID int32, contentType string, r io.Reader, size int64) (string, error) {
@@ -127,5 +167,69 @@ func (s *S3ImageStorage) Save(userID int32, contentType string, r io.Reader, siz
 		return "", fmt.Errorf("画像の保存に失敗しました")
 	}
 
-	return fmt.Sprintf("%s/%s/%s", s.publicURL, s.bucket, key), nil
+	return s.buildPublicURL(key), nil
+}
+
+func (s *S3ImageStorage) PresignUpload(userID int32, contentType string, size int64) (*PresignUploadResult, error) {
+	ext, err := validateImage(size, contentType)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := objectKey(userID, ext)
+	if err != nil {
+		return nil, err
+	}
+
+	req, _ := s.presignClient.PutObjectRequest(&s3.PutObjectInput{
+		Bucket:        aws.String(s.bucket),
+		Key:           aws.String(key),
+		ContentType:   aws.String(contentType),
+		ContentLength: aws.Int64(size),
+	})
+
+	uploadURL, err := req.Presign(15 * time.Minute)
+	if err != nil {
+		return nil, fmt.Errorf("アップロードURLの発行に失敗しました")
+	}
+
+	return &PresignUploadResult{
+		Key:       key,
+		UploadURL: uploadURL,
+		PublicURL: s.buildPublicURL(key),
+	}, nil
+}
+
+func (s *S3ImageStorage) ConfirmUpload(key string) (string, error) {
+	head, err := s.client.HeadObject(&s3.HeadObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok && (aerr.Code() == s3.ErrCodeNoSuchKey || aerr.Code() == "NotFound") {
+			return "", fmt.Errorf("画像のアップロードが確認できませんでした")
+		}
+		return "", fmt.Errorf("画像の確認に失敗しました")
+	}
+
+	if head.ContentLength == nil || *head.ContentLength <= 0 {
+		return "", fmt.Errorf("画像ファイルが空です")
+	}
+	if *head.ContentLength > MaxImageSize {
+		return "", fmt.Errorf("画像は5MB以下にしてください")
+	}
+
+	contentType := ""
+	if head.ContentType != nil {
+		contentType = *head.ContentType
+	}
+	if _, ok := allowedImageMIMEs[contentType]; !ok {
+		return "", fmt.Errorf("対応していない画像形式です（JPEG, PNG のみ）")
+	}
+
+	return s.buildPublicURL(key), nil
+}
+
+func (s *S3ImageStorage) buildPublicURL(key string) string {
+	return fmt.Sprintf("%s/%s/%s", s.publicURL, s.bucket, key)
 }

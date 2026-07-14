@@ -69,6 +69,12 @@ type CreateImageTweetItem struct {
 	ImageURL string `json:"image_url" example:"https://example.com/image.jpg"`
 }
 
+type PresignImageTweetResponse struct {
+	Key       string `json:"key" example:"uploads/1_abc123.jpg"`
+	UploadURL string `json:"upload_url" example:"https://s3.example.com/bucket/uploads/1_abc123.jpg?X-Amz-Signature=..."`
+	PublicURL string `json:"public_url" example:"https://example.com/bucket/uploads/1_abc123.jpg"`
+}
+
 type GetTweetResponse struct {
 	Tweet SwaggerTweet `json:"tweet"`
 }

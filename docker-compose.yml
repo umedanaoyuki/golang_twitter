@@ -10,16 +10,22 @@ services:
       - postgres:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-  s3mock:
-    image: adobe/s3mock:latest
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9191"
+    environment:
+      - MINIO_ROOT_USER=test
+      - MINIO_ROOT_PASSWORD=testtest123
+      - MINIO_API_CORS_ALLOW_ORIGIN=*
     ports:
-      - 9090:9090
+      - 9090:9000
       - 9191:9191
     healthcheck:
-      test:
-        ["CMD", "wget", "--spider", "-q", "http://localhost:9090/favicon.ico"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 5s
       retries: 3
+    volumes:
+      - minio:/data
 
   web:
     build:
@@ -32,16 +38,16 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_HOST=redis_server:6379
       - SESSION_SECRET=${SESSION_SECRET}
-      - S3_ENDPOINT=http://s3mock:9090
+      - S3_ENDPOINT=http://minio:9000
       - S3_PUBLIC_BASE_URL=http://localhost:9090
       - S3_BUCKET=golang-twitter-uploads
       - S3_REGION=us-east-1
       - S3_ACCESS_KEY=test
-      - S3_SECRET_KEY=test
+      - S3_SECRET_KEY=testtest123
     depends_on:
       - postgres
       - redis_server
-      - s3mock
+      - minio
     ports:
       - 8080:8080
     volumes:
@@ -64,3 +70,4 @@ services:
 
 volumes:
   postgres:
+  minio:

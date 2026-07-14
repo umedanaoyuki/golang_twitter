@@ -570,16 +570,16 @@ const docTemplate = `{
                 }
             }
         },
-        "/tweets-image": {
+        "/tweets-image/complete": {
             "post": {
                 "security": [
                     {
                         "SessionAuth": []
                     }
                 ],
-                "description": "認証済みユーザーとして画像ファイルを投稿する",
+                "description": "S3 へのアップロード完了後、key を確認して画像ツイートを作成する",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -587,14 +587,16 @@ const docTemplate = `{
                 "tags": [
                     "tweets"
                 ],
-                "summary": "画像投稿",
+                "summary": "画像アップロード完了",
                 "parameters": [
                     {
-                        "type": "file",
-                        "description": "画像ファイル（JPEG/PNG・5MB以下）",
-                        "name": "image",
-                        "in": "formData",
-                        "required": true
+                        "description": "アップロード済み画像の key",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.CompleteImageTweetInput"
+                        }
                     }
                 ],
                 "responses": {
@@ -602,6 +604,63 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/controllers.CreateImageTweetResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tweets-image/presign": {
+            "post": {
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "description": "認証済みユーザー向けに S3 への直接アップロード用 URL と key を発行する",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tweets"
+                ],
+                "summary": "画像アップロード許可",
+                "parameters": [
+                    {
+                        "description": "画像メタ情報",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.PresignImageTweetInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.PresignImageTweetResponse"
                         }
                     },
                     "400": {
@@ -1780,6 +1839,18 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "controllers.CompleteImageTweetInput": {
+            "type": "object",
+            "required": [
+                "key"
+            ],
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "example": "uploads/1_abc123.jpg"
+                }
+            }
+        },
         "controllers.CreateCommentBody": {
             "type": "object",
             "required": [
@@ -2157,6 +2228,41 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "処理が完了しました"
+                }
+            }
+        },
+        "controllers.PresignImageTweetInput": {
+            "type": "object",
+            "required": [
+                "content_type",
+                "size"
+            ],
+            "properties": {
+                "content_type": {
+                    "type": "string",
+                    "example": "image/jpeg"
+                },
+                "size": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 102400
+                }
+            }
+        },
+        "controllers.PresignImageTweetResponse": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "example": "uploads/1_abc123.jpg"
+                },
+                "public_url": {
+                    "type": "string",
+                    "example": "https://example.com/bucket/uploads/1_abc123.jpg"
+                },
+                "upload_url": {
+                    "type": "string",
+                    "example": "https://s3.example.com/bucket/uploads/1_abc123.jpg?X-Amz-Signature=..."
                 }
             }
         },
