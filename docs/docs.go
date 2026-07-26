@@ -2451,6 +2451,10 @@ const docTemplate = `{
         "controllers.SwaggerTweet": {
             "type": "object",
             "properties": {
+                "comment_count": {
+                    "type": "integer",
+                    "example": 0
+                },
                 "content": {
                     "type": "string",
                     "example": "Hello, world!"

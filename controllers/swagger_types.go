@@ -49,6 +49,7 @@ type SwaggerTweet struct {
 	UpdatedAt    string `json:"updated_at" example:"2024-01-01T00:00:00Z"`
 	LikeCount    int64  `json:"like_count" example:"0"`
 	RetweetCount int64  `json:"retweet_count" example:"0"`
+	CommentCount int64  `json:"comment_count" example:"0"`
 }
 
 type CreateTweetResponse struct {

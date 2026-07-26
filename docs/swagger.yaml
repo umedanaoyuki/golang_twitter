@@ -420,6 +420,9 @@ definitions:
     type: object
   controllers.SwaggerTweet:
     properties:
+      comment_count:
+        example: 0
+        type: integer
       content:
         example: Hello, world!
         type: string
