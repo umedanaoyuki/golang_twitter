@@ -732,6 +732,29 @@ paths:
       summary: ログイン
       tags:
       - auth
+  /logout:
+    post:
+      description: セッションを破棄し、セッション Cookie を削除する
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.MessageResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: ログアウト
+      tags:
+      - auth
   /profile:
     post:
       consumes:
