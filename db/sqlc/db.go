@@ -180,6 +180,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.updateUserProfileStmt, err = db.PrepareContext(ctx, updateUserProfile); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateUserProfile: %w", err)
 	}
+	if q.updateUserProfileImageStmt, err = db.PrepareContext(ctx, updateUserProfileImage); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateUserProfileImage: %w", err)
+	}
 	return &q, nil
 }
 
@@ -445,6 +448,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing updateUserProfileStmt: %w", cerr)
 		}
 	}
+	if q.updateUserProfileImageStmt != nil {
+		if cerr := q.updateUserProfileImageStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateUserProfileImageStmt: %w", cerr)
+		}
+	}
 	return err
 }
 
@@ -536,6 +544,7 @@ type Queries struct {
 	getUserRetweetsWithCursorStmt      *sql.Stmt
 	updateUserIsActiveStmt             *sql.Stmt
 	updateUserProfileStmt              *sql.Stmt
+	updateUserProfileImageStmt         *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
@@ -594,5 +603,6 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getUserRetweetsWithCursorStmt:      q.getUserRetweetsWithCursorStmt,
 		updateUserIsActiveStmt:             q.updateUserIsActiveStmt,
 		updateUserProfileStmt:              q.updateUserProfileStmt,
+		updateUserProfileImageStmt:         q.updateUserProfileImageStmt,
 	}
 }

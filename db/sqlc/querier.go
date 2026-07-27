@@ -61,6 +61,7 @@ type Querier interface {
 	GetUserRetweetsWithCursor(ctx context.Context, arg GetUserRetweetsWithCursorParams) ([]Retweet, error)
 	UpdateUserIsActive(ctx context.Context, arg UpdateUserIsActiveParams) error
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (UserProfile, error)
+	UpdateUserProfileImage(ctx context.Context, arg UpdateUserProfileImageParams) (UserProfile, error)
 }
 
 var _ Querier = (*Queries)(nil)

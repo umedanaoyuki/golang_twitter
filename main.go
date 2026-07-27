@@ -85,7 +85,7 @@ func main() {
 	messageService := services.NewMessageService(conn, queries)
 	retweetService := services.NewRetweetService(conn, queries, tweetService)
 	followService := services.NewFollowService(conn, queries)
-	userProfileService := services.NewUserProfileService(queries)
+	userProfileService := services.NewUserProfileService(queries, imageStorage)
 
 	// コントローラーの初期化
 	authController := controllers.NewAuthController(authService)
@@ -199,6 +199,9 @@ func main() {
 		authorized.POST("/profile", userProfileController.CreateUserProfile)
 		// プロフィール更新
 		authorized.PUT("/profile", userProfileController.UpdateUserProfile)
+		// プロフィール画像保存（S3 直接アップロード）
+		authorized.POST("/profile-image/presign", userProfileController.PresignProfileImage)
+		authorized.POST("/profile-image/complete", userProfileController.CompleteProfileImage)
 	}
 
 	log.Println("サーバー起動: http://localhost:8080")
