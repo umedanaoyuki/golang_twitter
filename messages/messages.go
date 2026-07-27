@@ -14,6 +14,9 @@ const (
 	MsgUserRegistered         = "メールを送信しました。\nアカウントを有効化してください。"
 	MsgUserActivated          = "アカウントが有効化されました"
 	MsgLoginSuccess           = "ログインに成功しました"
+	MsgLogoutSuccess          = "ログアウトしました"
+
+	ErrSessionSaveFailed      = "セッションの保存に失敗しました"
 
 	ErrInvalidEmailOrPassword = "メールアドレスまたはパスワードが正しくありません"
 	ErrAccountNotActivated    = "アカウントが有効化されていません"

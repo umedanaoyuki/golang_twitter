@@ -125,7 +125,7 @@ func (ctrl *AuthController) Login(c *gin.Context) {
 	session := sessions.Default(c)
 	session.Set("user_id", user.ID)
 	if err := session.Save(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "セッションの保存に失敗しました"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": messages.ErrSessionSaveFailed})
 		return
 	}
 
@@ -138,5 +138,39 @@ func (ctrl *AuthController) Login(c *gin.Context) {
 			"is_active":  user.IsActive,
 			"created_at": user.CreatedAt,
 		},
+	})
+}
+
+// Logout godoc
+// @Summary      ログアウト
+// @Description  セッションを破棄し、セッション Cookie を削除する
+// @Tags         auth
+// @Produce      json
+// @Security     SessionAuth
+// @Success      200  {object}  MessageResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /logout [post]
+func (ctrl *AuthController) Logout(c *gin.Context) {
+	session := sessions.Default(c)
+
+	// 1. セッションの中身を削除
+	session.Clear()
+
+	// 2. MaxAgeを-1にすることでブラウザ側のCookieも削除する
+	session.Options(sessions.Options{
+		Path:   "/",
+		MaxAge: -1,
+	})
+
+	// 3. Redisからセッションを削除し、Set-Cookieを発行
+	if err := session.Save(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": messages.ErrSessionSaveFailed})
+		return
+	}
+
+	// 4. 成功レスポンス
+	c.JSON(http.StatusOK, gin.H{
+		"message": messages.MsgLogoutSuccess,
 	})
 }

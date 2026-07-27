@@ -148,6 +148,9 @@ func main() {
 	// このグループ内のエンドポイントではmiddleware.AuthRequired()がまず実行される
 	authorized.Use(middleware.AuthRequired())
 	{
+		// ログアウト
+		authorized.POST("/logout", authController.Logout)
+
 		// ログインしているユーザー（自分）のツイート一覧取得
 		authorized.GET("/user/tweets", tweetController.GetCurrentUserTweets)
 		// ツイート投稿
