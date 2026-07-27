@@ -54,6 +54,11 @@ type GetUserTweetsQuery struct {
 	Limit  int32  `form:"limit" binding:"omitempty,min=1,max=100"`
 }
 
+type GetAllTweetsQuery struct {
+	Cursor *int32 `form:"cursor" binding:"omitempty,min=1"`
+	Limit  int32  `form:"limit" binding:"omitempty,min=1,max=100"`
+}
+
 // CreateTweet godoc
 // @Summary      ツイート投稿
 // @Description  認証済みユーザーとしてツイートを投稿する
@@ -269,6 +274,56 @@ func (ctrl *TweetController) GetUserTweets(c *gin.Context) {
 		c.Request.Context(), 
 		uriParams.UserID, 
 		queryParams.Cursor, 
+		limit,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 次のカーソルを計算
+	var nextCursor *int32
+	if len(tweets) > 0 {
+		lastTweetID := tweets[len(tweets)-1].ID
+		nextCursor = &lastTweetID
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"tweets":      tweets,
+		"next_cursor": nextCursor,
+		"has_more":    len(tweets) == int(limit),
+	})
+}
+
+// GetAllTweets godoc
+// @Summary      全ユーザーのツイート一覧取得
+// @Description  登録されている全ユーザーのツイートをカーソルページネーションで取得する
+// @Tags         tweets
+// @Produce      json
+// @Param        cursor  query     int  false  "ページネーションカーソル（最後に取得したツイートID）"
+// @Param        limit   query     int  false  "取得件数（1〜100、デフォルト20）"  default(20)
+// @Success      200     {object}  GetAllTweetsResponse
+// @Failure      400     {object}  ErrorResponse
+// @Failure      500     {object}  ErrorResponse
+// @Router       /tweets [get]
+func (ctrl *TweetController) GetAllTweets(c *gin.Context) {
+	// クエリパラメータのバリデーション（デフォルト値を設定）
+	var queryParams GetAllTweetsQuery
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "無効なクエリパラメータです"})
+		return
+	}
+
+	// limitのデフォルト値を設定
+	limit := queryParams.Limit
+	if limit == 0 {
+		limit = 20
+	}
+
+	// 全ユーザーのツイート一覧を取得
+	tweets, err := ctrl.tweetService.GetAllTweetsWithCursor(
+		c.Request.Context(),
+		queryParams.Cursor,
 		limit,
 	)
 	if err != nil {

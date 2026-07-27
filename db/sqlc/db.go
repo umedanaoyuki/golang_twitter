@@ -123,6 +123,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getAllTweetsStmt, err = db.PrepareContext(ctx, getAllTweets); err != nil {
 		return nil, fmt.Errorf("error preparing query GetAllTweets: %w", err)
 	}
+	if q.getAllTweetsWithCursorStmt, err = db.PrepareContext(ctx, getAllTweetsWithCursor); err != nil {
+		return nil, fmt.Errorf("error preparing query GetAllTweetsWithCursor: %w", err)
+	}
 	if q.getBookmarksByUserIdStmt, err = db.PrepareContext(ctx, getBookmarksByUserId); err != nil {
 		return nil, fmt.Errorf("error preparing query GetBookmarksByUserId: %w", err)
 	}
@@ -350,6 +353,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getAllTweetsStmt: %w", cerr)
 		}
 	}
+	if q.getAllTweetsWithCursorStmt != nil {
+		if cerr := q.getAllTweetsWithCursorStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getAllTweetsWithCursorStmt: %w", cerr)
+		}
+	}
 	if q.getBookmarksByUserIdStmt != nil {
 		if cerr := q.getBookmarksByUserIdStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getBookmarksByUserIdStmt: %w", cerr)
@@ -517,6 +525,7 @@ type Queries struct {
 	existsLikeStmt                     *sql.Stmt
 	existsRetweetStmt                  *sql.Stmt
 	getAllTweetsStmt                   *sql.Stmt
+	getAllTweetsWithCursorStmt         *sql.Stmt
 	getBookmarksByUserIdStmt           *sql.Stmt
 	getCommentsByTweetIDWithCursorStmt *sql.Stmt
 	getFollowersByUserIdWithCursorStmt *sql.Stmt
@@ -575,6 +584,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		existsLikeStmt:                     q.existsLikeStmt,
 		existsRetweetStmt:                  q.existsRetweetStmt,
 		getAllTweetsStmt:                   q.getAllTweetsStmt,
+		getAllTweetsWithCursorStmt:         q.getAllTweetsWithCursorStmt,
 		getBookmarksByUserIdStmt:           q.getBookmarksByUserIdStmt,
 		getCommentsByTweetIDWithCursorStmt: q.getCommentsByTweetIDWithCursorStmt,
 		getFollowersByUserIdWithCursorStmt: q.getFollowersByUserIdWithCursorStmt,

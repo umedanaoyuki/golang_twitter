@@ -85,6 +85,12 @@ type GetUserTweetsResponse struct {
 	HasMore    bool           `json:"has_more" example:"false"`
 }
 
+type GetAllTweetsResponse struct {
+	Tweets     []SwaggerTweet `json:"tweets"`
+	NextCursor *int32         `json:"next_cursor"`
+	HasMore    bool           `json:"has_more" example:"false"`
+}
+
 type GetCurrentUserTweetsResponse struct {
 	User       SwaggerUserDetail `json:"user"`
 	Tweets     []SwaggerTweet    `json:"tweets"`

@@ -25,6 +25,8 @@ type TweetService interface {
 	CompleteImageUpload(ctx context.Context, userID int32, key string) (*db.Tweet, error)
 	GetTweetByID(ctx context.Context, id int32) (*TweetDetail, error)
 	GetUserTweetsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]TweetDetail, error)
+	// GetAllTweetsWithCursor は登録されている全ユーザーのツイートを取得する
+	GetAllTweetsWithCursor(ctx context.Context, cursor *int32, limit int32) ([]TweetDetail, error)
 	// GetTweetDetailsByIDs は指定 ID のツイートを一括取得し、いいね数・リツイート数を付与する
 	GetTweetDetailsByIDs(ctx context.Context, ids []int32) (map[int32]TweetDetail, error)
 }
@@ -151,6 +153,62 @@ func (s *tweetService) GetUserTweetsWithCursor(ctx context.Context, userID int32
 			return nil, &ServiceError{Message: "リツイート数の取得に失敗しました"}
 		}
 		details = append(details, TweetDetail{Tweet: t, LikeCount: n, RetweetCount: rt})
+	}
+	return details, nil
+}
+
+// 全ユーザーのツイート一覧を取得
+func (s *tweetService) GetAllTweetsWithCursor(ctx context.Context, cursor *int32, limit int32) ([]TweetDetail, error) {
+	// cursorが指定されていない場合は0を使用（SQLで全件取得）
+	cursorValue := int32(0)
+	if cursor != nil {
+		cursorValue = *cursor
+	}
+
+	// カーソルベースでツイートを取得
+	tweets, err := s.queries.GetAllTweetsWithCursor(ctx, db.GetAllTweetsWithCursorParams{
+		Cursor:     cursorValue,
+		LimitCount: limit,
+	})
+	if err != nil {
+		return nil, &ServiceError{Message: "ツイートの取得に失敗しました"}
+	}
+
+	if len(tweets) == 0 {
+		return []TweetDetail{}, nil
+	}
+
+	// いいね数・リツイート数はまとめて取得する（N+1回避）
+	ids := make([]int32, 0, len(tweets))
+	for _, t := range tweets {
+		ids = append(ids, t.ID)
+	}
+
+	likeRows, err := s.queries.CountLikesByTweetIDs(ctx, ids)
+	if err != nil {
+		return nil, &ServiceError{Message: "いいね数の取得に失敗しました"}
+	}
+	retweetRows, err := s.queries.CountRetweetsByTweetIDs(ctx, ids)
+	if err != nil {
+		return nil, &ServiceError{Message: "リツイート数の取得に失敗しました"}
+	}
+
+	likeByTweetID := make(map[int32]int64, len(likeRows))
+	for _, row := range likeRows {
+		likeByTweetID[row.TweetID] = row.LikeCount
+	}
+	retweetByTweetID := make(map[int32]int64, len(retweetRows))
+	for _, row := range retweetRows {
+		retweetByTweetID[row.TweetID] = row.RetweetCount
+	}
+
+	details := make([]TweetDetail, 0, len(tweets))
+	for _, t := range tweets {
+		details = append(details, TweetDetail{
+			Tweet:        t,
+			LikeCount:    likeByTweetID[t.ID],
+			RetweetCount: retweetByTweetID[t.ID],
+		})
 	}
 	return details, nil
 }
