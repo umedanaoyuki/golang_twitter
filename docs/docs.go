@@ -510,6 +510,126 @@ const docTemplate = `{
                 }
             }
         },
+        "/profile-image/complete": {
+            "post": {
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "description": "S3 へのアップロード完了後、key を確認してプロフィール画像を保存する",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profiles"
+                ],
+                "summary": "プロフィール画像アップロード完了",
+                "parameters": [
+                    {
+                        "description": "アップロード済み画像の key",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.CompleteProfileImageInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.UserProfileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile-image/presign": {
+            "post": {
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "description": "認証済みユーザー向けに S3 への直接アップロード用 URL と key を発行する",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profiles"
+                ],
+                "summary": "プロフィール画像アップロード許可",
+                "parameters": [
+                    {
+                        "description": "画像メタ情報",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.PresignProfileImageInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.PresignProfileImageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/register": {
             "post": {
                 "description": "メールアドレスとパスワードで新規ユーザーを登録する",
@@ -1933,6 +2053,18 @@ const docTemplate = `{
                 }
             }
         },
+        "controllers.CompleteProfileImageInput": {
+            "type": "object",
+            "required": [
+                "key"
+            ],
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "example": "uploads/1_abc123.jpg"
+                }
+            }
+        },
         "controllers.CreateCommentBody": {
             "type": "object",
             "required": [
@@ -2350,6 +2482,41 @@ const docTemplate = `{
             }
         },
         "controllers.PresignImageTweetResponse": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "example": "uploads/1_abc123.jpg"
+                },
+                "public_url": {
+                    "type": "string",
+                    "example": "https://example.com/bucket/uploads/1_abc123.jpg"
+                },
+                "upload_url": {
+                    "type": "string",
+                    "example": "https://s3.example.com/bucket/uploads/1_abc123.jpg?X-Amz-Signature=..."
+                }
+            }
+        },
+        "controllers.PresignProfileImageInput": {
+            "type": "object",
+            "required": [
+                "content_type",
+                "size"
+            ],
+            "properties": {
+                "content_type": {
+                    "type": "string",
+                    "example": "image/jpeg"
+                },
+                "size": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 102400
+                }
+            }
+        },
+        "controllers.PresignProfileImageResponse": {
             "type": "object",
             "properties": {
                 "key": {

@@ -110,3 +110,31 @@ func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfilePa
 	)
 	return i, err
 }
+
+const updateUserProfileImage = `-- name: UpdateUserProfileImage :one
+UPDATE user_profiles
+SET image_url = $2, updated_at = NOW()
+WHERE user_id = $1
+RETURNING id, user_id, name, bio, image_url, location, created_at, updated_at
+`
+
+type UpdateUserProfileImageParams struct {
+	UserID   int32  `json:"user_id"`
+	ImageUrl string `json:"image_url"`
+}
+
+func (q *Queries) UpdateUserProfileImage(ctx context.Context, arg UpdateUserProfileImageParams) (UserProfile, error) {
+	row := q.queryRow(ctx, q.updateUserProfileImageStmt, updateUserProfileImage, arg.UserID, arg.ImageUrl)
+	var i UserProfile
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.Bio,
+		&i.ImageUrl,
+		&i.Location,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

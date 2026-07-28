@@ -8,6 +8,14 @@ definitions:
     required:
     - key
     type: object
+  controllers.CompleteProfileImageInput:
+    properties:
+      key:
+        example: uploads/1_abc123.jpg
+        type: string
+    required:
+    - key
+    type: object
   controllers.CreateCommentBody:
     properties:
       content:
@@ -290,6 +298,31 @@ definitions:
     - size
     type: object
   controllers.PresignImageTweetResponse:
+    properties:
+      key:
+        example: uploads/1_abc123.jpg
+        type: string
+      public_url:
+        example: https://example.com/bucket/uploads/1_abc123.jpg
+        type: string
+      upload_url:
+        example: https://s3.example.com/bucket/uploads/1_abc123.jpg?X-Amz-Signature=...
+        type: string
+    type: object
+  controllers.PresignProfileImageInput:
+    properties:
+      content_type:
+        example: image/jpeg
+        type: string
+      size:
+        example: 102400
+        minimum: 1
+        type: integer
+    required:
+    - content_type
+    - size
+    type: object
+  controllers.PresignProfileImageResponse:
     properties:
       key:
         example: uploads/1_abc123.jpg
@@ -844,6 +877,82 @@ paths:
       security:
       - SessionAuth: []
       summary: プロフィール更新
+      tags:
+      - profiles
+  /profile-image/complete:
+    post:
+      consumes:
+      - application/json
+      description: S3 へのアップロード完了後、key を確認してプロフィール画像を保存する
+      parameters:
+      - description: アップロード済み画像の key
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.CompleteProfileImageInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.UserProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: プロフィール画像アップロード完了
+      tags:
+      - profiles
+  /profile-image/presign:
+    post:
+      consumes:
+      - application/json
+      description: 認証済みユーザー向けに S3 への直接アップロード用 URL と key を発行する
+      parameters:
+      - description: 画像メタ情報
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.PresignProfileImageInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.PresignProfileImageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: プロフィール画像アップロード許可
       tags:
       - profiles
   /register:

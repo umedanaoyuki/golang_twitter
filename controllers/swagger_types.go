@@ -211,3 +211,9 @@ type SwaggerUserProfile struct {
 type UserProfileResponse struct {
 	Profile SwaggerUserProfile `json:"profile"`
 }
+
+type PresignProfileImageResponse struct {
+	Key       string `json:"key" example:"uploads/1_abc123.jpg"`
+	UploadURL string `json:"upload_url" example:"https://s3.example.com/bucket/uploads/1_abc123.jpg?X-Amz-Signature=..."`
+	PublicURL string `json:"public_url" example:"https://example.com/bucket/uploads/1_abc123.jpg"`
+}
