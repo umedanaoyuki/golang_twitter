@@ -137,6 +137,8 @@ func main() {
 	// ユーザープロフィール取得
 	router.GET("/users/:user_id/profile", userProfileController.GetUserProfileByUserID)
 
+	// 全ユーザーのツイート一覧取得
+	router.GET("/tweets", tweetController.GetAllTweets)
 	// 1つのTweet取得
 	router.GET("/tweets/:id", tweetController.GetTweetByID)
 	// ツイートのコメント一覧取得

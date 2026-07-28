@@ -27,6 +27,13 @@ FROM tweets
 ORDER BY created_at DESC
 LIMIT $1;
 
+-- name: GetAllTweetsWithCursor :many
+SELECT id, user_id, content, image_url, created_at, updated_at
+FROM tweets
+WHERE (CASE WHEN @cursor::int = 0 THEN true ELSE id < @cursor::int END)
+ORDER BY id DESC
+LIMIT @limit_count::int;
+
 -- name: GetTweetByID :one
 SELECT id, user_id, content, image_url, created_at, updated_at
 FROM tweets

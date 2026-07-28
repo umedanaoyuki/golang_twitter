@@ -93,6 +93,49 @@ func (q *Queries) GetAllTweets(ctx context.Context, limit int32) ([]Tweet, error
 	return items, nil
 }
 
+const getAllTweetsWithCursor = `-- name: GetAllTweetsWithCursor :many
+SELECT id, user_id, content, image_url, created_at, updated_at
+FROM tweets
+WHERE (CASE WHEN $1::int = 0 THEN true ELSE id < $1::int END)
+ORDER BY id DESC
+LIMIT $2::int
+`
+
+type GetAllTweetsWithCursorParams struct {
+	Cursor     int32 `json:"cursor"`
+	LimitCount int32 `json:"limit_count"`
+}
+
+func (q *Queries) GetAllTweetsWithCursor(ctx context.Context, arg GetAllTweetsWithCursorParams) ([]Tweet, error) {
+	rows, err := q.query(ctx, q.getAllTweetsWithCursorStmt, getAllTweetsWithCursor, arg.Cursor, arg.LimitCount)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Tweet{}
+	for rows.Next() {
+		var i Tweet
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Content,
+			&i.ImageUrl,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTweetByID = `-- name: GetTweetByID :one
 SELECT id, user_id, content, image_url, created_at, updated_at
 FROM tweets
