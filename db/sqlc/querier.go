@@ -58,6 +58,7 @@ type Querier interface {
 	GetUserActivationByToken(ctx context.Context, token string) (UserActivation, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserDetailByUserID(ctx context.Context, id int32) (GetUserDetailByUserIDRow, error)
+	GetUserLikesWithCursor(ctx context.Context, arg GetUserLikesWithCursorParams) ([]Like, error)
 	GetUserProfileByUserID(ctx context.Context, userID int32) (UserProfile, error)
 	GetUserRetweetsWithCursor(ctx context.Context, arg GetUserRetweetsWithCursorParams) ([]Retweet, error)
 	UpdateUserIsActive(ctx context.Context, arg UpdateUserIsActiveParams) error
