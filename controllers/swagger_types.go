@@ -161,6 +161,16 @@ type GetUserRetweetsResponse struct {
 	HasMore    bool                 `json:"has_more" example:"false"`
 }
 
+type SwaggerLikeItem struct {
+	Tweet SwaggerTweet `json:"tweet"`
+}
+
+type GetUserLikesResponse struct {
+	Likes      []SwaggerLikeItem `json:"likes"`
+	NextCursor *int32            `json:"next_cursor"`
+	HasMore    bool              `json:"has_more" example:"false"`
+}
+
 type SwaggerFollow struct {
 	ID             int32  `json:"id" example:"1"`
 	UserID         int32  `json:"user_id" example:"1"`

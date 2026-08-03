@@ -77,7 +77,7 @@ func main() {
 	// サービスの初期化
 	authService := services.NewAuthService(conn, queries, emailMailer)
 	tweetService := services.NewTweetService(conn, queries, imageStorage)
-	likeService := services.NewLikeService(conn, queries)
+	likeService := services.NewLikeService(conn, queries, tweetService)
 	commentService := services.NewCommentService(conn, queries)
 	userService := services.NewUserService(queries)
 	bookmarkService := services.NewBookmarkService(conn, queries)
@@ -132,6 +132,8 @@ func main() {
 	router.GET("/users/:user_id/tweets", tweetController.GetUserTweets)
 	// ユーザーのリツイート一覧取得
 	router.GET("/users/:user_id/retweets", retweetController.GetUserRetweets)
+	// ユーザーのいいね一覧取得
+	router.GET("/users/:user_id/likes", likeController.GetUserLikes)
 	// ユーザー情報取得
 	router.GET("/users/:user_id", userController.GetUserByID)
 	// ユーザープロフィール取得

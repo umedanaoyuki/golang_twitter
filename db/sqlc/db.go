@@ -171,6 +171,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getUserDetailByUserIDStmt, err = db.PrepareContext(ctx, getUserDetailByUserID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUserDetailByUserID: %w", err)
 	}
+	if q.getUserLikesWithCursorStmt, err = db.PrepareContext(ctx, getUserLikesWithCursor); err != nil {
+		return nil, fmt.Errorf("error preparing query GetUserLikesWithCursor: %w", err)
+	}
 	if q.getUserProfileByUserIDStmt, err = db.PrepareContext(ctx, getUserProfileByUserID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUserProfileByUserID: %w", err)
 	}
@@ -436,6 +439,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getUserDetailByUserIDStmt: %w", cerr)
 		}
 	}
+	if q.getUserLikesWithCursorStmt != nil {
+		if cerr := q.getUserLikesWithCursorStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getUserLikesWithCursorStmt: %w", cerr)
+		}
+	}
 	if q.getUserProfileByUserIDStmt != nil {
 		if cerr := q.getUserProfileByUserIDStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getUserProfileByUserIDStmt: %w", cerr)
@@ -549,6 +557,7 @@ type Queries struct {
 	getUserActivationByTokenStmt       *sql.Stmt
 	getUserByEmailStmt                 *sql.Stmt
 	getUserDetailByUserIDStmt          *sql.Stmt
+	getUserLikesWithCursorStmt         *sql.Stmt
 	getUserProfileByUserIDStmt         *sql.Stmt
 	getUserRetweetsWithCursorStmt      *sql.Stmt
 	updateUserIsActiveStmt             *sql.Stmt
@@ -609,6 +618,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getUserActivationByTokenStmt:       q.getUserActivationByTokenStmt,
 		getUserByEmailStmt:                 q.getUserByEmailStmt,
 		getUserDetailByUserIDStmt:          q.getUserDetailByUserIDStmt,
+		getUserLikesWithCursorStmt:         q.getUserLikesWithCursorStmt,
 		getUserProfileByUserIDStmt:         q.getUserProfileByUserIDStmt,
 		getUserRetweetsWithCursorStmt:      q.getUserRetweetsWithCursorStmt,
 		updateUserIsActiveStmt:             q.updateUserIsActiveStmt,
