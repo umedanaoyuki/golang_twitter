@@ -45,6 +45,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.countRetweetsByTweetIDsStmt, err = db.PrepareContext(ctx, countRetweetsByTweetIDs); err != nil {
 		return nil, fmt.Errorf("error preparing query CountRetweetsByTweetIDs: %w", err)
 	}
+	if q.countUnreadNotificationsByUserIDStmt, err = db.PrepareContext(ctx, countUnreadNotificationsByUserID); err != nil {
+		return nil, fmt.Errorf("error preparing query CountUnreadNotificationsByUserID: %w", err)
+	}
 	if q.createBookmarkStmt, err = db.PrepareContext(ctx, createBookmark); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateBookmark: %w", err)
 	}
@@ -65,6 +68,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.createMessageStmt, err = db.PrepareContext(ctx, createMessage); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateMessage: %w", err)
+	}
+	if q.createNotificationStmt, err = db.PrepareContext(ctx, createNotification); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateNotification: %w", err)
 	}
 	if q.createRetweetStmt, err = db.PrepareContext(ctx, createRetweet); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateRetweet: %w", err)
@@ -150,6 +156,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getMessagesByGroupIDStmt, err = db.PrepareContext(ctx, getMessagesByGroupID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetMessagesByGroupID: %w", err)
 	}
+	if q.getNotificationsByUserIDWithCursorStmt, err = db.PrepareContext(ctx, getNotificationsByUserIDWithCursor); err != nil {
+		return nil, fmt.Errorf("error preparing query GetNotificationsByUserIDWithCursor: %w", err)
+	}
 	if q.getTweetByIDStmt, err = db.PrepareContext(ctx, getTweetByID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetTweetByID: %w", err)
 	}
@@ -229,6 +238,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing countRetweetsByTweetIDsStmt: %w", cerr)
 		}
 	}
+	if q.countUnreadNotificationsByUserIDStmt != nil {
+		if cerr := q.countUnreadNotificationsByUserIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countUnreadNotificationsByUserIDStmt: %w", cerr)
+		}
+	}
 	if q.createBookmarkStmt != nil {
 		if cerr := q.createBookmarkStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createBookmarkStmt: %w", cerr)
@@ -262,6 +276,11 @@ func (q *Queries) Close() error {
 	if q.createMessageStmt != nil {
 		if cerr := q.createMessageStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createMessageStmt: %w", cerr)
+		}
+	}
+	if q.createNotificationStmt != nil {
+		if cerr := q.createNotificationStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createNotificationStmt: %w", cerr)
 		}
 	}
 	if q.createRetweetStmt != nil {
@@ -404,6 +423,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getMessagesByGroupIDStmt: %w", cerr)
 		}
 	}
+	if q.getNotificationsByUserIDWithCursorStmt != nil {
+		if cerr := q.getNotificationsByUserIDWithCursorStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getNotificationsByUserIDWithCursorStmt: %w", cerr)
+		}
+	}
 	if q.getTweetByIDStmt != nil {
 		if cerr := q.getTweetByIDStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getTweetByIDStmt: %w", cerr)
@@ -506,123 +530,129 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                                 DBTX
-	tx                                 *sql.Tx
-	countBookmarksByTweetIDStmt        *sql.Stmt
-	countCommentsByTweetIDStmt         *sql.Stmt
-	countCommentsByTweetIDsStmt        *sql.Stmt
-	countLikesByTweetIDStmt            *sql.Stmt
-	countLikesByTweetIDsStmt           *sql.Stmt
-	countRetweetsByTweetIDStmt         *sql.Stmt
-	countRetweetsByTweetIDsStmt        *sql.Stmt
-	createBookmarkStmt                 *sql.Stmt
-	createCommentStmt                  *sql.Stmt
-	createFollowStmt                   *sql.Stmt
-	createGroupStmt                    *sql.Stmt
-	createGroupMemberStmt              *sql.Stmt
-	createLikeStmt                     *sql.Stmt
-	createMessageStmt                  *sql.Stmt
-	createRetweetStmt                  *sql.Stmt
-	createTweetStmt                    *sql.Stmt
-	createUserStmt                     *sql.Stmt
-	createUserActivationStmt           *sql.Stmt
-	createUserProfileStmt              *sql.Stmt
-	deleteBookmarkStmt                 *sql.Stmt
-	deleteCommentStmt                  *sql.Stmt
-	deleteFollowStmt                   *sql.Stmt
-	deleteLikeStmt                     *sql.Stmt
-	deleteRetweetStmt                  *sql.Stmt
-	deleteTweetStmt                    *sql.Stmt
-	deleteUserStmt                     *sql.Stmt
-	deleteUserActivationStmt           *sql.Stmt
-	existsBookmarkStmt                 *sql.Stmt
-	existsCommentStmt                  *sql.Stmt
-	existsGroupMemberStmt              *sql.Stmt
-	existsLikeStmt                     *sql.Stmt
-	existsRetweetStmt                  *sql.Stmt
-	getAllTweetsStmt                   *sql.Stmt
-	getAllTweetsWithCursorStmt         *sql.Stmt
-	getBookmarksByUserIdStmt           *sql.Stmt
-	getCommentsByTweetIDWithCursorStmt *sql.Stmt
-	getFollowersByUserIdWithCursorStmt *sql.Stmt
-	getFollowingByUserIdWithCursorStmt *sql.Stmt
-	getGroupByIDStmt                   *sql.Stmt
-	getGroupsByMemberUserIDStmt        *sql.Stmt
-	getGroupsByUserIDStmt              *sql.Stmt
-	getMessagesByGroupIDStmt           *sql.Stmt
-	getTweetByIDStmt                   *sql.Stmt
-	getTweetsByIDsStmt                 *sql.Stmt
-	getTweetsByUserIDStmt              *sql.Stmt
-	getTweetsByUserIDWithCursorStmt    *sql.Stmt
-	getUserActivationByTokenStmt       *sql.Stmt
-	getUserByEmailStmt                 *sql.Stmt
-	getUserDetailByUserIDStmt          *sql.Stmt
-	getUserLikesWithCursorStmt         *sql.Stmt
-	getUserProfileByUserIDStmt         *sql.Stmt
-	getUserRetweetsWithCursorStmt      *sql.Stmt
-	updateUserIsActiveStmt             *sql.Stmt
-	updateUserProfileStmt              *sql.Stmt
-	updateUserProfileImageStmt         *sql.Stmt
+	db                                     DBTX
+	tx                                     *sql.Tx
+	countBookmarksByTweetIDStmt            *sql.Stmt
+	countCommentsByTweetIDStmt             *sql.Stmt
+	countCommentsByTweetIDsStmt            *sql.Stmt
+	countLikesByTweetIDStmt                *sql.Stmt
+	countLikesByTweetIDsStmt               *sql.Stmt
+	countRetweetsByTweetIDStmt             *sql.Stmt
+	countRetweetsByTweetIDsStmt            *sql.Stmt
+	countUnreadNotificationsByUserIDStmt   *sql.Stmt
+	createBookmarkStmt                     *sql.Stmt
+	createCommentStmt                      *sql.Stmt
+	createFollowStmt                       *sql.Stmt
+	createGroupStmt                        *sql.Stmt
+	createGroupMemberStmt                  *sql.Stmt
+	createLikeStmt                         *sql.Stmt
+	createMessageStmt                      *sql.Stmt
+	createNotificationStmt                 *sql.Stmt
+	createRetweetStmt                      *sql.Stmt
+	createTweetStmt                        *sql.Stmt
+	createUserStmt                         *sql.Stmt
+	createUserActivationStmt               *sql.Stmt
+	createUserProfileStmt                  *sql.Stmt
+	deleteBookmarkStmt                     *sql.Stmt
+	deleteCommentStmt                      *sql.Stmt
+	deleteFollowStmt                       *sql.Stmt
+	deleteLikeStmt                         *sql.Stmt
+	deleteRetweetStmt                      *sql.Stmt
+	deleteTweetStmt                        *sql.Stmt
+	deleteUserStmt                         *sql.Stmt
+	deleteUserActivationStmt               *sql.Stmt
+	existsBookmarkStmt                     *sql.Stmt
+	existsCommentStmt                      *sql.Stmt
+	existsGroupMemberStmt                  *sql.Stmt
+	existsLikeStmt                         *sql.Stmt
+	existsRetweetStmt                      *sql.Stmt
+	getAllTweetsStmt                       *sql.Stmt
+	getAllTweetsWithCursorStmt             *sql.Stmt
+	getBookmarksByUserIdStmt               *sql.Stmt
+	getCommentsByTweetIDWithCursorStmt     *sql.Stmt
+	getFollowersByUserIdWithCursorStmt     *sql.Stmt
+	getFollowingByUserIdWithCursorStmt     *sql.Stmt
+	getGroupByIDStmt                       *sql.Stmt
+	getGroupsByMemberUserIDStmt            *sql.Stmt
+	getGroupsByUserIDStmt                  *sql.Stmt
+	getMessagesByGroupIDStmt               *sql.Stmt
+	getNotificationsByUserIDWithCursorStmt *sql.Stmt
+	getTweetByIDStmt                       *sql.Stmt
+	getTweetsByIDsStmt                     *sql.Stmt
+	getTweetsByUserIDStmt                  *sql.Stmt
+	getTweetsByUserIDWithCursorStmt        *sql.Stmt
+	getUserActivationByTokenStmt           *sql.Stmt
+	getUserByEmailStmt                     *sql.Stmt
+	getUserDetailByUserIDStmt              *sql.Stmt
+	getUserLikesWithCursorStmt             *sql.Stmt
+	getUserProfileByUserIDStmt             *sql.Stmt
+	getUserRetweetsWithCursorStmt          *sql.Stmt
+	updateUserIsActiveStmt                 *sql.Stmt
+	updateUserProfileStmt                  *sql.Stmt
+	updateUserProfileImageStmt             *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                                 tx,
-		tx:                                 tx,
-		countBookmarksByTweetIDStmt:        q.countBookmarksByTweetIDStmt,
-		countCommentsByTweetIDStmt:         q.countCommentsByTweetIDStmt,
-		countCommentsByTweetIDsStmt:        q.countCommentsByTweetIDsStmt,
-		countLikesByTweetIDStmt:            q.countLikesByTweetIDStmt,
-		countLikesByTweetIDsStmt:           q.countLikesByTweetIDsStmt,
-		countRetweetsByTweetIDStmt:         q.countRetweetsByTweetIDStmt,
-		countRetweetsByTweetIDsStmt:        q.countRetweetsByTweetIDsStmt,
-		createBookmarkStmt:                 q.createBookmarkStmt,
-		createCommentStmt:                  q.createCommentStmt,
-		createFollowStmt:                   q.createFollowStmt,
-		createGroupStmt:                    q.createGroupStmt,
-		createGroupMemberStmt:              q.createGroupMemberStmt,
-		createLikeStmt:                     q.createLikeStmt,
-		createMessageStmt:                  q.createMessageStmt,
-		createRetweetStmt:                  q.createRetweetStmt,
-		createTweetStmt:                    q.createTweetStmt,
-		createUserStmt:                     q.createUserStmt,
-		createUserActivationStmt:           q.createUserActivationStmt,
-		createUserProfileStmt:              q.createUserProfileStmt,
-		deleteBookmarkStmt:                 q.deleteBookmarkStmt,
-		deleteCommentStmt:                  q.deleteCommentStmt,
-		deleteFollowStmt:                   q.deleteFollowStmt,
-		deleteLikeStmt:                     q.deleteLikeStmt,
-		deleteRetweetStmt:                  q.deleteRetweetStmt,
-		deleteTweetStmt:                    q.deleteTweetStmt,
-		deleteUserStmt:                     q.deleteUserStmt,
-		deleteUserActivationStmt:           q.deleteUserActivationStmt,
-		existsBookmarkStmt:                 q.existsBookmarkStmt,
-		existsCommentStmt:                  q.existsCommentStmt,
-		existsGroupMemberStmt:              q.existsGroupMemberStmt,
-		existsLikeStmt:                     q.existsLikeStmt,
-		existsRetweetStmt:                  q.existsRetweetStmt,
-		getAllTweetsStmt:                   q.getAllTweetsStmt,
-		getAllTweetsWithCursorStmt:         q.getAllTweetsWithCursorStmt,
-		getBookmarksByUserIdStmt:           q.getBookmarksByUserIdStmt,
-		getCommentsByTweetIDWithCursorStmt: q.getCommentsByTweetIDWithCursorStmt,
-		getFollowersByUserIdWithCursorStmt: q.getFollowersByUserIdWithCursorStmt,
-		getFollowingByUserIdWithCursorStmt: q.getFollowingByUserIdWithCursorStmt,
-		getGroupByIDStmt:                   q.getGroupByIDStmt,
-		getGroupsByMemberUserIDStmt:        q.getGroupsByMemberUserIDStmt,
-		getGroupsByUserIDStmt:              q.getGroupsByUserIDStmt,
-		getMessagesByGroupIDStmt:           q.getMessagesByGroupIDStmt,
-		getTweetByIDStmt:                   q.getTweetByIDStmt,
-		getTweetsByIDsStmt:                 q.getTweetsByIDsStmt,
-		getTweetsByUserIDStmt:              q.getTweetsByUserIDStmt,
-		getTweetsByUserIDWithCursorStmt:    q.getTweetsByUserIDWithCursorStmt,
-		getUserActivationByTokenStmt:       q.getUserActivationByTokenStmt,
-		getUserByEmailStmt:                 q.getUserByEmailStmt,
-		getUserDetailByUserIDStmt:          q.getUserDetailByUserIDStmt,
-		getUserLikesWithCursorStmt:         q.getUserLikesWithCursorStmt,
-		getUserProfileByUserIDStmt:         q.getUserProfileByUserIDStmt,
-		getUserRetweetsWithCursorStmt:      q.getUserRetweetsWithCursorStmt,
-		updateUserIsActiveStmt:             q.updateUserIsActiveStmt,
-		updateUserProfileStmt:              q.updateUserProfileStmt,
-		updateUserProfileImageStmt:         q.updateUserProfileImageStmt,
+		db:                                     tx,
+		tx:                                     tx,
+		countBookmarksByTweetIDStmt:            q.countBookmarksByTweetIDStmt,
+		countCommentsByTweetIDStmt:             q.countCommentsByTweetIDStmt,
+		countCommentsByTweetIDsStmt:            q.countCommentsByTweetIDsStmt,
+		countLikesByTweetIDStmt:                q.countLikesByTweetIDStmt,
+		countLikesByTweetIDsStmt:               q.countLikesByTweetIDsStmt,
+		countRetweetsByTweetIDStmt:             q.countRetweetsByTweetIDStmt,
+		countRetweetsByTweetIDsStmt:            q.countRetweetsByTweetIDsStmt,
+		countUnreadNotificationsByUserIDStmt:   q.countUnreadNotificationsByUserIDStmt,
+		createBookmarkStmt:                     q.createBookmarkStmt,
+		createCommentStmt:                      q.createCommentStmt,
+		createFollowStmt:                       q.createFollowStmt,
+		createGroupStmt:                        q.createGroupStmt,
+		createGroupMemberStmt:                  q.createGroupMemberStmt,
+		createLikeStmt:                         q.createLikeStmt,
+		createMessageStmt:                      q.createMessageStmt,
+		createNotificationStmt:                 q.createNotificationStmt,
+		createRetweetStmt:                      q.createRetweetStmt,
+		createTweetStmt:                        q.createTweetStmt,
+		createUserStmt:                         q.createUserStmt,
+		createUserActivationStmt:               q.createUserActivationStmt,
+		createUserProfileStmt:                  q.createUserProfileStmt,
+		deleteBookmarkStmt:                     q.deleteBookmarkStmt,
+		deleteCommentStmt:                      q.deleteCommentStmt,
+		deleteFollowStmt:                       q.deleteFollowStmt,
+		deleteLikeStmt:                         q.deleteLikeStmt,
+		deleteRetweetStmt:                      q.deleteRetweetStmt,
+		deleteTweetStmt:                        q.deleteTweetStmt,
+		deleteUserStmt:                         q.deleteUserStmt,
+		deleteUserActivationStmt:               q.deleteUserActivationStmt,
+		existsBookmarkStmt:                     q.existsBookmarkStmt,
+		existsCommentStmt:                      q.existsCommentStmt,
+		existsGroupMemberStmt:                  q.existsGroupMemberStmt,
+		existsLikeStmt:                         q.existsLikeStmt,
+		existsRetweetStmt:                      q.existsRetweetStmt,
+		getAllTweetsStmt:                       q.getAllTweetsStmt,
+		getAllTweetsWithCursorStmt:             q.getAllTweetsWithCursorStmt,
+		getBookmarksByUserIdStmt:               q.getBookmarksByUserIdStmt,
+		getCommentsByTweetIDWithCursorStmt:     q.getCommentsByTweetIDWithCursorStmt,
+		getFollowersByUserIdWithCursorStmt:     q.getFollowersByUserIdWithCursorStmt,
+		getFollowingByUserIdWithCursorStmt:     q.getFollowingByUserIdWithCursorStmt,
+		getGroupByIDStmt:                       q.getGroupByIDStmt,
+		getGroupsByMemberUserIDStmt:            q.getGroupsByMemberUserIDStmt,
+		getGroupsByUserIDStmt:                  q.getGroupsByUserIDStmt,
+		getMessagesByGroupIDStmt:               q.getMessagesByGroupIDStmt,
+		getNotificationsByUserIDWithCursorStmt: q.getNotificationsByUserIDWithCursorStmt,
+		getTweetByIDStmt:                       q.getTweetByIDStmt,
+		getTweetsByIDsStmt:                     q.getTweetsByIDsStmt,
+		getTweetsByUserIDStmt:                  q.getTweetsByUserIDStmt,
+		getTweetsByUserIDWithCursorStmt:        q.getTweetsByUserIDWithCursorStmt,
+		getUserActivationByTokenStmt:           q.getUserActivationByTokenStmt,
+		getUserByEmailStmt:                     q.getUserByEmailStmt,
+		getUserDetailByUserIDStmt:              q.getUserDetailByUserIDStmt,
+		getUserLikesWithCursorStmt:             q.getUserLikesWithCursorStmt,
+		getUserProfileByUserIDStmt:             q.getUserProfileByUserIDStmt,
+		getUserRetweetsWithCursorStmt:          q.getUserRetweetsWithCursorStmt,
+		updateUserIsActiveStmt:                 q.updateUserIsActiveStmt,
+		updateUserProfileStmt:                  q.updateUserProfileStmt,
+		updateUserProfileImageStmt:             q.updateUserProfileImageStmt,
 	}
 }
