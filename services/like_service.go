@@ -20,16 +20,18 @@ type UserLikeItem struct {
 }
 
 type likeService struct {
-	db           *sql.DB
-	queries      *db.Queries
-	tweetService TweetService
+	db                  *sql.DB
+	queries             *db.Queries
+	tweetService        TweetService
+	notificationService NotificationService
 }
 
-func NewLikeService(db *sql.DB, queries *db.Queries, tweetService TweetService) LikeService {
+func NewLikeService(db *sql.DB, queries *db.Queries, tweetService TweetService, notificationService NotificationService) LikeService {
 	return &likeService{
-		db:           db,
-		queries:      queries,
-		tweetService: tweetService,
+		db:                  db,
+		queries:             queries,
+		tweetService:        tweetService,
+		notificationService: notificationService,
 	}
 }
 
@@ -39,11 +41,15 @@ func (s *likeService) CreateLike(ctx context.Context, userID int32, tweetID int3
 		TweetID: tweetID,
 	})
 	if err != nil {
+		// ON CONFLICT DO NOTHING により既にいいね済みの場合は ErrNoRows になる（通知も作らない）
 		if err == sql.ErrNoRows {
 			return nil
 		}
 		return err
 	}
+
+	// 新規にいいねされた場合のみツイート作者へ通知
+	s.notificationService.NotifyLike(ctx, userID, tweetID)
 	return nil
 }
 
