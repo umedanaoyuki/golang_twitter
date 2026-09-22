@@ -386,6 +386,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/notifications": {
+            "get": {
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "description": "ログインユーザー宛の通知（いいね・フォロー・コメント）をカーソルページネーションで取得する",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "通知一覧取得",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ページネーションカーソル（最後に取得した通知ID）",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "取得件数（1〜100、デフォルト20）",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.GetNotificationsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/profile": {
             "put": {
                 "security": [
@@ -2397,6 +2455,24 @@ const docTemplate = `{
                 }
             }
         },
+        "controllers.GetNotificationsResponse": {
+            "type": "object",
+            "properties": {
+                "has_more": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "next_cursor": {
+                    "type": "integer"
+                },
+                "notifications": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controllers.SwaggerNotification"
+                    }
+                }
+            }
+        },
         "controllers.GetTweetResponse": {
             "type": "object",
             "properties": {
@@ -2780,6 +2856,52 @@ const docTemplate = `{
                 "id": {
                     "type": "integer",
                     "example": 1
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "controllers.SwaggerNotification": {
+            "type": "object",
+            "properties": {
+                "actor_id": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "comment_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "is_read": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "read_at": {
+                    "type": "string",
+                    "example": "2024-01-01T00:00:00Z"
+                },
+                "tweet_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "like",
+                        "follow",
+                        "comment"
+                    ],
+                    "example": "like"
                 },
                 "user_id": {
                     "type": "integer",
