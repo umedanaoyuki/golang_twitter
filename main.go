@@ -77,14 +77,15 @@ func main() {
 	// サービスの初期化
 	authService := services.NewAuthService(conn, queries, emailMailer)
 	tweetService := services.NewTweetService(conn, queries, imageStorage)
-	likeService := services.NewLikeService(conn, queries, tweetService)
-	commentService := services.NewCommentService(conn, queries)
+	notificationService := services.NewNotificationService(conn, queries)
+	likeService := services.NewLikeService(conn, queries, tweetService, notificationService)
+	commentService := services.NewCommentService(conn, queries, notificationService)
 	userService := services.NewUserService(queries)
 	bookmarkService := services.NewBookmarkService(conn, queries)
 	groupService := services.NewGroupService(conn, queries)
 	messageService := services.NewMessageService(conn, queries)
 	retweetService := services.NewRetweetService(conn, queries, tweetService)
-	followService := services.NewFollowService(conn, queries)
+	followService := services.NewFollowService(conn, queries, notificationService)
 	userProfileService := services.NewUserProfileService(queries, imageStorage)
 
 	// コントローラーの初期化
@@ -99,6 +100,7 @@ func main() {
 	retweetController := controllers.NewRetweetController(retweetService)
 	followController := controllers.NewFollowController(followService)
 	userProfileController := controllers.NewUserProfileController(userProfileService)
+	notificationController := controllers.NewNotificationController(notificationService)
 	// Ginルーター設定
 	router := gin.Default()
 
@@ -198,6 +200,9 @@ func main() {
 		authorized.GET("/users/:user_id/followers", followController.GetFollowersByUserId)
 		// ユーザーフォロー中一覧取得
 		authorized.GET("/users/:user_id/following", followController.GetFollowingByUserId)
+
+		// 通知一覧取得（いいね・フォロー・コメント）
+		authorized.GET("/notifications", notificationController.GetNotifications)
 
 		// プロフィール作成
 		authorized.POST("/profile", userProfileController.CreateUserProfile)
