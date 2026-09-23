@@ -203,6 +203,8 @@ func main() {
 
 		// 通知一覧取得（いいね・フォロー・コメント）
 		authorized.GET("/notifications", notificationController.GetNotifications)
+		// 未読通知件数取得
+		authorized.GET("/notifications/count", notificationController.GetNotificationCount)
 
 		// プロフィール作成
 		authorized.POST("/profile", userProfileController.CreateUserProfile)

@@ -24,6 +24,8 @@ type NotificationService interface {
 	NotifyComment(ctx context.Context, actorID int32, tweetID int32, commentID int32)
 	// GetNotificationsWithCursor はログインユーザー宛の通知一覧をカーソルページネーションで取得する
 	GetNotificationsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]NotificationItem, error)
+	// GetUnreadNotificationCount はログインユーザー宛の未読通知件数を取得する
+	GetUnreadNotificationCount(ctx context.Context, userID int32) (int64, error)
 }
 
 // NotificationItem は API 用の通知1件分
@@ -130,6 +132,14 @@ func (s *notificationService) GetNotificationsWithCursor(ctx context.Context, us
 		items = append(items, toNotificationItem(n))
 	}
 	return items, nil
+}
+
+func (s *notificationService) GetUnreadNotificationCount(ctx context.Context, userID int32) (int64, error) {
+	count, err := s.queries.CountUnreadNotificationsByUserID(ctx, userID)
+	if err != nil {
+		return 0, &ServiceError{Message: "通知件数の取得に失敗しました"}
+	}
+	return count, nil
 }
 
 // DB モデルの NULL 許容型（sql.NullInt32 等）をポインタに変換して JSON で扱いやすくする
