@@ -203,6 +203,12 @@ definitions:
           $ref: '#/definitions/controllers.SwaggerMessage'
         type: array
     type: object
+  controllers.GetNotificationCountResponse:
+    properties:
+      unread_count:
+        example: 3
+        type: integer
+    type: object
   controllers.GetNotificationsResponse:
     properties:
       has_more:
@@ -898,6 +904,29 @@ paths:
       security:
       - SessionAuth: []
       summary: 通知一覧取得
+      tags:
+      - notifications
+  /notifications/count:
+    get:
+      description: ログインユーザー宛の未読通知の件数のみを返却する（バッジ表示などの軽量用途向け）
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.GetNotificationCountResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - SessionAuth: []
+      summary: 未読通知件数取得
       tags:
       - notifications
   /profile:
