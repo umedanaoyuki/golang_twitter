@@ -14,14 +14,16 @@ type CommentService interface {
 }
 
 type commentService struct {
-	db      *sql.DB
-	queries *db.Queries
+	db                  *sql.DB
+	queries             *db.Queries
+	notificationService NotificationService
 }
 
-func NewCommentService(db *sql.DB, queries *db.Queries) CommentService {
+func NewCommentService(db *sql.DB, queries *db.Queries, notificationService NotificationService) CommentService {
 	return &commentService{
-		db:      db,
-		queries: queries,
+		db:                  db,
+		queries:             queries,
+		notificationService: notificationService,
 	}
 }
 
@@ -41,6 +43,9 @@ func (s *commentService) CreateComment(ctx context.Context, userID int32, tweetI
 	if err != nil {
 		return nil, &ServiceError{Message: "コメントの作成に失敗しました"}
 	}
+
+	// ツイート作者へ通知
+	s.notificationService.NotifyComment(ctx, userID, tweetID, comment.ID)
 	return &comment, nil
 }
 

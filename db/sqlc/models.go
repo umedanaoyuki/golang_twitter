@@ -5,6 +5,7 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -56,6 +57,18 @@ type Message struct {
 	GroupID   int32     `json:"group_id"`
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+type Notification struct {
+	ID        int32         `json:"id"`
+	UserID    int32         `json:"user_id"`
+	ActorID   int32         `json:"actor_id"`
+	Type      string        `json:"type"`
+	TweetID   sql.NullInt32 `json:"tweet_id"`
+	CommentID sql.NullInt32 `json:"comment_id"`
+	IsRead    bool          `json:"is_read"`
+	ReadAt    sql.NullTime  `json:"read_at"`
+	CreatedAt time.Time     `json:"created_at"`
 }
 
 type Retweet struct {

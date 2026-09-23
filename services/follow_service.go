@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"database/sql"
+	"errors"
 	db "golang_twitter/db/sqlc"
 )
 
@@ -14,14 +15,16 @@ type FollowService interface {
 }
 
 type followService struct {
-	db      *sql.DB
-	queries *db.Queries
+	db                  *sql.DB
+	queries             *db.Queries
+	notificationService NotificationService
 }
 
-func NewFollowService(db *sql.DB, queries *db.Queries) FollowService {
+func NewFollowService(db *sql.DB, queries *db.Queries, notificationService NotificationService) FollowService {
 	return &followService{
-		db:      db,
-		queries: queries,
+		db:                  db,
+		queries:             queries,
+		notificationService: notificationService,
 	}
 }
 
@@ -31,12 +34,19 @@ func (s *followService) CreateFollow(ctx context.Context, userID int32, followed
 	}
 
 	_, err := s.queries.CreateFollow(ctx, db.CreateFollowParams{
-		UserID: userID,
+		UserID:         userID,
 		FollowedUserID: followedUserID,
 	})
 	if err != nil {
+		// ON CONFLICT DO NOTHING により既にフォロー済みの場合は ErrNoRows になる（通知も作らない）
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil
+		}
 		return err
 	}
+
+	// 新規にフォローされた場合のみフォローされたユーザーへ通知
+	s.notificationService.NotifyFollow(ctx, userID, followedUserID)
 	return nil
 }
 

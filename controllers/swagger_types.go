@@ -227,3 +227,21 @@ type PresignProfileImageResponse struct {
 	UploadURL string `json:"upload_url" example:"https://s3.example.com/bucket/uploads/1_abc123.jpg?X-Amz-Signature=..."`
 	PublicURL string `json:"public_url" example:"https://example.com/bucket/uploads/1_abc123.jpg"`
 }
+
+type SwaggerNotification struct {
+	ID        int32   `json:"id" example:"1"`
+	UserID    int32   `json:"user_id" example:"1"`
+	ActorID   int32   `json:"actor_id" example:"2"`
+	Type      string  `json:"type" example:"like" enums:"like,follow,comment"`
+	TweetID   *int32  `json:"tweet_id" example:"1"`
+	CommentID *int32  `json:"comment_id" example:"1"`
+	IsRead    bool    `json:"is_read" example:"false"`
+	ReadAt    *string `json:"read_at" example:"2024-01-01T00:00:00Z"`
+	CreatedAt string  `json:"created_at" example:"2024-01-01T00:00:00Z"`
+}
+
+type GetNotificationsResponse struct {
+	Notifications []SwaggerNotification `json:"notifications"`
+	NextCursor    *int32                `json:"next_cursor"`
+	HasMore       bool                  `json:"has_more" example:"false"`
+}
