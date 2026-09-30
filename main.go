@@ -203,6 +203,8 @@ func main() {
 
 		// 通知一覧取得（いいね・フォロー・コメント）
 		authorized.GET("/notifications", notificationController.GetNotifications)
+		// 通知全件削除（物理削除）
+		authorized.DELETE("/notifications", notificationController.DeleteAllNotifications)
 
 		// プロフィール作成
 		authorized.POST("/profile", userProfileController.CreateUserProfile)
