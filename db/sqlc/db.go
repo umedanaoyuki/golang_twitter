@@ -87,6 +87,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createUserProfileStmt, err = db.PrepareContext(ctx, createUserProfile); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUserProfile: %w", err)
 	}
+	if q.deleteAllNotificationsByUserIDStmt, err = db.PrepareContext(ctx, deleteAllNotificationsByUserID); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteAllNotificationsByUserID: %w", err)
+	}
 	if q.deleteBookmarkStmt, err = db.PrepareContext(ctx, deleteBookmark); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteBookmark: %w", err)
 	}
@@ -306,6 +309,11 @@ func (q *Queries) Close() error {
 	if q.createUserProfileStmt != nil {
 		if cerr := q.createUserProfileStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createUserProfileStmt: %w", cerr)
+		}
+	}
+	if q.deleteAllNotificationsByUserIDStmt != nil {
+		if cerr := q.deleteAllNotificationsByUserIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteAllNotificationsByUserIDStmt: %w", cerr)
 		}
 	}
 	if q.deleteBookmarkStmt != nil {
@@ -553,6 +561,7 @@ type Queries struct {
 	createUserStmt                         *sql.Stmt
 	createUserActivationStmt               *sql.Stmt
 	createUserProfileStmt                  *sql.Stmt
+	deleteAllNotificationsByUserIDStmt     *sql.Stmt
 	deleteBookmarkStmt                     *sql.Stmt
 	deleteCommentStmt                      *sql.Stmt
 	deleteFollowStmt                       *sql.Stmt
@@ -617,6 +626,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		createUserStmt:                         q.createUserStmt,
 		createUserActivationStmt:               q.createUserActivationStmt,
 		createUserProfileStmt:                  q.createUserProfileStmt,
+		deleteAllNotificationsByUserIDStmt:     q.deleteAllNotificationsByUserIDStmt,
 		deleteBookmarkStmt:                     q.deleteBookmarkStmt,
 		deleteCommentStmt:                      q.deleteCommentStmt,
 		deleteFollowStmt:                       q.deleteFollowStmt,

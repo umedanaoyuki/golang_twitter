@@ -30,6 +30,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserActivation(ctx context.Context, arg CreateUserActivationParams) (UserActivation, error)
 	CreateUserProfile(ctx context.Context, arg CreateUserProfileParams) (UserProfile, error)
+	DeleteAllNotificationsByUserID(ctx context.Context, userID int32) error
 	DeleteBookmark(ctx context.Context, arg DeleteBookmarkParams) error
 	DeleteComment(ctx context.Context, arg DeleteCommentParams) (int32, error)
 	DeleteFollow(ctx context.Context, arg DeleteFollowParams) error
