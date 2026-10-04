@@ -245,3 +245,7 @@ type GetNotificationsResponse struct {
 	NextCursor    *int32                `json:"next_cursor"`
 	HasMore       bool                  `json:"has_more" example:"false"`
 }
+
+type GetNotificationCountResponse struct {
+	UnreadCount int64 `json:"unread_count" example:"3"`
+}

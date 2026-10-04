@@ -205,6 +205,8 @@ func main() {
 		authorized.GET("/notifications", notificationController.GetNotifications)
 		// 通知全件削除（物理削除）
 		authorized.DELETE("/notifications", notificationController.DeleteAllNotifications)
+		// 未読通知件数取得
+		authorized.GET("/notifications/count", notificationController.GetNotificationCount)
 
 		// プロフィール作成
 		authorized.POST("/profile", userProfileController.CreateUserProfile)

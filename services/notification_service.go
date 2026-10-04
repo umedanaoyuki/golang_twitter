@@ -26,6 +26,8 @@ type NotificationService interface {
 	GetNotificationsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]NotificationItem, error)
 	// DeleteAll はログインユーザー宛の通知をすべて物理削除する
 	DeleteAll(ctx context.Context, userID int32) error
+	// GetUnreadNotificationCount はログインユーザー宛の未読通知件数を取得する
+	GetUnreadNotificationCount(ctx context.Context, userID int32) (int64, error)
 }
 
 // NotificationItem は API 用の通知1件分
@@ -139,6 +141,14 @@ func (s *notificationService) DeleteAll(ctx context.Context, userID int32) error
 		return &ServiceError{Message: "通知の削除に失敗しました"}
 	}
 	return nil
+}
+
+func (s *notificationService) GetUnreadNotificationCount(ctx context.Context, userID int32) (int64, error) {
+	count, err := s.queries.CountUnreadNotificationsByUserID(ctx, userID)
+	if err != nil {
+		return 0, &ServiceError{Message: "通知件数の取得に失敗しました"}
+	}
+	return count, nil
 }
 
 // DB モデルの NULL 許容型（sql.NullInt32 等）をポインタに変換して JSON で扱いやすくする
