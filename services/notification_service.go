@@ -24,6 +24,8 @@ type NotificationService interface {
 	NotifyComment(ctx context.Context, actorID int32, tweetID int32, commentID int32)
 	// GetNotificationsWithCursor はログインユーザー宛の通知一覧をカーソルページネーションで取得する
 	GetNotificationsWithCursor(ctx context.Context, userID int32, cursor *int32, limit int32) ([]NotificationItem, error)
+	// DeleteAll はログインユーザー宛の通知をすべて物理削除する
+	DeleteAll(ctx context.Context, userID int32) error
 	// GetUnreadNotificationCount はログインユーザー宛の未読通知件数を取得する
 	GetUnreadNotificationCount(ctx context.Context, userID int32) (int64, error)
 }
@@ -132,6 +134,13 @@ func (s *notificationService) GetNotificationsWithCursor(ctx context.Context, us
 		items = append(items, toNotificationItem(n))
 	}
 	return items, nil
+}
+
+func (s *notificationService) DeleteAll(ctx context.Context, userID int32) error {
+	if err := s.queries.DeleteAllNotificationsByUserID(ctx, userID); err != nil {
+		return &ServiceError{Message: "通知の削除に失敗しました"}
+	}
+	return nil
 }
 
 func (s *notificationService) GetUnreadNotificationCount(ctx context.Context, userID int32) (int64, error) {

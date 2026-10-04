@@ -67,6 +67,16 @@ func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotification
 	return i, err
 }
 
+const deleteAllNotificationsByUserID = `-- name: DeleteAllNotificationsByUserID :exec
+DELETE FROM notifications
+WHERE user_id = $1
+`
+
+func (q *Queries) DeleteAllNotificationsByUserID(ctx context.Context, userID int32) error {
+	_, err := q.exec(ctx, q.deleteAllNotificationsByUserIDStmt, deleteAllNotificationsByUserID, userID)
+	return err
+}
+
 const getNotificationsByUserIDWithCursor = `-- name: GetNotificationsByUserIDWithCursor :many
 SELECT id, user_id, actor_id, type, tweet_id, comment_id, is_read, read_at, created_at
 FROM notifications

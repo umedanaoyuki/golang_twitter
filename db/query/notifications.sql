@@ -22,3 +22,7 @@ LIMIT $3;
 SELECT COUNT(*)::bigint AS unread_count
 FROM notifications
 WHERE user_id = $1 AND is_read = false;
+
+-- name: DeleteAllNotificationsByUserID :exec
+DELETE FROM notifications
+WHERE user_id = $1;

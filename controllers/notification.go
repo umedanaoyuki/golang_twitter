@@ -76,6 +76,30 @@ func (ctrl *NotificationController) GetNotifications(c *gin.Context) {
 	})
 }
 
+// DeleteAllNotifications godoc
+// @Summary      通知全件削除
+// @Description  ログインユーザー宛の通知をすべて削除する（物理削除）
+// @Tags         notifications
+// @Produce      json
+// @Security     SessionAuth
+// @Success      200  {object}  StatusOKResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /notifications [delete]
+func (ctrl *NotificationController) DeleteAllNotifications(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "ログインが必要です"})
+		return
+	}
+
+	if err := ctrl.NotificationService.DeleteAll(c.Request.Context(), userID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
 // GetNotificationCount godoc
 // @Summary      未読通知件数取得
 // @Description  ログインユーザー宛の未読通知の件数のみを返却する（バッジ表示などの軽量用途向け）
