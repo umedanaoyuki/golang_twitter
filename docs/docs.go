@@ -444,6 +444,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/notifications/count": {
+            "get": {
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "description": "ログインユーザー宛の未読通知の件数のみを返却する（バッジ表示などの軽量用途向け）",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "notifications"
+                ],
+                "summary": "未読通知件数取得",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.GetNotificationCountResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/profile": {
             "put": {
                 "security": [
@@ -2452,6 +2489,15 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/controllers.SwaggerMessage"
                     }
+                }
+            }
+        },
+        "controllers.GetNotificationCountResponse": {
+            "type": "object",
+            "properties": {
+                "unread_count": {
+                    "type": "integer",
+                    "example": 3
                 }
             }
         },

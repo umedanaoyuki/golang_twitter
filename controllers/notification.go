@@ -75,3 +75,31 @@ func (ctrl *NotificationController) GetNotifications(c *gin.Context) {
 		"has_more":      len(notifications) == int(limit),
 	})
 }
+
+// GetNotificationCount godoc
+// @Summary      未読通知件数取得
+// @Description  ログインユーザー宛の未読通知の件数のみを返却する（バッジ表示などの軽量用途向け）
+// @Tags         notifications
+// @Produce      json
+// @Security     SessionAuth
+// @Success      200  {object}  GetNotificationCountResponse
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /notifications/count [get]
+func (ctrl *NotificationController) GetNotificationCount(c *gin.Context) {
+	userID, err := middleware.GetUserID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "ログインが必要です"})
+		return
+	}
+
+	count, err := ctrl.NotificationService.GetUnreadNotificationCount(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"unread_count": count,
+	})
+}
